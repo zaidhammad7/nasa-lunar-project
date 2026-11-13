@@ -1,17 +1,17 @@
 {
-  "generated_utc": "2026-11-13T17:43:25.044808+00:00",
+  "generated_utc": "2026-11-13T18:10:25.615738+00:00",
   "passed": 107,
   "total": 107,
   "checks": [
     {
       "test": "GET /api/health 200",
       "pass": true,
-      "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor_active': True, 'warmup_latency_ms': 1494.9, 'dem_error': None, 'response_cache_entries': 5, 'schema_version': '3.1', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
+      "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor_active': True, 'warmup_latency_ms': 1478.6, 'dem_error': None, 'response_cache_entries': 5, 'schema_version': '3.1', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
     },
     {
       "test": "health has models_ready, dem_ready, cached_demo_sites, safety_factor_active, warmup_latency_ms",
       "pass": true,
-      "detail": "warm-up 1494.9 ms, 5/5 demo sites cached"
+      "detail": "warm-up 1478.6 ms, 5/5 demo sites cached"
     },
     {
       "test": "CORS header allows any origin",
@@ -221,7 +221,7 @@
     {
       "test": "slow Horizons -> analytic fallback returned within budget (never hangs)",
       "pass": true,
-      "detail": "206 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
+      "detail": "210 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
     },
     {
       "test": "coordinate equal to a preset snaps to that preset",
@@ -446,12 +446,12 @@
     {
       "test": "POST /api/warmup 200 with 5 demo sites",
       "pass": true,
-      "detail": "5.2 s total (DEM open included)"
+      "detail": "5.4 s total (DEM open included)"
     },
     {
       "test": "warm-up reports cache status + eval latency per site",
       "pass": true,
-      "detail": "A:7.3ms, B:7.5ms, C:7.9ms, D:7.2ms, E:7.2ms"
+      "detail": "A:7.9ms, B:8.4ms, C:7.9ms, D:9.4ms, E:7.9ms"
     },
     {
       "test": "warm-up: all 5 demo sites served from cache",
@@ -461,7 +461,7 @@
     {
       "test": "warm-up opened the LOLA DEM (dem_ready) or reported why not",
       "pass": true,
-      "detail": "{'ready': True, 'open_ms': 5003.4, 'read_ms': 68.3, 'warm_point': {'lat_deg': -88.3448, 'lon_deg_east': 225.8806}, 'elevation_m': -2553.5, '"
+      "detail": "{'ready': True, 'open_ms': 5260.2, 'read_ms': 62.1, 'warm_point': {'lat_deg': -88.3448, 'lon_deg_east': 225.8806}, 'elevation_m': -2553.5, '"
     },
     {
       "test": "health after warm-up: dem_ready mirrors warm-up, 5/5 cached",
@@ -531,12 +531,12 @@
     {
       "test": "preset /api/evaluate incl. 1440-row timeline: median < 250 ms",
       "pass": true,
-      "detail": "median 18 ms, p95 20 ms"
+      "detail": "median 18 ms, p95 19 ms"
     },
     {
       "test": "hourly series generator < 50 ms",
       "pass": true,
-      "detail": "0.18 ms"
+      "detail": "0.20 ms"
     }
   ]
 }

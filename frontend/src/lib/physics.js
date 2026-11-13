@@ -104,8 +104,8 @@ export const latLonToVec = (lat, lon, r = 1) => {
 }
 /** Inverse of latLonToVec for any point on / above the surface (lon in [0, 360)). */
 export const vecToLatLon = (x, y, z) => {
-  const r = Math.hypot(x, y, z) || 1
-  return { lat: Math.asin(clamp(y / r, -1, 1)) * DEG, lon: ((Math.atan2(-z, x) * DEG) % 360 + 360) % 360 }
+  // atan2 keeps full precision near the poles, where asin(y / r) loses digits (its slope is infinite at |y / r| = 1)
+  return { lat: Math.atan2(y, Math.hypot(x, z)) * DEG, lon: ((Math.atan2(-z, x) * DEG) % 360 + 360) % 360 }
 }
 
 // ---------------------------------------------------------------- analytic ephemeris (flat-horizon model)

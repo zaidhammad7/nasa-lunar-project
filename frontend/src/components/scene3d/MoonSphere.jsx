@@ -90,7 +90,7 @@ export default function MoonSphere({ sites, showPresets, pins, onPick }) {
   const hit = (e) => {
     // exact selenographic coordinates of the clicked surface point (Moon-local, +Y north, lon 0 at +X, east toward -Z)
     const p = moonRef.current.worldToLocal(e.point.clone()).normalize()
-    const lat = Number((Math.asin(Math.max(-1, Math.min(1, p.y))) * (180 / Math.PI)).toFixed(4))
+    const lat = Number((Math.atan2(p.y, Math.hypot(p.x, p.z)) * (180 / Math.PI)).toFixed(4)) // atan2: exact near the pole
     let lon = Number((Math.atan2(-p.z, p.x) * (180 / Math.PI)).toFixed(4))
     if (lon < 0) lon += 360
     onPick(lat, lon)

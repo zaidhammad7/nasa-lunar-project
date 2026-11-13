@@ -1,0 +1,706 @@
+{
+ "passed": 100,
+ "total": 100,
+ "cases": [
+  {
+   "n": 1,
+   "group": "A",
+   "case": "dataset has exactly 100 sites",
+   "pass": true,
+   "detail": "100 rows"
+  },
+  {
+   "n": 2,
+   "group": "A",
+   "case": "site IDs are unique",
+   "pass": true,
+   "detail": "0 duplicates"
+  },
+  {
+   "n": 3,
+   "group": "A",
+   "case": "no missing values in any column",
+   "pass": true,
+   "detail": "0 missing cells"
+  },
+  {
+   "n": 4,
+   "group": "A",
+   "case": "latitudes within the -90..-85 deg study cap",
+   "pass": true,
+   "detail": "range -89.5637..-85.0062"
+  },
+  {
+   "n": 5,
+   "group": "A",
+   "case": "longitudes within 0..360 deg E",
+   "pass": true,
+   "detail": "range 2.0405..351.6163"
+  },
+  {
+   "n": 6,
+   "group": "A",
+   "case": "Sun/Earth visibility percentages within 0..100",
+   "pass": true,
+   "detail": "out-of-range percentage"
+  },
+  {
+   "n": 7,
+   "group": "A",
+   "case": "Sun average elevation <= Sun maximum elevation (every site)",
+   "pass": true,
+   "detail": "violations: []"
+  },
+  {
+   "n": 8,
+   "group": "A",
+   "case": "Earth average elevation <= Earth maximum elevation (every site)",
+   "pass": true,
+   "detail": "violations: []"
+  },
+  {
+   "n": 9,
+   "group": "A",
+   "case": "slopes within 0..90 deg",
+   "pass": true,
+   "detail": "range 0.242..68.459"
+  },
+  {
+   "n": 10,
+   "group": "A",
+   "case": "elevations within the Moon's physical range (-9.5..+11 km)",
+   "pass": true,
+   "detail": "range -5131.0..6135.0 m"
+  },
+  {
+   "n": 11,
+   "group": "A",
+   "case": "roughness table covers all 100 sites",
+   "pass": true,
+   "detail": "missing []"
+  },
+  {
+   "n": 12,
+   "group": "A",
+   "case": "roughness values finite and non-negative",
+   "pass": true,
+   "detail": "range 0.275..5.827 m"
+  },
+  {
+   "n": 13,
+   "group": "A",
+   "case": "roughness table terrain agrees with dataset (elev 0.01 m, slope 0.01 deg)",
+   "pass": true,
+   "detail": "max diff 0.0000 m, 0.0005 deg"
+  },
+  {
+   "n": 14,
+   "group": "A",
+   "case": "no two sites share the same coordinates",
+   "pass": true,
+   "detail": "0 duplicated coordinates"
+  },
+  {
+   "n": 15,
+   "group": "B",
+   "case": "ranked table lists the same 100 sites",
+   "pass": true,
+   "detail": "site sets differ"
+  },
+  {
+   "n": 16,
+   "group": "B",
+   "case": "ranks are 1..100 and follow descending suitability score",
+   "pass": true,
+   "detail": "rank order inconsistent with score"
+  },
+  {
+   "n": 17,
+   "group": "B",
+   "case": "suitability scores within 0..100",
+   "pass": true,
+   "detail": "score out of range"
+  },
+  {
+   "n": 18,
+   "group": "B",
+   "case": "safety classes are Optimal / Acceptable / Hazardous only",
+   "pass": true,
+   "detail": "classes {'Hazardous', 'Acceptable', 'Optimal'}"
+  },
+  {
+   "n": 19,
+   "group": "B",
+   "case": "ranked-table features equal the dataset (every site)",
+   "pass": true,
+   "detail": "max diff 0.00e+00"
+  },
+  {
+   "n": 20,
+   "group": "B",
+   "case": "frontend site list has the same 100 sites",
+   "pass": true,
+   "detail": "site sets differ"
+  },
+  {
+   "n": 21,
+   "group": "B",
+   "case": "frontend coordinates equal the dataset (1e-4 deg)",
+   "pass": true,
+   "detail": "max diff 0.00e+00 deg"
+  },
+  {
+   "n": 22,
+   "group": "B",
+   "case": "frontend Sun/Earth/terrain values equal the dataset",
+   "pass": true,
+   "detail": "max diff 0.00e+00"
+  },
+  {
+   "n": 23,
+   "group": "B",
+   "case": "frontend roughness equals the roughness table",
+   "pass": true,
+   "detail": "max diff 4.89e-04 m"
+  },
+  {
+   "n": 24,
+   "group": "B",
+   "case": "frontend rank and rule class equal the ranked table",
+   "pass": true,
+   "detail": "mismatches []"
+  },
+  {
+   "n": 25,
+   "group": "C",
+   "case": "tower boost is zero at 0 m",
+   "pass": true,
+   "detail": "0.0"
+  },
+  {
+   "n": 26,
+   "group": "C",
+   "case": "tower boost at 20 m = 0.2749 deg (acos(R/(R+h)))",
+   "pass": true,
+   "detail": "0.27492 deg"
+  },
+  {
+   "n": 27,
+   "group": "C",
+   "case": "tower boost at 150 m = 0.7529 deg",
+   "pass": true,
+   "detail": "0.75287 deg"
+  },
+  {
+   "n": 28,
+   "group": "C",
+   "case": "tower boost increases with height (1..150 m)",
+   "pass": true,
+   "detail": "not strictly increasing"
+  },
+  {
+   "n": 29,
+   "group": "C",
+   "case": "solar disc fully hidden at -1 deg",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 30,
+   "group": "C",
+   "case": "solar disc fully visible at +1 deg",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 31,
+   "group": "C",
+   "case": "solar disc half visible at 0 deg",
+   "pass": true,
+   "detail": "0.5"
+  },
+  {
+   "n": 32,
+   "group": "C",
+   "case": "illumination states: darkness / partial / direct",
+   "pass": true,
+   "detail": "['Total Darkness', 'Partial Shadow', 'Direct Sunlight']"
+  },
+  {
+   "n": 33,
+   "group": "C",
+   "case": "no power when the Sun is below the horizon",
+   "pass": true,
+   "detail": "[0. 0. 0.]"
+  },
+  {
+   "n": 34,
+   "group": "C",
+   "case": "power = S0 x efficiency x area x sin(elevation + tilt)",
+   "pass": true,
+   "detail": "4083.000 W vs 4083.000 W"
+  },
+  {
+   "n": 35,
+   "group": "C",
+   "case": "power scales linearly with panel area",
+   "pass": true,
+   "detail": "3904.59 W x3 -> 11713.78 W"
+  },
+  {
+   "n": 36,
+   "group": "C",
+   "case": "power never negative (elevation -10..10, tilt 0..90)",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 37,
+   "group": "C",
+   "case": "pole to -85 deg distance = 151.6 km (5 deg arc)",
+   "pass": true,
+   "detail": "151.62 km"
+  },
+  {
+   "n": 38,
+   "group": "C",
+   "case": "sunset crossing found at the right fractional hour",
+   "pass": true,
+   "detail": "[1.5]"
+  },
+  {
+   "n": 39,
+   "group": "D",
+   "case": "cross-validated score error (RMSE) below 3 points",
+   "pass": true,
+   "detail": "RMSE 2.05"
+  },
+  {
+   "n": 40,
+   "group": "D",
+   "case": "cross-validated R^2 above 0.9",
+   "pass": true,
+   "detail": "R2 0.972"
+  },
+  {
+   "n": 41,
+   "group": "D",
+   "case": "slope safety margin: 15 deg lander limit -> 13.5 deg allowed",
+   "pass": true,
+   "detail": "13.5"
+  },
+  {
+   "n": 42,
+   "group": "D",
+   "case": "priority-mode weights sum to 1",
+   "pass": true,
+   "detail": "{'most_safety': 1.0, 'balanced': 1.0, 'most_power': 1.0}"
+  },
+  {
+   "n": 43,
+   "group": "D",
+   "case": "unknown priority mode is rejected",
+   "pass": true,
+   "detail": "ValueError"
+  },
+  {
+   "n": 44,
+   "group": "D",
+   "case": "prediction is deterministic",
+   "pass": true,
+   "detail": "82.39 vs 82.39"
+  },
+  {
+   "n": 45,
+   "group": "D",
+   "case": "all 100 sites: score 0..100, valid class, NO-GO never above 44",
+   "pass": true,
+   "detail": "bad: []"
+  },
+  {
+   "n": 46,
+   "group": "D",
+   "case": "steeper slope never raises the score (best site, 0..14 deg)",
+   "pass": true,
+   "detail": "[82.4, 82.4, 82.4, 82.4, 82.4, 82.1, 81.8, 76.3, 76.0, 75.0, 71.3, 69.4, 68.8, 68.1, 44.0]"
+  },
+  {
+   "n": 47,
+   "group": "D",
+   "case": "slope 16 deg forces NO-GO (tip-over guardrail)",
+   "pass": true,
+   "detail": "Hazardous"
+  },
+  {
+   "n": 48,
+   "group": "D",
+   "case": "20% sunlight forces NO-GO (shadowed-region guardrail)",
+   "pass": true,
+   "detail": "Hazardous"
+  },
+  {
+   "n": 49,
+   "group": "D",
+   "case": "5% Earth visibility forces NO-GO (comms blackout guardrail)",
+   "pass": true,
+   "detail": "Hazardous"
+  },
+  {
+   "n": 50,
+   "group": "D",
+   "case": "slope 14 deg (above 13.5 deg derated limit) is NO-GO",
+   "pass": true,
+   "detail": "Hazardous"
+  },
+  {
+   "n": 51,
+   "group": "E",
+   "case": "GET /api/health reports models ready",
+   "pass": true,
+   "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor"
+  },
+  {
+   "n": 52,
+   "group": "E",
+   "case": "GET /api/sites returns all 100 sites",
+   "pass": true,
+   "detail": "100 sites"
+  },
+  {
+   "n": 53,
+   "group": "E",
+   "case": "evaluate a preset site: required sections present",
+   "pass": true,
+   "detail": "missing set()"
+  },
+  {
+   "n": 54,
+   "group": "E",
+   "case": "timeline length equals the mission duration",
+   "pass": true,
+   "detail": "240 rows"
+  },
+  {
+   "n": 55,
+   "group": "E",
+   "case": "custom point: exact clicked coordinates are used",
+   "pass": true,
+   "detail": "-87.5092, 100.1863"
+  },
+  {
+   "n": 56,
+   "group": "E",
+   "case": "verdict identical in all three priority modes",
+   "pass": true,
+   "detail": "{'most_safety': 'Optimal', 'balanced': 'Optimal', 'most_power': 'Optimal'}"
+  },
+  {
+   "n": 57,
+   "group": "E",
+   "case": "reported mode weights match the configuration",
+   "pass": true,
+   "detail": "{'terrain': 0.2, 'solar': 0.6, 'comms': 0.2}"
+  },
+  {
+   "n": 58,
+   "group": "E",
+   "case": "POST /api/compare returns both scenarios",
+   "pass": true,
+   "detail": "A=Auto_SP_099 B=Auto_SP_075 deltas=True"
+  },
+  {
+   "n": 59,
+   "group": "E",
+   "case": "CSV export: one row per mission hour plus header",
+   "pass": true,
+   "detail": "73 lines, header at 0"
+  },
+  {
+   "n": 60,
+   "group": "E",
+   "case": "repeat request is served from cache",
+   "pass": true,
+   "detail": "MISS -> HIT"
+  },
+  {
+   "n": 61,
+   "group": "E",
+   "case": "duration_days = 2 gives the same timeline as duration_hours = 48",
+   "pass": true,
+   "detail": "timelines differ"
+  },
+  {
+   "n": 62,
+   "group": "E",
+   "case": "timeline_hour_index selects that hour's live values",
+   "pass": true,
+   "detail": "-2.2707 vs -2.2707"
+  },
+  {
+   "n": 63,
+   "group": "E",
+   "case": "longer mast never lowers sunlight (API, 1 vs 150 m)",
+   "pass": true,
+   "detail": "60.0 % -> 65.139 %"
+  },
+  {
+   "n": 64,
+   "group": "E",
+   "case": "larger panel area raises mission energy proportionally",
+   "pass": true,
+   "detail": "ratio 2.000000022918453"
+  },
+  {
+   "n": 65,
+   "group": "E",
+   "case": "power is zero whenever the timeline is in total darkness",
+   "pass": true,
+   "detail": "0 dark hours with power"
+  },
+  {
+   "n": 66,
+   "group": "E",
+   "case": "Hazardous verdict comes with at least one warning",
+   "pass": true,
+   "detail": "Auto_SP_08: Hazardous"
+  },
+  {
+   "n": 67,
+   "group": "E",
+   "case": "95% confidence interval contains the score",
+   "pass": true,
+   "detail": "77.65 <= 82.16 <= 86.68"
+  },
+  {
+   "n": 68,
+   "group": "E",
+   "case": "GET /api/stress-test serves stored results",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 69,
+   "group": "E",
+   "case": "single evaluation completes in under 1 s (preset)",
+   "pass": true,
+   "detail": "18 ms"
+  },
+  {
+   "n": 70,
+   "group": "F",
+   "case": "rejects latitude -84.9 (outside cap) with HTTP 422",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 71,
+   "group": "F",
+   "case": "rejects latitude -90.1 with HTTP 422",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 72,
+   "group": "F",
+   "case": "rejects longitude 360.1 with HTTP 422",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 73,
+   "group": "F",
+   "case": "rejects longitude -0.1 with HTTP 422",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 74,
+   "group": "F",
+   "case": "rejects tower 0.5 m with HTTP 422",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 75,
+   "group": "F",
+   "case": "rejects tower 151 m with HTTP 422",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 76,
+   "group": "F",
+   "case": "rejects panel tilt -1 deg with HTTP 422",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 77,
+   "group": "F",
+   "case": "rejects panel tilt 91 deg with HTTP 422",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 78,
+   "group": "F",
+   "case": "rejects panel area 0.5 m2 with HTTP 422",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 79,
+   "group": "F",
+   "case": "rejects panel area 51 m2 with HTTP 422",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 80,
+   "group": "F",
+   "case": "rejects duration 0 h with HTTP 422",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 81,
+   "group": "F",
+   "case": "rejects unknown site ID with HTTP 422",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 82,
+   "group": "F",
+   "case": "rejects unknown priority mode with HTTP 422",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 83,
+   "group": "F",
+   "case": "rejects no location given with HTTP 422",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 84,
+   "group": "F",
+   "case": "rejects max slope 16 deg (above lander limit) with HTTP 422",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 85,
+   "group": "F",
+   "case": "rejects window past the end of the ephemeris with HTTP 422",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 86,
+   "group": "G",
+   "case": "JS horizon boost equals Python at 1, 20, 150 m",
+   "pass": true,
+   "detail": "max diff 0.0e+00"
+  },
+  {
+   "n": 87,
+   "group": "G",
+   "case": "JS solar-disc fraction equals Python",
+   "pass": true,
+   "detail": "[0, 0, 0.5, 1, 1] vs [0.0, 0.0, 0.5, 1.0, 1.0]"
+  },
+  {
+   "n": 88,
+   "group": "G",
+   "case": "JS illumination states equal Python",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 89,
+   "group": "G",
+   "case": "JS solar power equals Python (5 cases)",
+   "pass": true,
+   "detail": "max diff 0.0e+00 W"
+  },
+  {
+   "n": 90,
+   "group": "G",
+   "case": "JS safety constants equal the backend",
+   "pass": true,
+   "detail": "mismatch {}"
+  },
+  {
+   "n": 91,
+   "group": "G",
+   "case": "JS priority-mode weights equal the backend",
+   "pass": true,
+   "detail": "mismatch {}"
+  },
+  {
+   "n": 92,
+   "group": "G",
+   "case": "JS terrain/solar/comms sub-scores equal the ranked table (100 sites)",
+   "pass": true,
+   "detail": "max diff 1.4e-14"
+  },
+  {
+   "n": 93,
+   "group": "G",
+   "case": "JS ranking equals backend in 'most_safety' mode (100 sites)",
+   "pass": true,
+   "detail": "max diff 1.4e-14; top-10 same"
+  },
+  {
+   "n": 94,
+   "group": "G",
+   "case": "JS ranking equals backend in 'balanced' mode (100 sites)",
+   "pass": true,
+   "detail": "max diff 2.1e-14; top-10 same"
+  },
+  {
+   "n": 95,
+   "group": "G",
+   "case": "JS ranking equals backend in 'most_power' mode (100 sites)",
+   "pass": true,
+   "detail": "max diff 1.4e-14; top-10 same"
+  },
+  {
+   "n": 96,
+   "group": "G",
+   "case": "JS great-circle distances equal Python",
+   "pass": true,
+   "detail": "max diff 0.0e+00 km"
+  },
+  {
+   "n": 97,
+   "group": "G",
+   "case": "3-D click mapping round-trips lat/lon exactly (2000 points)",
+   "pass": true,
+   "detail": "max error 8.5e-14 deg"
+  },
+  {
+   "n": 98,
+   "group": "G",
+   "case": "battery model: empties at hour 66, 34 h without power (synthetic night)",
+   "pass": true,
+   "detail": "{\"survives\": false, \"minSocPct\": 0, \"hoursEmpty\": 34, \"firstEmptyHour\": 66, \"endSocPct\": 100}"
+  },
+  {
+   "n": 99,
+   "group": "G",
+   "case": "battery sizing: 100 h night at 150 W needs 15.0 kWh",
+   "pass": true,
+   "detail": "15.0000 kWh"
+  },
+  {
+   "n": 100,
+   "group": "G",
+   "case": "named craters lie in the polar region with valid longitudes",
+   "pass": true,
+   "detail": "bad []"
+  }
+ ]
+}
