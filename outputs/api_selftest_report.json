@@ -1,17 +1,17 @@
 {
-  "generated_utc": "2026-11-13T18:26:27.782072+00:00",
+  "generated_utc": "2026-11-13T18:33:44.297330+00:00",
   "passed": 107,
   "total": 107,
   "checks": [
     {
       "test": "GET /api/health 200",
       "pass": true,
-      "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor_active': True, 'warmup_latency_ms': 1631.3, 'dem_error': None, 'response_cache_entries': 5, 'schema_version': '3.1', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
+      "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor_active': True, 'warmup_latency_ms': 5878.8, 'terrain_shadowing_ready': True, 'dem_error': None, 'response_cache_entries': 5, 'schema_version': '3.1', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
     },
     {
       "test": "health has models_ready, dem_ready, cached_demo_sites, safety_factor_active, warmup_latency_ms",
       "pass": true,
-      "detail": "warm-up 1631.3 ms, 5/5 demo sites cached"
+      "detail": "warm-up 5878.8 ms, 5/5 demo sites cached"
     },
     {
       "test": "CORS header allows any origin",
@@ -66,7 +66,7 @@
     {
       "test": "200 OK",
       "pass": true,
-      "detail": "19 ms round trip incl. 1440-row timeline JSON"
+      "detail": "41 ms round trip incl. 1440-row timeline JSON"
     },
     {
       "test": "all dashboard output blocks present",
@@ -206,7 +206,7 @@
     {
       "test": "custom (lat, lon) evaluates without hanging (<= 3.6 s Horizons budget)",
       "pass": true,
-      "detail": "0.02 s; ephemeris source: JPL Horizons (cached hourly series)"
+      "detail": "0.05 s; ephemeris source: JPL Horizons (cached hourly series)"
     },
     {
       "test": "duration_days=10 -> 240 h and timestamp_utc -> hour 54",
@@ -221,7 +221,7 @@
     {
       "test": "slow Horizons -> analytic fallback returned within budget (never hangs)",
       "pass": true,
-      "detail": "211 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
+      "detail": "205 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
     },
     {
       "test": "coordinate equal to a preset snaps to that preset",
@@ -366,7 +366,7 @@
     {
       "test": "illumination_state values are valid",
       "pass": true,
-      "detail": "{'Partial Shadow', 'Direct Sunlight', 'Total Darkness'}"
+      "detail": "{'Direct Sunlight', 'Partial Shadow', 'Total Darkness'}"
     },
     {
       "test": "dte_status values are valid",
@@ -446,12 +446,12 @@
     {
       "test": "POST /api/warmup 200 with 5 demo sites",
       "pass": true,
-      "detail": "5.1 s total (DEM open included)"
+      "detail": "7.4 s total (DEM open included)"
     },
     {
       "test": "warm-up reports cache status + eval latency per site",
       "pass": true,
-      "detail": "A:8.0ms, B:9.3ms, C:9.1ms, D:9.9ms, E:9.5ms"
+      "detail": "A:21.4ms, B:22.9ms, C:22.3ms, D:27.4ms, E:23.1ms"
     },
     {
       "test": "warm-up: all 5 demo sites served from cache",
@@ -461,7 +461,7 @@
     {
       "test": "warm-up opened the LOLA DEM (dem_ready) or reported why not",
       "pass": true,
-      "detail": "{'ready': True, 'open_ms': 4969.8, 'read_ms': 43.2, 'warm_point': {'lat_deg': -88.3448, 'lon_deg_east': 225.8806}, 'elevation_m': -2553.5, '"
+      "detail": "{'ready': True, 'open_ms': 7012.5, 'read_ms': 123.8, 'warm_point': {'lat_deg': -88.3448, 'lon_deg_east': 225.8806}, 'elevation_m': -2553.5, "
     },
     {
       "test": "health after warm-up: dem_ready mirrors warm-up, 5/5 cached",
@@ -471,7 +471,7 @@
     {
       "test": "demo A first request served from the pre-computed response cache (X-Cache: HIT)",
       "pass": true,
-      "detail": "1 ms"
+      "detail": "3 ms"
     },
     {
       "test": "custom demo site E (cached terrain + series) is a cache HIT",
@@ -531,12 +531,12 @@
     {
       "test": "preset /api/evaluate incl. 1440-row timeline: median < 250 ms",
       "pass": true,
-      "detail": "median 19 ms, p95 21 ms"
+      "detail": "median 43 ms, p95 46 ms"
     },
     {
       "test": "hourly series generator < 50 ms",
       "pass": true,
-      "detail": "0.27 ms"
+      "detail": "0.45 ms"
     }
   ]
 }

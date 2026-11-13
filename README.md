@@ -1,0 +1,71 @@
+# Lunar Landing Site Navigator
+
+**NASA Space Apps 2026 · Team TNB** — a decision-support tool that ranks candidate landing sites at the lunar South Pole
+(−85° to −90°) by combining terrain safety, real terrain-shadowed sunlight and Earth line-of-sight, in an interactive
+true-scale 3-D mission-control dashboard.
+
+![Validation against NASA LOLA illumination](outputs/illumination_validation.png)
+
+## What it does
+- **Click anywhere on the 3-D Moon** (NASA LRO imagery, true-scale Earth and Sun) to evaluate that exact point.
+- **GO / CONDITIONAL / NO-GO decision** with a 0–100 score, 95% confidence interval and an **Evidence** card listing every safety check against its limit.
+- **Real terrain shadowing:** sunlight and Earth visibility follow NASA LOLA's measured illumination maps, not a smooth horizon.
+- **60-day mission timeline** with live sunrise / Earthrise countdowns, solar power, and a **battery survival** check through the longest night.
+- **Suitability heatmap**, named craters (IAU), top-3 landing windows, top-5 backup sites, side-by-side comparison, CSV export.
+- **Hardware what-if:** tower height (1–150 m), panel tilt and area update power instantly.
+
+See [docs/JUDGES_BRIEF.md](docs/JUDGES_BRIEF.md) for the method, validation results and limits.
+
+## Quick start
+Requirements: Python 3.10+, Node.js 20+.
+
+```bash
+pip install -r requirements.txt
+python src/analysis/build_corrected_dataset.py   # first run only: downloads NASA LOLA illumination maps (~100 MB) into data/
+uvicorn src.app.api_server:app --port 8000        # backend  -> http://localhost:8000/docs
+```
+
+```bash
+cd frontend
+npm install
+npm run dev                                       # frontend -> http://localhost:5173
+```
+
+The frontend falls back to a built-in offline engine if the backend is unreachable. API reference: [API_USAGE.md](API_USAGE.md).
+
+## How it works
+| Step | Data / method |
+|---|---|
+| Terrain | Slope, elevation, roughness from the NASA LRO **LOLA** elevation model (118 m/px) |
+| Sun and Earth positions | Hourly ephemeris from **JPL Horizons** (analytic fallback offline) |
+| Terrain shadowing | NASA LOLA **average Sun / Earth visibility maps** (60 m/px, 2009–2013) set each point's effective horizon |
+| Score | Gradient-boosting model on 100 sites (5-fold CV error ≈ 3.7 / 100, R² 0.95) + rule-based components |
+| Safety | 3-layer safety factor (13.5° derated slope, worst-case score buffer, hazard probability < 28%) + hard guardrails |
+
+## Tests and validation
+```bash
+python tests/test_all.py                    # 100 cases: data integrity, physics, safety rules, API, input validation, app/backend parity
+python src/app/api_selftest.py              # 107 API checks with independently recomputed expectations
+python src/analysis/test_tower_limit.py     # tower-height physics (1-150 m)
+python src/analysis/validate_illumination.py  # comparison with NASA LOLA illumination maps
+```
+
+## Project structure
+```
+src/analysis/   computation: ephemeris, terrain shadowing, scoring, ML training, validation (no UI code)
+src/app/        FastAPI backend (api_server.py) and its self-test
+frontend/       React + three.js dashboard (see frontend/README.md)
+tests/          100-case data and system test suite
+scripts/        data preparation (NASA Moon textures, app site list)
+models/         trained models          outputs/   rankings, metrics, figures, reports
+data/           raw downloads (git-ignored; fetched by the scripts above)
+docs/           judges' brief
+```
+
+## Data sources
+NASA LRO LOLA elevation model (USGS) · NASA PDS LOLA illumination products (AVGVISIB_85S_060M) · JPL Horizons ephemeris ·
+NASA SVS CGI Moon Kit (LROC colour, LOLA elevation) · IAU Gazetteer of Planetary Nomenclature (crater positions).
+
+## Limits
+Hour-by-hour sunrise/sunset timing uses one effective horizon height in all directions; terrain is 118 m/px; the heatmap is
+interpolated from 100 scored sites. This is a screening tool, not a certified landing-site analysis.

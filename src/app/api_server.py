@@ -44,6 +44,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "analysis"))
 import demo_sites  # noqa: E402
 import mission_simulator as ms  # noqa: E402
 import predict_site as ps  # noqa: E402
+import terrain_illumination as ti  # noqa: E402
 from suitability import OUTPUTS_DIR  # noqa: E402
 
 RESPONSE_CACHE_MAX = 256
@@ -142,6 +143,9 @@ def _bg_warm() -> None:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     STATE["warmup_started"] = True
+    if not ti.available():
+        print("WARNING: NASA LOLA illumination maps not found in data/lola_illumination/ - sunlight will use a smooth horizon "
+              "(over-estimated). Run: python src/analysis/build_corrected_dataset.py", flush=True)
     STATE["warmup_latency_ms"] = _warm_sync()
     if os.environ.get("LUNAR_SKIP_BG_WARMUP") != "1":
         _bg_warm()
@@ -220,6 +224,7 @@ def health() -> dict:
     return {"status": "ok", "models_ready": bool(STATE["models_ready"]), "dem_ready": ps.dem_ready(),
             "cached_demo_sites": demo_sites.cached_count(), "demo_sites_total": len(demo_sites.DEMO_SITES),
             "safety_factor_active": ps.SAFETY_FACTOR_ACTIVE, "warmup_latency_ms": STATE["warmup_latency_ms"],
+            "terrain_shadowing_ready": ti.available(),
             "dem_error": ps.dem_error(), "response_cache_entries": len(_RESP_CACHE), "schema_version": "3.1",
             "baseline_window_utc": ["2026-11-13T00:00:00Z", "2027-01-12T00:00:00Z"]}
 

@@ -3,27 +3,30 @@
 ## Goal
 Help mission planners evaluate and rank candidate lunar landing sites by combining terrain
 safety (slope, roughness) with illumination/Earth-visibility timelines, shown in an interactive
-3D Streamlit dashboard.
+3D web dashboard (React + three.js frontend, FastAPI backend).
 
 ## Architecture
 ```
-data/            DEM grids (GeoTIFF/NPY/CSV) and ephemeris CSVs. Raw downloads are git-ignored.
-src/analysis/    Pure computation: ephemeris, illumination, slope/roughness, site scoring.
-src/app/         Streamlit UI only: loads data, calls src/analysis, renders Plotly 3D.
+data/            Raw downloads (DEM, NASA LOLA illumination maps). Git-ignored; fetched by scripts.
+src/analysis/    Pure computation: ephemeris, terrain shadowing, slope/roughness, site scoring, ML training.
+src/app/         FastAPI backend (api_server.py): validates requests, calls src/analysis, returns JSON/CSV.
+frontend/        React + three.js dashboard; offline engine in src/lib mirrors the backend physics.
+tests/           100-case data/system suite (python tests/test_all.py).
 requirements.txt Python dependencies.
 ```
 
 ### Rules
-- `src/analysis` must not import `streamlit` or `plotly`; it stays testable and UI-free.
+- `src/analysis` must not import web/UI frameworks (FastAPI, React code); it stays testable and UI-free.
 - `src/app` contains no scientific logic — call `src/analysis` functions.
-- Data loading/caching lives in one place (`@st.cache_data` wrappers in the app, plain functions in analysis).
+- Data loading/caching lives in one place (`lru_cache` loaders in analysis, the response cache in the API).
 - Never commit large raw data; document how to fetch it (script or README note) instead.
-- Run the app from the repo root: `streamlit run src/app/main.py`.
+- Run from the repo root: `uvicorn src.app.api_server:app --port 8000`, then `npm run dev` in `frontend/`.
+- Keep JS constants in `frontend/src/lib/physics.js` equal to their Python counterparts (tests check this).
 
 ## Coding standards
 - Python 3.10+, PEP 8, type hints on public functions, docstrings with units (m, deg, km, UTC).
 - Use NumPy vectorization over loops; DEMs are 2D arrays with explicit pixel size (m/px).
-- Coordinates: selenographic lat/lon in degrees; times as UTC `astropy.time.Time`.
+- Coordinates: selenographic lat/lon in degrees; times as timezone-aware UTC `datetime`.
 - No hard-coded absolute paths; use `pathlib` relative to the repo root.
 - Keep functions small and deterministic; put tunables (slope limit, weights) in named constants.
 - Secrets/keys via environment variables, never committed.

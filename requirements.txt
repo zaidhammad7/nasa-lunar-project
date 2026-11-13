@@ -1,15 +1,12 @@
 ﻿numpy
 pandas
 scipy
-streamlit
-plotly
-requests
-astropy
 scikit-learn
-matplotlib
 joblib
+matplotlib
+requests
 rasterio
 pyproj
 fastapi
 uvicorn
-httpx
+httpx  # FastAPI TestClient (tests)
