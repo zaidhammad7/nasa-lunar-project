@@ -1,17 +1,17 @@
 {
-  "generated_utc": "2026-11-13T13:51:04.350282+00:00",
+  "generated_utc": "2026-11-13T17:43:25.044808+00:00",
   "passed": 107,
   "total": 107,
   "checks": [
     {
       "test": "GET /api/health 200",
       "pass": true,
-      "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor_active': True, 'warmup_latency_ms': 1626.8, 'dem_error': None, 'response_cache_entries': 5, 'schema_version': '3.1', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
+      "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor_active': True, 'warmup_latency_ms': 1494.9, 'dem_error': None, 'response_cache_entries': 5, 'schema_version': '3.1', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
     },
     {
       "test": "health has models_ready, dem_ready, cached_demo_sites, safety_factor_active, warmup_latency_ms",
       "pass": true,
-      "detail": "warm-up 1626.8 ms, 5/5 demo sites cached"
+      "detail": "warm-up 1494.9 ms, 5/5 demo sites cached"
     },
     {
       "test": "CORS header allows any origin",
@@ -66,7 +66,7 @@
     {
       "test": "200 OK",
       "pass": true,
-      "detail": "31 ms round trip incl. 1440-row timeline JSON"
+      "detail": "18 ms round trip incl. 1440-row timeline JSON"
     },
     {
       "test": "all dashboard output blocks present",
@@ -206,7 +206,7 @@
     {
       "test": "custom (lat, lon) evaluates without hanging (<= 3.6 s Horizons budget)",
       "pass": true,
-      "detail": "0.04 s; ephemeris source: JPL Horizons (cached hourly series)"
+      "detail": "0.01 s; ephemeris source: JPL Horizons (cached hourly series)"
     },
     {
       "test": "duration_days=10 -> 240 h and timestamp_utc -> hour 54",
@@ -221,7 +221,7 @@
     {
       "test": "slow Horizons -> analytic fallback returned within budget (never hangs)",
       "pass": true,
-      "detail": "213 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
+      "detail": "206 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
     },
     {
       "test": "coordinate equal to a preset snaps to that preset",
@@ -274,7 +274,7 @@
       "detail": ""
     },
     {
-      "test": "422 for tower > 20",
+      "test": "422 for tower > 150",
       "pass": true,
       "detail": ""
     },
@@ -446,12 +446,12 @@
     {
       "test": "POST /api/warmup 200 with 5 demo sites",
       "pass": true,
-      "detail": "15.5 s total (DEM open included)"
+      "detail": "5.2 s total (DEM open included)"
     },
     {
       "test": "warm-up reports cache status + eval latency per site",
       "pass": true,
-      "detail": "A:15.6ms, B:15.9ms, C:15.8ms, D:15.8ms, E:16.0ms"
+      "detail": "A:7.3ms, B:7.5ms, C:7.9ms, D:7.2ms, E:7.2ms"
     },
     {
       "test": "warm-up: all 5 demo sites served from cache",
@@ -461,7 +461,7 @@
     {
       "test": "warm-up opened the LOLA DEM (dem_ready) or reported why not",
       "pass": true,
-      "detail": "{'ready': True, 'open_ms': 2675.2, 'read_ms': 12620.9, 'warm_point': {'lat_deg': -88.3448, 'lon_deg_east': 225.8806}, 'elevation_m': -2553.5"
+      "detail": "{'ready': True, 'open_ms': 5003.4, 'read_ms': 68.3, 'warm_point': {'lat_deg': -88.3448, 'lon_deg_east': 225.8806}, 'elevation_m': -2553.5, '"
     },
     {
       "test": "health after warm-up: dem_ready mirrors warm-up, 5/5 cached",
@@ -471,7 +471,7 @@
     {
       "test": "demo A first request served from the pre-computed response cache (X-Cache: HIT)",
       "pass": true,
-      "detail": "2 ms"
+      "detail": "1 ms"
     },
     {
       "test": "custom demo site E (cached terrain + series) is a cache HIT",
@@ -531,12 +531,12 @@
     {
       "test": "preset /api/evaluate incl. 1440-row timeline: median < 250 ms",
       "pass": true,
-      "detail": "median 30 ms, p95 33 ms"
+      "detail": "median 18 ms, p95 20 ms"
     },
     {
       "test": "hourly series generator < 50 ms",
       "pass": true,
-      "detail": "0.38 ms"
+      "detail": "0.18 ms"
     }
   ]
 }
