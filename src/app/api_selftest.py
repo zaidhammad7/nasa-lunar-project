@@ -401,6 +401,40 @@ def run() -> int:
         r = client.post("/api/evaluate", json={"site_id": "Auto_SP_46", "tower_height_m": 7.5})
         check("changed parameters miss the cache and are computed correctly", r.headers.get("x-cache") == "MISS" and r.json()["scenario"]["hardware"]["tower_height_m"] == 7.5)
 
+        print("\n[9d] Optimisation priority modes")
+        ev = {m: client.post("/api/evaluate", json={"site_id": "Auto_SP_099", "priority_mode": m, "duration_hours": 240}).json()
+              for m in ("most_safety", "balanced", "most_power")}
+        pdm = {m: ev[m]["primary_landing_decision"] for m in ev}
+        check("mode weights are 60/25/15, 40/35/25, 20/60/20", pdm["most_safety"]["mode_weights"] == {"terrain": 0.6, "solar": 0.25, "comms": 0.15}
+              and pdm["balanced"]["mode_weights"] == {"terrain": 0.4, "solar": 0.35, "comms": 0.25}
+              and pdm["most_power"]["mode_weights"] == {"terrain": 0.2, "solar": 0.6, "comms": 0.2})
+        cs = ev["balanced"]["xai_and_hazard_alerts"]["component_scores"]
+        exp_shift = {"most_safety": (0.6 - 0.4) * cs["terrain"] + (0.25 - 0.35) * cs["solar"] + (0.15 - 0.25) * cs["comms"],
+                     "most_power": (0.2 - 0.4) * cs["terrain"] + (0.6 - 0.35) * cs["solar"] + (0.2 - 0.25) * cs["comms"]}
+        ok_shift = all(abs((pdm[m]["Suitability_Score"] - pdm["balanced"]["Suitability_Score"]) - exp_shift[m]) < 0.02 for m in exp_shift)
+        check("score = balanced score + change of the weighted composite (flat site: safety > balanced > power)", ok_shift
+              and pdm["most_safety"]["Suitability_Score"] > pdm["balanced"]["Suitability_Score"] > pdm["most_power"]["Suitability_Score"],
+              ", ".join(f"{m} {pdm[m]['Suitability_Score']}" for m in pdm))
+        check("safety verdict is identical in every mode", len({pdm[m]["Safety_Class"] for m in pdm}) == 1 and
+              len({pdm[m]["Suitability_Score_balanced"] for m in pdm}) == 1)
+        hz = {m: client.post("/api/evaluate", json={"site_id": "Auto_SP_33", "priority_mode": m, "duration_hours": 240}).json()["primary_landing_decision"] for m in ("most_safety", "most_power")}
+        check("MOST POWER cannot relax a NO-GO: derated-slope site stays Hazardous and <= 44", all(v["Safety_Class"] == "Hazardous" and v["Suitability_Score"] <= 44.0 for v in hz.values()), str({m: v["Suitability_Score"] for m, v in hz.items()}))
+        sj = {m: client.get("/api/sites", params={"priority_mode": m}).json() for m in ("most_safety", "balanced", "most_power")}
+        check("/api/sites re-ranks per mode (ranks 1..100 unique, top-5 sorted by mode score)", all(
+            sorted(s_["rank"] for s_ in sj[m]["sites"]) == list(range(1, 101))
+            and [x["Suitability_Score"] for x in sj[m]["top5_filtered"]] == sorted((x["Suitability_Score"] for x in sj[m]["top5_filtered"]), reverse=True) for m in sj))
+        check("top-5 list differs between MOST SAFETY and MOST POWER", [x["site_id"] for x in sj["most_safety"]["top5_filtered"]] != [x["site_id"] for x in sj["most_power"]["top5_filtered"]]
+              or [x["Suitability_Score"] for x in sj["most_safety"]["top5_filtered"]] != [x["Suitability_Score"] for x in sj["most_power"]["top5_filtered"]],
+              str({m: [x["site_id"] for x in sj[m]["top5_filtered"]] for m in sj}))
+        check("sites carry display_class with the 13.5 deg derating (no site >13.5 deg is coloured safe)",
+              all(s_["Safety_Class"] == "Hazardous" for s_ in sj["balanced"]["sites"] if s_["slope_deg"] > 13.5))
+        check("unknown priority_mode -> 422", client.post("/api/evaluate", json={"site_id": "Auto_SP_099", "priority_mode": "yolo"}).status_code == 422
+              and client.get("/api/sites", params={"priority_mode": "yolo"}).status_code == 422)
+        cmp_m = client.post("/api/compare", json={"scenario_a": {"site_id": "Auto_SP_099", "priority_mode": "most_safety"},
+                                                  "scenario_b": {"site_id": "Auto_SP_099", "priority_mode": "most_power"}}).json()["side_by_side_comparison"]
+        check("compare honours per-scenario priority_mode", cmp_m["scenario_a"]["primary_landing_decision"]["priority_mode"] == "most_safety"
+              and cmp_m["scenario_b"]["primary_landing_decision"]["priority_mode"] == "most_power" and cmp_m["deltas"]["delta_suitability_score"] < 0)
+
         # ---------------------------------------------------------------- latency
         print("\n[10] Latency")
         lat = []

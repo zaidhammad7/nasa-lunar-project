@@ -445,10 +445,11 @@ def _components(m: dict, profile: dict | None = None) -> dict:
 # ----------------------------------------------------------------------------
 # Explanation, confidence, hazards, readiness
 # ----------------------------------------------------------------------------
-def explain(m: dict, pred: dict, score_default_profile: dict) -> dict:
+def explain(m: dict, pred: dict, score_default_profile: dict, weights_tuple: tuple | None = None) -> dict:
     """Weighted score decomposition + local one-at-a-time sensitivity of the ML score."""
     comp = score_default_profile
-    weights = {"terrain": W_TERRAIN, "solar": W_SOLAR, "comms": W_COMMS}
+    wt, ws, wc = weights_tuple or (W_TERRAIN, W_SOLAR, W_COMMS)
+    weights = {"terrain": wt, "solar": ws, "comms": wc}
     contrib = {k: round(weights[k] * comp[k], 2) for k in comp}
     lost = {k: round(weights[k] * (100 - comp[k]), 2) for k in comp}
     median = _dataset()[FEATURES].median()
@@ -474,7 +475,7 @@ def confidence(m: dict, pred: dict, sources: dict, rule_class: str, safety: str)
     rmse, basis = _cv_rmse()
     score = pred["score"]
     ds = _dataset()
-    ood = [f for f in FEATURES if not ds[f].min() <= m[f] <= ds[f].max()]
+    ood = [f for f in FEATURES if not ds[f].min() - OOD_TOLERANCE.get(f, 0.0) <= m[f] <= ds[f].max() + OOD_TOLERANCE.get(f, 0.0)]
     class_conf = float(pred["proba"].max())
     live = all(("offline" not in v) and ("fallback" not in v) for v in sources.values())
     agree = pred["ml_class"] == rule_class
@@ -643,6 +644,11 @@ GUARDRAILS = (
 )
 STATUS_LABELS = {"Optimal": "GO / Optimal", "Acceptable": "CONDITIONAL / Acceptable", "Hazardous": "NO-GO / Hazardous"}
 UNCERTAINTY_MODEL_FILE = "uncertainty_ensemble.joblib"
+# A mast raises every Sun/Earth elevation by up to 0.275 deg (20 m), which can push an angle feature just past the
+# dataset's [min, max]. That is a hardware effect, not an unfamiliar site, so angle features get this tolerance.
+OOD_ANGLE_TOLERANCE_DEG = 0.35
+OOD_TOLERANCE = {"Sun_Avg_El": OOD_ANGLE_TOLERANCE_DEG, "Sun_Max_El": OOD_ANGLE_TOLERANCE_DEG,
+                 "Earth_Avg_El": OOD_ANGLE_TOLERANCE_DEG, "Earth_Max_El": OOD_ANGLE_TOLERANCE_DEG}
 
 
 @lru_cache(maxsize=1)
@@ -699,6 +705,17 @@ HAZARD_PROB_THRESHOLD = 0.28       # classifier override: P(Hazardous) >= 0.28 -
 SAFETY_CAP_SCORE = ACCEPTABLE_MIN_SCORE - 1.0  # a Hazardous verdict never displays an Acceptable-looking score
 SAFETY_LAYERS = ("SLOPE_DERATING", "SCORE_BUFFER", "HAZARD_PROB")
 
+# ---- Optimisation priority modes: (terrain, solar, comms) weights of the composite score ----
+PRIORITY_MODES = {"most_safety": (0.60, 0.25, 0.15), "balanced": (W_TERRAIN, W_SOLAR, W_COMMS), "most_power": (0.20, 0.60, 0.20)}
+DEFAULT_PRIORITY_MODE = "balanced"
+
+
+def mode_weights(mode: str) -> tuple[float, float, float]:
+    """(terrain, solar, comms) weights of a priority mode; ValueError for unknown names."""
+    if mode not in PRIORITY_MODES:
+        raise ValueError(f"unknown priority_mode '{mode}'; choose from {sorted(PRIORITY_MODES)}")
+    return PRIORITY_MODES[mode]
+
 
 def effective_max_slope(max_slope_deg: float) -> float:
     """Derated operational slope limit (deg) = max_slope - 1.5 (never below 0)."""
@@ -734,8 +751,8 @@ def ood_mask(df: pd.DataFrame) -> np.ndarray:
     ds = _dataset()
     bad = np.zeros(len(df), dtype=bool)
     for f in FEATURES:
-        v = df[f].to_numpy(dtype=float)
-        bad |= (v < ds[f].min()) | (v > ds[f].max())
+        v, tol = df[f].to_numpy(dtype=float), OOD_TOLERANCE.get(f, 0.0)
+        bad |= (v < ds[f].min() - tol) | (v > ds[f].max() + tol)
     return bad
 
 
@@ -783,11 +800,16 @@ def score_interval(pred_score: float, std_pts: float, cap: float | None) -> dict
 
 
 def assess_features(lat: float, lon: float, raw: dict, sources: dict, warnings: list[str], prof: dict,
-                    explain_result: bool = True) -> dict:
+                    explain_result: bool = True, priority_mode: str = DEFAULT_PRIORITY_MODE) -> dict:
     """Score one site from already-collected physical features (no network).
 
     `raw` holds the FEATURES (plus optional Sun_Longest_Dark_h, Sun_Longest_Lit_h,
-    Earth_Longest_Blackout_h, Roughness_m, _dx_m). Applies the hard physics guardrails.
+    Earth_Longest_Blackout_h, Roughness_m, _dx_m). Applies the hard physics guardrails and the safety factor.
+
+    `priority_mode` re-weights the composite score (terrain/solar/comms): the displayed score is the ML score
+    shifted by the change in the rule-based composite relative to balanced (40/35/25). The safety verdict
+    (class, guardrails, safety layers) is computed on the balanced score and is mode-independent, so a
+    power-first mode can never relax it; Hazardous verdicts stay capped.
     """
     metrics = {f: float(raw[f]) for f in FEATURES}
     tele = {"sun_longest_dark_h": raw.get("Sun_Longest_Dark_h"), "sun_longest_lit_h": raw.get("Sun_Longest_Lit_h"),
@@ -823,7 +845,7 @@ def assess_features(lat: float, lon: float, raw: dict, sources: dict, warnings: 
         "HAZARD_PROB": (f"WARNING: P(Hazardous) = {p_haz:.2f} >= {HAZARD_PROB_THRESHOLD:g} risk-averse threshold; "
                         "class overridden to Hazardous."),
     }
-    ood_feats = [f for f in FEATURES if not _dataset()[f].min() <= metrics[f] <= _dataset()[f].max()]
+    ood_feats = [f for f in FEATURES if not _dataset()[f].min() - OOD_TOLERANCE.get(f, 0.0) <= metrics[f] <= _dataset()[f].max() + OOD_TOLERANCE.get(f, 0.0)]
     for _, msg, _ in triggered:
         warnings.append(msg)
     for layer in sf_layers:
@@ -849,6 +871,13 @@ def assess_features(lat: float, lon: float, raw: dict, sources: dict, warnings: 
     for layer in sf_layers:
         just.append(f"Safety factor {layer}: {sf_msgs[layer]} Score capped at {SAFETY_CAP_SCORE:.0f}.")
     state = readiness(flags)
+    w_t, w_s, w_c = mode_weights(priority_mode)
+    rule_mode = w_t * default_comp["terrain"] + w_s * default_comp["solar"] + w_c * default_comp["comms"]
+    score_balanced = score_final
+    pred_mode = float(np.clip(pred["score"] + (rule_mode - rule_score), 0, 100))
+    caps_all = [c for _, _, c in triggered] + ([SAFETY_CAP_SCORE] if safety == "Hazardous" else [])
+    cap = min(caps_all) if caps_all else None
+    score_final = min(pred_mode, cap) if cap is not None else pred_mode
     ci = score_interval(score_final, std, cap)
 
     result = {
@@ -886,6 +915,8 @@ def assess_features(lat: float, lon: float, raw: dict, sources: dict, warnings: 
         # ---- schema 2.1 additions (hybrid physics-ML) ----
         "Suitability_Score_raw_ml": round(pred["score"], 2),
         "mission_status_label": STATUS_LABELS[safety],
+        "priority_mode": priority_mode, "mode_weights": {"terrain": w_t, "solar": w_s, "comms": w_c},
+        "Suitability_Score_balanced": round(score_balanced, 2),
         "model_confidence_pct": round(float(pred["proba"].max()) * 100, 1),
         "score_uncertainty_95ci": ci,
         "guardrails": {"triggered": [c for c, _, _ in triggered], "score_cap": cap,
@@ -903,7 +934,7 @@ def assess_features(lat: float, lon: float, raw: dict, sources: dict, warnings: 
             "class_before_safety_factor": str(cls_g[0]), "score_before_safety_factor": round(float(score_g[0]), 2)},
     }
     if explain_result:
-        result["explanation"] = explain(metrics, pred, default_comp)
+        result["explanation"] = explain(metrics, pred, default_comp, (w_t, w_s, w_c))
     return result
 
 

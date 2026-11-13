@@ -1,0 +1,50 @@
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+@import "tailwindcss";
+
+/* Soft deep-space theme: no pure black, eye-friendly slate surfaces with semantic accents. */
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "Cascadia Mono", monospace;
+  --color-bg: #0b1120;
+  --color-panel: #111827;
+  --color-panel2: #1e293b;
+  --color-line: #334155;
+  --color-ink: #f1f5f9;
+  --color-mute: #94a3b8;
+  --color-solar: #f59e0b;
+  --color-earth: #38bdf8;
+  --color-go: #10b981;
+  --color-nogo: #f43f5e;
+  --color-scenb: #a78bfa;
+  --breakpoint-wide: 87.5rem; /* 1400px: KPI ribbon switches to a single row of 6 cards */
+}
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0; background: var(--color-bg); color: var(--color-ink); font-family: var(--font-sans);
+  overflow: hidden; -webkit-font-smoothing: antialiased;
+}
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* Slim scrollbars */
+* { scrollbar-width: thin; scrollbar-color: #334155 transparent; }
+
+/* Range inputs */
+input[type="range"] { -webkit-appearance: none; appearance: none; background: transparent; height: 22px; width: 100%; cursor: pointer; }
+input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 9999px; background: var(--track, #334155); }
+input[type="range"]::-moz-range-track { height: 6px; border-radius: 9999px; background: var(--track, #334155); }
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; height: 16px; width: 16px; margin-top: -5px; border-radius: 9999px;
+  background: var(--thumb, #38bdf8); border: 2px solid #0b1120; box-shadow: 0 0 0 1px #475569;
+}
+input[type="range"]::-moz-range-thumb { height: 14px; width: 14px; border-radius: 9999px; background: var(--thumb, #38bdf8); border: 2px solid #0b1120; }
+input[type="number"], input[type="time"], select {
+  background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #f1f5f9; padding: 4px 8px; font-size: 13px;
+}
+input:focus, select:focus, button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 1px; }
+input[type="number"]::-webkit-inner-spin-button { opacity: 0.6; }
+.glass { background: rgba(17, 24, 39, 0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+
+@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,.5); } 100% { box-shadow: 0 0 0 10px rgba(16,185,129,0); } }
+.pulse-go { animation: pulse-ring 1.8s ease-out infinite; }

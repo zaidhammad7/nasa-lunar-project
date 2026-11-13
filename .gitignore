@@ -30,3 +30,7 @@ $RECYCLE.BIN/
 
 # Regenerable ephemeris cache (python src/analysis/warm_caches.py)
 ephemeris_cache/
+
+# Vite cache
+.vite/
+.claude/launch.json

@@ -1,17 +1,17 @@
 {
-  "generated_utc": "2026-11-13T12:50:57.062435+00:00",
-  "passed": 98,
-  "total": 98,
+  "generated_utc": "2026-11-13T13:51:04.350282+00:00",
+  "passed": 107,
+  "total": 107,
   "checks": [
     {
       "test": "GET /api/health 200",
       "pass": true,
-      "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor_active': True, 'warmup_latency_ms': 5395.0, 'dem_error': None, 'response_cache_entries': 5, 'schema_version': '3.1', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
+      "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor_active': True, 'warmup_latency_ms': 1626.8, 'dem_error': None, 'response_cache_entries': 5, 'schema_version': '3.1', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
     },
     {
       "test": "health has models_ready, dem_ready, cached_demo_sites, safety_factor_active, warmup_latency_ms",
       "pass": true,
-      "detail": "warm-up 5395.0 ms, 5/5 demo sites cached"
+      "detail": "warm-up 1626.8 ms, 5/5 demo sites cached"
     },
     {
       "test": "CORS header allows any origin",
@@ -66,7 +66,7 @@
     {
       "test": "200 OK",
       "pass": true,
-      "detail": "52 ms round trip incl. 1440-row timeline JSON"
+      "detail": "31 ms round trip incl. 1440-row timeline JSON"
     },
     {
       "test": "all dashboard output blocks present",
@@ -221,7 +221,7 @@
     {
       "test": "slow Horizons -> analytic fallback returned within budget (never hangs)",
       "pass": true,
-      "detail": "207 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
+      "detail": "213 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
     },
     {
       "test": "coordinate equal to a preset snaps to that preset",
@@ -446,12 +446,12 @@
     {
       "test": "POST /api/warmup 200 with 5 demo sites",
       "pass": true,
-      "detail": "10.5 s total (DEM open included)"
+      "detail": "15.5 s total (DEM open included)"
     },
     {
       "test": "warm-up reports cache status + eval latency per site",
       "pass": true,
-      "detail": "A:27.8ms, B:25.1ms, C:58.7ms, D:27.7ms, E:21.9ms"
+      "detail": "A:15.6ms, B:15.9ms, C:15.8ms, D:15.8ms, E:16.0ms"
     },
     {
       "test": "warm-up: all 5 demo sites served from cache",
@@ -461,7 +461,7 @@
     {
       "test": "warm-up opened the LOLA DEM (dem_ready) or reported why not",
       "pass": true,
-      "detail": "{'ready': True, 'open_ms': 9905.1, 'read_ms': 136.0, 'warm_point': {'lat_deg': -88.3448, 'lon_deg_east': 225.8806}, 'elevation_m': -2553.5, "
+      "detail": "{'ready': True, 'open_ms': 2675.2, 'read_ms': 12620.9, 'warm_point': {'lat_deg': -88.3448, 'lon_deg_east': 225.8806}, 'elevation_m': -2553.5"
     },
     {
       "test": "health after warm-up: dem_ready mirrors warm-up, 5/5 cached",
@@ -471,7 +471,7 @@
     {
       "test": "demo A first request served from the pre-computed response cache (X-Cache: HIT)",
       "pass": true,
-      "detail": "39 ms"
+      "detail": "2 ms"
     },
     {
       "test": "custom demo site E (cached terrain + series) is a cache HIT",
@@ -484,14 +484,59 @@
       "detail": ""
     },
     {
+      "test": "mode weights are 60/25/15, 40/35/25, 20/60/20",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "score = balanced score + change of the weighted composite (flat site: safety > balanced > power)",
+      "pass": true,
+      "detail": "most_safety 87.15, balanced 82.16, most_power 72.41"
+    },
+    {
+      "test": "safety verdict is identical in every mode",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "MOST POWER cannot relax a NO-GO: derated-slope site stays Hazardous and <= 44",
+      "pass": true,
+      "detail": "{'most_safety': 30.0, 'most_power': 30.0}"
+    },
+    {
+      "test": "/api/sites re-ranks per mode (ranks 1..100 unique, top-5 sorted by mode score)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "top-5 list differs between MOST SAFETY and MOST POWER",
+      "pass": true,
+      "detail": "{'most_safety': ['Auto_SP_099', 'Auto_SP_075', 'Auto_SP_50', 'Auto_SP_36', 'Auto_SP_073'], 'balanced': ['Auto_SP_099', 'Auto_SP_075', 'Auto_SP_50', 'Auto_SP_073', 'Auto_SP_36'], 'most_power': ['Auto_SP_099', 'Auto_SP_075', 'Auto_SP_50', 'Auto_SP_073', 'Auto_SP_080']}"
+    },
+    {
+      "test": "sites carry display_class with the 13.5 deg derating (no site >13.5 deg is coloured safe)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "unknown priority_mode -> 422",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "compare honours per-scenario priority_mode",
+      "pass": true,
+      "detail": ""
+    },
+    {
       "test": "preset /api/evaluate incl. 1440-row timeline: median < 250 ms",
       "pass": true,
-      "detail": "median 60 ms, p95 69 ms"
+      "detail": "median 30 ms, p95 33 ms"
     },
     {
       "test": "hourly series generator < 50 ms",
       "pass": true,
-      "detail": "0.78 ms"
+      "detail": "0.38 ms"
     }
   ]
 }

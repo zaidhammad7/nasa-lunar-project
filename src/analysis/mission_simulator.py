@@ -34,7 +34,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import predict_site as ps  # noqa: E402
 from ephemeris_series import BASELINE_START, N_SAMPLES, STEP_HOURS, HourlySeries, get_hourly_series  # noqa: E402
-from suitability import DATA_CSV, FEATURES, OUTPUTS_DIR  # noqa: E402
+from suitability import DATA_CSV, FEATURES, OUTPUTS_DIR, comms_score, solar_score, terrain_score  # noqa: E402
 
 R_MOON_M = 1_737_400.0
 R_MOON_KM = 1737.4
@@ -77,6 +77,7 @@ class Scenario:
     tower_height_m: float = 5.0
     panel_tilt_deg: float = 45.0
     panel_area_m2: float = 10.0
+    priority_mode: str = "balanced"             # most_safety | balanced | most_power
 
     @classmethod
     def from_dict(cls, d: dict) -> "Scenario":
@@ -139,6 +140,7 @@ def validate(s: Scenario) -> None:
         v, (lo, hi) = getattr(s, name), LIMITS[name]
         if v is None or not math.isfinite(v) or not lo <= v <= hi:
             raise ValueError(f"{name}={v} outside [{lo}, {hi}]")
+    ps.mode_weights(s.priority_mode)  # raises ValueError for an unknown mode
     if s.site_id is None:
         if s.lat is None or s.lon is None:
             raise ValueError("provide site_id or both lat and lon")
@@ -320,9 +322,33 @@ def filter_sites(max_slope_deg: float, min_sun_pct: float, min_earth_pct: float)
     return r[passes_filters(r, max_slope_deg, min_sun_pct, min_earth_pct)]
 
 
+def mode_scores(r: pd.DataFrame, mode: str) -> pd.Series:
+    """Rule-based composite score of every row under a priority mode's (terrain, solar, comms) weights."""
+    wt, ws, wc = ps.mode_weights(mode)
+    return (wt * terrain_score(r["Slope_deg"]) + ws * solar_score(r["Sun_Visible_Pct"], r["Sun_Max_El"])
+            + wc * comms_score(r["Earth_Visible_Pct"], r["Earth_Avg_El"]))
+
+
+def display_class(r: pd.DataFrame) -> pd.Series:
+    """Rule class with the safety-factor slope derating applied (what the dashboard colours the 3-D markers with)."""
+    rough = r["Site_ID"].map(_roughness_table()).fillna(0.0)
+    bad = (r["Slope_deg"] > ps.effective_max_slope(15.0)) | (r["Slope_deg"] + ps.ROUGHNESS_SLOPE_WEIGHT * rough > 15.0)
+    return r["Safety_Class"].where(~bad, "Hazardous")
+
+
+def _ranked_for_mode(mode: str) -> pd.DataFrame:
+    """ranked_lunar_sites.csv with mode_score, rank_in_mode (1 = best under this mode) and display_class."""
+    r = _ranked().copy()
+    r["mode_score"] = mode_scores(r, mode)
+    r["rank_in_mode"] = r["mode_score"].rank(ascending=False, method="first").astype(int)
+    r["display_class"] = display_class(r)
+    return r
+
+
 def _site_record(r: pd.Series, lat: float, lon: float) -> dict:
-    return {"rank": int(r["Rank"]), "site_id": r["Site_ID"], "lat_deg": float(r["Lat"]), "lon_deg_east": float(r["Lon"]),
-            "Suitability_Score": round(float(r["Suitability_Score"]), 2), "Safety_Class": r["Safety_Class"],
+    return {"rank": int(r["rank_in_mode"]), "balanced_rank": int(r["Rank"]), "site_id": r["Site_ID"],
+            "lat_deg": float(r["Lat"]), "lon_deg_east": float(r["Lon"]),
+            "Suitability_Score": round(float(r["mode_score"]), 2), "Safety_Class": r["display_class"],
             "slope_deg": float(r["Slope_deg"]), "Sun_Visible_Pct": float(r["Sun_Visible_Pct"]),
             "Earth_Visible_Pct": float(r["Earth_Visible_Pct"]),
             "distance_km": round(float(haversine_km(lat, lon, r["Lat"], r["Lon"])), 3),
@@ -330,25 +356,28 @@ def _site_record(r: pd.Series, lat: float, lon: float) -> dict:
 
 
 def top_alternatives(lat: float, lon: float, s: Scenario, n: int = 5, exclude_site_id: str | None = None) -> dict:
-    """Top-n ranked sites that pass the (safety-derated) vehicle filters, with distance and bearing from (lat, lon)."""
-    f = filter_sites(s.max_slope_deg, s.min_sun_pct, s.min_earth_pct)
+    """Top-n sites under the scenario's priority mode that pass the (safety-derated) vehicle filters, with distance and bearing."""
+    r = _ranked_for_mode(s.priority_mode)
+    f = r[passes_filters(r, s.max_slope_deg, s.min_sun_pct, s.min_earth_pct)].sort_values("mode_score", ascending=False)
     f = f[f["Site_ID"] != exclude_site_id] if exclude_site_id else f
-    top = [_site_record(r, lat, lon) for _, r in f.head(n).iterrows()]
+    top = [_site_record(row, lat, lon) for _, row in f.head(n).iterrows()]
     return {"selected": {"lat_deg": lat, "lon_deg_east": lon, "polar_x_deg": round((90 + lat) * math.cos(math.radians(lon)), 4),
                          "polar_y_deg": round((90 + lat) * math.sin(math.radians(lon)), 4)},
+            "priority_mode": s.priority_mode, "mode_weights": dict(zip(("terrain", "solar", "comms"), ps.mode_weights(s.priority_mode))),
             "filters": {"max_slope_deg": s.max_slope_deg, "effective_max_slope_deg": ps.effective_max_slope(s.max_slope_deg),
                         "slope_safety_margin_deg": ps.SLOPE_SAFETY_MARGIN_DEG, "min_sun_pct": s.min_sun_pct,
                         "min_earth_pct": s.min_earth_pct},
             "n_sites_passing_filters": int(len(f)), "top5_filtered": top,
-            "note": "Ranked by the dataset Suitability_Score (default 5/15 deg rules); distances on a 1737.4 km sphere."}
+            "note": "Ranked by the rule-based composite under the active priority mode; distances on a 1737.4 km sphere."}
 
 
 def sites_overview(max_slope_deg: float = 15.0, min_sun_pct: float = 50.0, min_earth_pct: float = 40.0,
-                   lat: float = -90.0, lon: float = 0.0) -> dict:
-    """All 100 preset sites (with a passes_filters flag) plus the filtered top 5 from (lat, lon)."""
-    s = Scenario(lat=lat, lon=lon, max_slope_deg=max_slope_deg, min_sun_pct=min_sun_pct, min_earth_pct=min_earth_pct)
+                   lat: float = -90.0, lon: float = 0.0, priority_mode: str = "balanced") -> dict:
+    """All 100 preset sites (with passes_filters, mode score/rank) plus the filtered top 5 from (lat, lon)."""
+    s = Scenario(lat=lat, lon=lon, max_slope_deg=max_slope_deg, min_sun_pct=min_sun_pct, min_earth_pct=min_earth_pct,
+                 priority_mode=priority_mode)
     validate(s)
-    r = _ranked().copy()
+    r = _ranked_for_mode(priority_mode).sort_values("rank_in_mode")
     ok = passes_filters(r, max_slope_deg, min_sun_pct, min_earth_pct)
     sites = []
     for (_, row), passes in zip(r.iterrows(), ok):
@@ -356,12 +385,12 @@ def sites_overview(max_slope_deg: float = 15.0, min_sun_pct: float = 50.0, min_e
         rec.update({"passes_filters": bool(passes), "Elevation_m": float(row["Elevation_m"]),
                     "Sun_Avg_El": float(row["Sun_Avg_El"]), "Sun_Max_El": float(row["Sun_Max_El"]),
                     "Earth_Avg_El": float(row["Earth_Avg_El"]), "Earth_Max_El": float(row["Earth_Max_El"]),
-                    "Roughness_m": _roughness_table().get(row["Site_ID"])})
+                    "rule_class": row["Safety_Class"], "Roughness_m": _roughness_table().get(row["Site_ID"])})
         sites.append(rec)
     alt = top_alternatives(lat, lon, s)
-    return {"n_sites": len(sites), "sites": sites, "top5_filtered": alt["top5_filtered"],
-            "n_sites_passing_filters": alt["n_sites_passing_filters"], "filters": alt["filters"],
-            "reference_point": {"lat_deg": lat, "lon_deg_east": lon}}
+    return {"n_sites": len(sites), "sites": sites, "top5_filtered": alt["top5_filtered"], "priority_mode": priority_mode,
+            "mode_weights": alt["mode_weights"], "n_sites_passing_filters": alt["n_sites_passing_filters"],
+            "filters": alt["filters"], "reference_point": {"lat_deg": lat, "lon_deg_east": lon}}
 
 
 # ----------------------------------------------------------------------------
@@ -444,7 +473,7 @@ def evaluate_scenario(s: Scenario, include_timeline: bool = True, series_mode: s
                "analytic_model": "analytic physics model (uncalibrated fallback)"}[ctx.series.source]
     prof = ps.resolve_profile(None, s.max_slope_deg, s.min_sun_pct, s.min_earth_pct)
     res = ps.assess_features(ctx.lat, ctx.lon, raw, {"ephemeris": eph_src, "terrain": terrain_src},
-                             tw + list(ctx.series.notes), prof, explain_result=explain)
+                             tw + list(ctx.series.notes), prof, explain_result=explain, priority_mode=s.priority_mode)
 
     f_sun = sun_disc_fraction(ctx.sun_eff)
     state = illumination_state(ctx.sun_eff)
@@ -479,6 +508,7 @@ def evaluate_scenario(s: Scenario, include_timeline: bool = True, series_mode: s
                      "end_datetime_utc": _iso(ctx.start_utc + timedelta(hours=ctx.length)),
                      "duration_hours": ctx.length, "timeline_hour_index": idx,
                      "timestamp_utc": _iso(ctx.start_utc + timedelta(hours=idx)),
+                     "priority_mode": s.priority_mode,
                      "vehicle": {"max_slope_deg": s.max_slope_deg, "min_sun_pct": s.min_sun_pct,
                                  "min_earth_pct": s.min_earth_pct},
                      "hardware": {"tower_height_m": s.tower_height_m, "tower_horizon_boost_deg": round(ctx.boost_deg, 5),
@@ -488,7 +518,8 @@ def evaluate_scenario(s: Scenario, include_timeline: bool = True, series_mode: s
             "Safety_Class": res["Safety_Class"], "mission_status_label": res["mission_status_label"],
             "model_confidence_pct": res["model_confidence_pct"], "class_probabilities": res["class_probabilities"],
             "Suitability_Score_raw_ml": res["Suitability_Score_raw_ml"], "guardrails": res["guardrails"],
-            "safety_factor": res["safety_factor"],
+            "safety_factor": res["safety_factor"], "priority_mode": res["priority_mode"], "mode_weights": res["mode_weights"],
+            "Suitability_Score_balanced": res["Suitability_Score_balanced"],
             "mission_readiness": res["mission_readiness"], "ood_warning": res["ood_warning"]},
         "terrain_topography_physics": {"Slope_deg": round(terrain["Slope_deg"], 3),
                                        "Elevation_m": round(terrain["Elevation_m"], 2),

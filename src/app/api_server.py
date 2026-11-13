@@ -33,6 +33,7 @@ from collections import OrderedDict
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -176,6 +177,8 @@ class ScenarioIn(BaseModel):
     tower_height_m: float = Field(5.0, ge=1.0, le=20.0)
     panel_tilt_deg: float = Field(45.0, ge=0.0, le=90.0)
     panel_area_m2: float = Field(10.0, ge=1.0, le=50.0)
+    # 0. Optimisation priority (terrain / solar / comms weights 60/25/15, 40/35/25, 20/60/20)
+    priority_mode: Literal["most_safety", "balanced", "most_power"] = "balanced"
 
     @model_validator(mode="after")
     def _need_location(self):
@@ -191,7 +194,7 @@ class ScenarioIn(BaseModel):
                            timestamp_utc=self.timestamp_utc, max_slope_deg=self.max_slope_deg,
                            min_sun_pct=self.min_sun_pct, min_earth_pct=self.min_earth_pct,
                            tower_height_m=self.tower_height_m, panel_tilt_deg=self.panel_tilt_deg,
-                           panel_area_m2=self.panel_area_m2)
+                           panel_area_m2=self.panel_area_m2, priority_mode=self.priority_mode)
 
 
 class CompareIn(BaseModel):
@@ -241,10 +244,11 @@ def warmup() -> dict:
 @app.get("/api/sites")
 def sites(max_slope_deg: float = Query(15.0, ge=0, le=15), min_sun_pct: float = Query(50.0, ge=0, le=100),
           min_earth_pct: float = Query(40.0, ge=0, le=100), lat: float = Query(-90.0, ge=-90, le=-85),
-          lon: float = Query(0.0, ge=0, le=360)):
+          lon: float = Query(0.0, ge=0, le=360),
+          priority_mode: Literal["most_safety", "balanced", "most_power"] = Query("balanced")):
     """All 100 preset sites (with passes_filters) + the Top 5 that satisfy the vehicle filters (slope safety-derated)."""
     try:
-        return _ok(ms.sites_overview(max_slope_deg, min_sun_pct, min_earth_pct, lat, lon))
+        return _ok(ms.sites_overview(max_slope_deg, min_sun_pct, min_earth_pct, lat, lon, priority_mode))
     except ValueError as exc:
         raise _bad(exc)
 
