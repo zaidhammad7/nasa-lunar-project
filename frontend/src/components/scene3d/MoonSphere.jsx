@@ -1,38 +1,30 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import TextSprite from './TextSprite.jsx'
 import * as THREE from 'three'
-import { buildMoonGeometry, reliefAt } from './moonRelief.js'
-import { latLonToVec, vecToLatLon } from '../../lib/physics.js'
+import TextSprite from './TextSprite.jsx'
+import { useMoonTextures } from './textures.js'
+import { latLonToVec } from '../../lib/physics.js'
 import { classHex } from '../../lib/format.js'
 import { sky } from './sky.js'
-import { perfFlag } from '../../lib/perf.js'
 
-/** Point on the (relief-displaced) Moon surface for a selenographic coordinate, optionally lifted. */
-export const surfacePoint = (lat, lon, lift = 0) => {
-  const v = latLonToVec(lat, lon)
-  const { relief } = reliefAt(v[0], v[1], v[2])
-  return v.map((c) => c * (1 + relief + lift))
-}
+/** Point on the Moon's surface (unit sphere) for a selenographic coordinate, optionally lifted. */
+export const surfacePoint = (lat, lon, lift = 0) => latLonToVec(lat, lon, 1 + lift)
+
+const CLICK_SLOP_PX = 4 // pointer travel (px) below which a press/release counts as a click, not an OrbitControls drag
 
 function SitePin({ lat, lon, color, label, tower, tilt }) {
-  const grp = useRef()
+  const grp = useRef(), ring = useRef()
   const { camera } = useThree()
-  const pos = useMemo(() => surfacePoint(lat, lon, 0.002), [lat, lon])
+  const pos = useMemo(() => surfacePoint(lat, lon, 0.001), [lat, lon])
   const quat = useMemo(() => new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(...latLonToVec(lat, lon))), [lat, lon])
-  const ring = useRef()
   const H = 0.035 + tower * 0.0045 // exaggerated mast height (the real 1-20 m is invisible at Moon scale)
   useFrame(({ clock }) => {
     if (ring.current) ring.current.scale.setScalar(1 + 0.3 * Math.sin(clock.elapsedTime * 3.2))
-    // keep the pin legible from the wide shot down to the close-up
-    if (grp.current) grp.current.scale.setScalar(Math.min(1.7, Math.max(0.2, (camera.position.length() - 1) / 1.5)))
+    if (grp.current) grp.current.scale.setScalar(Math.min(1.7, Math.max(0.2, (camera.position.length() - 1) / 1.5))) // stay legible at any zoom
   })
   return (
     <group ref={grp} position={pos} quaternion={quat}>
-      <mesh>
-        <sphereGeometry args={[0.014, 16, 16]} />
-        <meshBasicMaterial color={color} toneMapped={false} />
-      </mesh>
+      <mesh><sphereGeometry args={[0.014, 16, 16]} /><meshBasicMaterial color={color} toneMapped={false} /></mesh>
       <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, 0]}>
         <ringGeometry args={[0.032, 0.041, 48]} />
         <meshBasicMaterial color={color} transparent opacity={0.8} side={THREE.DoubleSide} toneMapped={false} blending={THREE.AdditiveBlending} depthWrite={false} />
@@ -45,40 +37,39 @@ function SitePin({ lat, lon, color, label, tower, tilt }) {
         <boxGeometry args={[0.075, 0.004, 0.045]} />
         <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={0.55} />
       </mesh>
-      <TextSprite text={label} color={color} position={[0, H + 0.05, 0]} height={0.03} />
+      <TextSprite text={label} color={color} position={[0, H + 0.05, 0]} height={0.016} />
     </group>
   )
 }
 
-/** Day/night boundary: a static great-circle torus, re-oriented (not rebuilt) every frame to stay perpendicular to the Sun. */
+/** Day/night boundary: a static great-circle torus re-oriented (not rebuilt) every frame to stay perpendicular to the Sun. */
 function Terminator() {
   const ref = useRef()
   const z = useMemo(() => new THREE.Vector3(0, 0, 1), [])
   const s = useMemo(() => new THREE.Vector3(), [])
-  useFrame(() => {
-    if (!ref.current) return
-    s.set(sky.sun[0], sky.sun[1], sky.sun[2])
-    ref.current.quaternion.setFromUnitVectors(z, s)
-  })
+  useFrame(() => { if (ref.current) { s.set(sky.sun[0], sky.sun[1], sky.sun[2]); ref.current.quaternion.setFromUnitVectors(z, s) } })
   return (
     <mesh ref={ref} renderOrder={4}>
-      <torusGeometry args={[1.012, 0.0032, 6, 200]} />
-      <meshBasicMaterial color="#fbbf24" transparent opacity={0.55} toneMapped={false} depthWrite={false} />
+      <torusGeometry args={[1.004, 0.0028, 6, 200]} />
+      <meshBasicMaterial color="#fbbf24" transparent opacity={0.5} toneMapped={false} depthWrite={false} />
     </mesh>
   )
 }
 
-/** The Moon: displaced mesh, invisible pick sphere (raycast -> lat/lon), 100 instanced site markers, Site A/B pins. */
-export default function MoonSphere({ sites, pins, onPick, onSelectSite, onHover }) {
-  const geometry = useMemo(() => buildMoonGeometry(52), [])
-  const inst = useRef()
-  const lastHover = useRef(0)
+/**
+ * The Moon: 128x128 sphere, real LRO-derived albedo + bump (procedural fallback offline), matte regolith shading.
+ * A click anywhere on the surface becomes an exact (lat, lon) - no snapping to the 100 presets.
+ */
+export default function MoonSphere({ sites, showPresets, pins, onPick }) {
+  const moonRef = useRef(), inst = useRef(), down = useRef(null), scale = useRef(0)
+  const tex = useMoonTextures()
+  const { camera } = useThree()
 
-  const markerScale = useRef(0)
   const paint = (k) => {
+    if (!inst.current) return
     const m = new THREE.Matrix4(), c = new THREE.Color(), q = new THREE.Quaternion()
     sites.forEach((s, i) => {
-      const p = surfacePoint(s.lat, s.lon, 0.004), r = k * (s.passes ? 1 : 0.62)
+      const p = surfacePoint(s.lat, s.lon, 0.002), r = k * (s.passes ? 1 : 0.62)
       m.compose(new THREE.Vector3(...p), q, new THREE.Vector3(r, r, r))
       inst.current.setMatrixAt(i, m)
       c.set(classHex(s.displayClass))
@@ -87,45 +78,44 @@ export default function MoonSphere({ sites, pins, onPick, onSelectSite, onHover 
     })
     inst.current.instanceMatrix.needsUpdate = true
     if (inst.current.instanceColor) inst.current.instanceColor.needsUpdate = true
-    markerScale.current = k
+    scale.current = k
   }
-  useEffect(() => { paint(markerScale.current || 0.009) }, [sites]) // eslint-disable-line react-hooks/exhaustive-deps
-  // constant ~5 px markers: world size follows the camera's distance to the surface
-  const { camera } = useThree()
-  useFrame(() => {
-    if (!inst.current) return
-    const k = Math.min(0.024, Math.max(0.0035, (camera.position.length() - 1) * 0.0068))
-    if (Math.abs(k - markerScale.current) / markerScale.current > 0.07) paint(k)
+  useEffect(() => { paint(scale.current || 0.006) }, [sites]) // eslint-disable-line react-hooks/exhaustive-deps
+  useFrame(() => { // small, constant ~4 px preset markers
+    if (!showPresets || !inst.current) return
+    const k = Math.min(0.016, Math.max(0.0022, (camera.position.length() - 1) * 0.0046))
+    if (Math.abs(k - scale.current) / Math.max(scale.current, 1e-6) > 0.08) paint(k)
   })
 
-  const pointer = (e, fn) => {
-    const { lat, lon } = vecToLatLon(e.point.x, e.point.y, e.point.z)
-    fn(lat, lon)
+  const hit = (e) => {
+    // exact selenographic coordinates of the clicked surface point (Moon-local, +Y north, lon 0 at +X, east toward -Z)
+    const p = moonRef.current.worldToLocal(e.point.clone()).normalize()
+    const lat = Number((Math.asin(Math.max(-1, Math.min(1, p.y))) * (180 / Math.PI)).toFixed(4))
+    let lon = Number((Math.atan2(-p.z, p.x) * (180 / Math.PI)).toFixed(4))
+    if (lon < 0) lon += 360
+    onPick(lat, lon)
   }
 
   return (
     <group>
-      <mesh geometry={geometry} castShadow receiveShadow>
-        <meshStandardMaterial vertexColors roughness={0.96} metalness={0} />
+      <mesh ref={moonRef} castShadow receiveShadow
+        onPointerDown={(e) => { down.current = [e.nativeEvent.clientX, e.nativeEvent.clientY] }}
+        onClick={(e) => {
+          const d = down.current
+          if (!d || Math.hypot(e.nativeEvent.clientX - d[0], e.nativeEvent.clientY - d[1]) >= CLICK_SLOP_PX) return // it was a camera drag
+          e.stopPropagation(); hit(e)
+        }}>
+        <sphereGeometry args={[1, 128, 128]} />
+        <meshStandardMaterial map={tex.map} bumpMap={tex.bump} bumpScale={0.025} roughness={0.94} metalness={0} />
       </mesh>
 
-      {/* invisible unit sphere: exact ray -> (lat, lon); clicks that were really drags (orbit) are ignored */}
-      <mesh
-        onClick={(e) => { if (e.delta > 5) return; e.stopPropagation(); pointer(e, onPick) }}
-        onPointerMove={(e) => { const now = performance.now(); if (now - lastHover.current > 60) { lastHover.current = now; pointer(e, (la, lo) => onHover({ lat: la, lon: lo })) } }}
-        onPointerOut={() => onHover(null)}
-      >
-        <sphereGeometry args={[1.0, 64, 48]} />
-        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
-      </mesh>
-
-      <instancedMesh ref={inst} args={[null, null, sites.length]} frustumCulled={false}
-        onClick={(e) => { if (e.delta > 5) return; e.stopPropagation(); const s = sites[e.instanceId]; if (s) onSelectSite(s.id) }}>
-        <sphereGeometry args={[1, 10, 10]} />
+      {/* preset markers are purely visual: they never intercept pointer events, so free surface clicking is never blocked */}
+      <instancedMesh ref={inst} args={[null, null, sites.length]} frustumCulled={false} visible={showPresets} raycast={() => null}>
+        <sphereGeometry args={[1, 8, 8]} />
         <meshBasicMaterial toneMapped={false} />
       </instancedMesh>
 
-      {!perfFlag('nolines') && <Terminator />}
+      <Terminator />
       {pins.map(({ key, ...p }) => <SitePin key={key} {...p} />)}
     </group>
   )

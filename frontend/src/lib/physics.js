@@ -91,14 +91,19 @@ export const bearingDeg = (lat1, lon1, lat2, lon2) => {
 }
 export const compass = (b) => ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.floor(((b + 22.5) % 360) / 45)]
 
-/** Selenographic (lat, lon east) -> unit vector in the scene frame (+Y = lunar north, +Z = lon 0, +X = lon 90E). */
+/**
+ * Selenographic (lat, lon east) -> vector in the scene frame: +Y = lunar north (-Y = south pole), lon 0 at +X and east
+ * toward -Z. This is exactly how three.js wraps an equirectangular map on a SphereGeometry (image centre = +X, east to the
+ * right), so real lunar textures land on the right coordinates and longitudes are not mirrored.
+ */
 export const latLonToVec = (lat, lon, r = 1) => {
   const la = lat * RAD, lo = lon * RAD
-  return [r * Math.cos(la) * Math.sin(lo), r * Math.sin(la), r * Math.cos(la) * Math.cos(lo)]
+  return [r * Math.cos(la) * Math.cos(lo), r * Math.sin(la), -r * Math.cos(la) * Math.sin(lo)]
 }
+/** Inverse of latLonToVec for any point on / above the surface (lon in [0, 360)). */
 export const vecToLatLon = (x, y, z) => {
   const r = Math.hypot(x, y, z) || 1
-  return { lat: Math.asin(clamp(y / r, -1, 1)) * DEG, lon: ((Math.atan2(x, z) * DEG) % 360 + 360) % 360 }
+  return { lat: Math.asin(clamp(y / r, -1, 1)) * DEG, lon: ((Math.atan2(-z, x) * DEG) % 360 + 360) % 360 }
 }
 
 // ---------------------------------------------------------------- analytic ephemeris (flat-horizon model)

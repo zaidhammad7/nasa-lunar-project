@@ -16,6 +16,9 @@ export function updateSky() {
   sky.earth = earthDirection(t)
 }
 
-// Stylised (not to scale) distances: compressed so the Sun and Earth stay in frame around the Moon.
-export const SUN_DISTANCE = 3.1
-export const EARTH_DISTANCE = 2.05
+// TRUE scale: 1 unit = lunar radius = 1737.4 km.
+export const MOON_RADIUS = 1.0
+export const EARTH_RADIUS = 3.668 // 6371 km
+export const EARTH_DISTANCE = 221.2 // 384,400 km
+export const SUN_RADIUS = 400.8 // 696,340 km
+export const SUN_DISTANCE = 86105 // 149,600,000 km (subtends 0.53 deg)

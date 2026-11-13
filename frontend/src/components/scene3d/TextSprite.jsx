@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 
 /** Constant-screen-size text label (canvas texture on a sprite): no DOM, no per-frame layout work. */
-export default function TextSprite({ text, color = '#f1f5f9', border = true, position = [0, 0, 0], height = 0.05 }) {
+export default function TextSprite({ text, color = '#f1f5f9', border = true, position = [0, 0, 0], height = 0.05, anchorTop = false }) {
   const { tex, aspect } = useMemo(() => {
     const c = document.createElement('canvas')
     const ctx = c.getContext('2d')
@@ -20,7 +20,7 @@ export default function TextSprite({ text, color = '#f1f5f9', border = true, pos
   }, [text, color, border])
   useEffect(() => () => tex.dispose(), [tex])
   return (
-    <sprite position={position} scale={[height * aspect, height, 1]} renderOrder={10}>
+    <sprite position={position} scale={[height * aspect, height, 1]} renderOrder={10} center={anchorTop ? [0.5, 1.15] : [0.5, 0.5]}>
       <spriteMaterial map={tex} sizeAttenuation={false} depthTest={false} transparent toneMapped={false} />
     </sprite>
   )

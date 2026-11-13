@@ -2,7 +2,8 @@
 // Validation errors (HTTP 422) are surfaced to the UI; network failures / 5xx silently switch to offline mode.
 import { offlineEvaluate, offlineCompare } from './mockSimulationData.js'
 
-export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '')
+// Backend URL: ?api=http://host:port (handy for testing) > VITE_API_URL > http://localhost:8000
+export const API_URL = (new URLSearchParams(location.search).get('api') || import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '')
 
 const listeners = new Set()
 export const backendStatus = { online: null, health: null, lastError: null }
