@@ -174,7 +174,7 @@ class ScenarioIn(BaseModel):
     min_sun_pct: float = Field(50.0, ge=0.0, le=100.0)
     min_earth_pct: float = Field(40.0, ge=0.0, le=100.0)
     # 4-6. Hardware
-    tower_height_m: float = Field(5.0, ge=1.0, le=20.0)
+    tower_height_m: float = Field(5.0, ge=1.0, le=ps.MAX_TOWER_HEIGHT_M)
     panel_tilt_deg: float = Field(45.0, ge=0.0, le=90.0)
     panel_area_m2: float = Field(10.0, ge=1.0, le=50.0)
     # 0. Optimisation priority (terrain / solar / comms weights 60/25/15, 40/35/25, 20/60/20)

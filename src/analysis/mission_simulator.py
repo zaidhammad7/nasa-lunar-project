@@ -54,7 +54,7 @@ STATES = np.array(["Total Darkness", "Partial Shadow", "Direct Sunlight"])
 ROUGHNESS_CSV = OUTPUTS_DIR / "site_roughness.csv"
 
 LIMITS = {"lat": (-90.0, -85.0), "lon": (0.0, 360.0), "max_slope_deg": (0.0, 15.0), "min_sun_pct": (0.0, 100.0),
-          "min_earth_pct": (0.0, 100.0), "tower_height_m": (1.0, 20.0), "panel_tilt_deg": (0.0, 90.0),
+          "min_earth_pct": (0.0, 100.0), "tower_height_m": (1.0, ps.MAX_TOWER_HEIGHT_M), "panel_tilt_deg": (0.0, 90.0),
           "panel_area_m2": (1.0, 50.0)}
 
 
@@ -274,9 +274,11 @@ def timeline_index(s: Scenario, ctx: Context) -> int:
     return idx
 
 
-def window_features(ctx: Context) -> dict:
-    """Dataset-style Sun/Earth features of the mission window (effective elevations, incl. tower boost)."""
+def window_features(ctx: Context, mast_free: bool = False) -> dict:
+    """Dataset-style Sun/Earth features of the mission window (effective elevations, incl. tower boost unless mast_free)."""
     sun, earth = ctx.sun_eff[ctx.win], ctx.earth_eff[ctx.win]
+    if mast_free:
+        sun, earth = sun - ctx.boost_deg, earth - ctx.boost_deg
     out = {"Sun_Visible_Pct": float((sun > 0).mean() * 100), "Sun_Avg_El": float(sun.mean()),
            "Sun_Max_El": float(sun.max()), "Earth_Visible_Pct": float((earth > 0).mean() * 100),
            "Earth_Avg_El": float(earth.mean()), "Earth_Max_El": float(earth.max())}
@@ -467,7 +469,8 @@ def evaluate_scenario(s: Scenario, include_timeline: bool = True, series_mode: s
     terrain, terrain_src, tw = terrain_for(ctx)
     raw = {**{f: feats[f] for f in FEATURES if f in feats}, "Elevation_m": terrain["Elevation_m"],
            "Slope_deg": terrain["Slope_deg"], "Roughness_m": terrain.get("Roughness_m"), "_dx_m": terrain.get("_dx_m"),
-           **{k: feats[k] for k in ("Sun_Longest_Dark_h", "Sun_Longest_Lit_h", "Earth_Longest_Blackout_h")}}
+           **{k: feats[k] for k in ("Sun_Longest_Dark_h", "Sun_Longest_Lit_h", "Earth_Longest_Blackout_h")},
+           "_ood_ref": {f: v for f, v in window_features(ctx, mast_free=True).items() if f in FEATURES}}
     eph_src = {"horizons_cache": "JPL Horizons (cached hourly series)", "horizons_live": "JPL Horizons API (hourly series)",
                "analytic_calibrated": "analytic curve calibrated to dataset statistics",
                "analytic_model": "analytic physics model (uncalibrated fallback)"}[ctx.series.source]

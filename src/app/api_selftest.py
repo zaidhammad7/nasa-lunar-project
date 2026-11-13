@@ -261,7 +261,7 @@ def run() -> int:
         # ---------------------------------------------------------------- validation
         print("\n[6] Input validation")
         bad = [({"lat": -80, "lon": 10}, "lat outside -90..-85"), ({"lat": -86, "lon": 400}, "lon > 360"),
-               ({"site_id": "Auto_SP_099", "tower_height_m": 25}, "tower > 20"), ({"site_id": "Auto_SP_099", "panel_tilt_deg": 120}, "tilt > 90"),
+               ({"site_id": "Auto_SP_099", "tower_height_m": 151}, "tower > 150"), ({"site_id": "Auto_SP_099", "panel_tilt_deg": 120}, "tilt > 90"),
                ({"site_id": "Auto_SP_099", "panel_area_m2": 0.5}, "area < 1"), ({"site_id": "Auto_SP_099", "max_slope_deg": 20}, "slope > 15"),
                ({"site_id": "nope"}, "unknown site"), ({}, "no location"),
                ({"site_id": "Auto_SP_099", "start_datetime_utc": "2027-01-11T00:00:00Z", "duration_hours": 100}, "window past baseline"),

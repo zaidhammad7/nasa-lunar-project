@@ -3,7 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import TextSprite from './TextSprite.jsx'
 import { useMoonTextures } from './textures.js'
-import { latLonToVec } from '../../lib/physics.js'
+import { latLonToVec, mastDrawHeight } from '../../lib/physics.js'
 import { classHex } from '../../lib/format.js'
 import { sky } from './sky.js'
 
@@ -17,7 +17,7 @@ function SitePin({ lat, lon, color, label, tower, tilt }) {
   const { camera } = useThree()
   const pos = useMemo(() => surfacePoint(lat, lon, 0.001), [lat, lon])
   const quat = useMemo(() => new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(...latLonToVec(lat, lon))), [lat, lon])
-  const H = 0.035 + tower * 0.0045 // exaggerated mast height (the real 1-20 m is invisible at Moon scale)
+  const H = mastDrawHeight(tower) // exaggerated mast height (real masts are invisible at Moon scale)
   useFrame(({ clock }) => {
     if (ring.current) ring.current.scale.setScalar(1 + 0.3 * Math.sin(clock.elapsedTime * 3.2))
     if (grp.current) grp.current.scale.setScalar(Math.min(1.7, Math.max(0.2, (camera.position.length() - 1) / 1.5))) // stay legible at any zoom

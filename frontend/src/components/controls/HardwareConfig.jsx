@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Label } from '../ui/primitives.jsx'
-import { towerBoostDeg, sunDiscFraction } from '../../lib/physics.js'
+import { towerBoostDeg, sunDiscFraction, MAX_TOWER_M } from '../../lib/physics.js'
 
-/** Tower height (numeric input, 1-20 m), panel tilt slider (0-90 deg) and panel area slider (1-50 m2). */
+/** Tower height (numeric input, 1-150 m), panel tilt slider (0-90 deg) and panel area slider (1-50 m2). */
 export default function HardwareConfig({ scenario, onPatch, calc }) {
   const [tower, setTower] = useState(String(scenario.tower))
   useEffect(() => { setTower(String(scenario.tower)) }, [scenario.tower])
-  const t = parseFloat(tower), bad = tower !== '' && !(t >= 1 && t <= 20)
+  const t = parseFloat(tower), bad = tower !== '' && !(t >= 1 && t <= MAX_TOWER_M)
   const commit = () => {
     if (!(t >= 1)) return setTower(String(scenario.tower))
-    const v = Math.min(20, Math.max(1, Math.round(t * 2) / 2))
+    const v = Math.min(MAX_TOWER_M, Math.max(1, Math.round(t * 2) / 2))
     setTower(String(v)); onPatch({ tower: v })
   }
 
@@ -25,7 +25,7 @@ export default function HardwareConfig({ scenario, onPatch, calc }) {
     <div className="space-y-3.5">
       <label className="block">
         <Label right={<span className="num text-[10px]">horizon +{towerBoostDeg(scenario.tower).toFixed(3)}°</span>}>Tower height (m)</Label>
-        <input type="number" min="1" max="20" step="0.5" value={tower} onChange={(e) => setTower(e.target.value)} onBlur={commit}
+        <input type="number" min="1" max={MAX_TOWER_M} step="0.5" value={tower} onChange={(e) => setTower(e.target.value)} onBlur={commit}
           onKeyDown={(e) => e.key === 'Enter' && commit()} className={`num w-full ${bad ? '!border-nogo' : ''}`} aria-invalid={bad} aria-label="Tower height in metres" />
       </label>
       <div>

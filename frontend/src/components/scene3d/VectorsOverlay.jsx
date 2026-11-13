@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { sky } from './sky.js'
 import { surfacePoint } from './MoonSphere.jsx'
+import { mastDrawHeight } from '../../lib/physics.js'
 
 const RAY_LENGTH = 2.3
 const Y = new THREE.Vector3(0, 1, 0)
@@ -15,7 +16,7 @@ const Y = new THREE.Vector3(0, 1, 0)
 function Rays({ lat, lon, tower, getLive }) {
   const sunRef = useRef(), earthRef = useRef()
   const geom = useMemo(() => { const g = new THREE.CylinderGeometry(1, 1, 1, 8, 1, true); g.translate(0, 0.5, 0); return g }, [])
-  const base = useMemo(() => surfacePoint(lat, lon, 0.035 + tower * 0.0045 + 0.01), [lat, lon, tower]) // mast tip
+  const base = useMemo(() => surfacePoint(lat, lon, mastDrawHeight(tower) + 0.01), [lat, lon, tower]) // mast tip
   const tmp = useMemo(() => new THREE.Vector3(), [])
   useFrame(({ camera }) => {
     const live = getLive()

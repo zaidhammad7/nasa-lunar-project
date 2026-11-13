@@ -470,12 +470,13 @@ def explain(m: dict, pred: dict, score_default_profile: dict, weights_tuple: tup
     }
 
 
-def confidence(m: dict, pred: dict, sources: dict, rule_class: str, safety: str) -> dict:
+def confidence(m: dict, pred: dict, sources: dict, rule_class: str, safety: str, ood_m: dict | None = None) -> dict:
     """Prediction interval, class confidence, out-of-distribution check and a coarse level."""
     rmse, basis = _cv_rmse()
     score = pred["score"]
     ds = _dataset()
-    ood = [f for f in FEATURES if not ds[f].min() - OOD_TOLERANCE.get(f, 0.0) <= m[f] <= ds[f].max() + OOD_TOLERANCE.get(f, 0.0)]
+    om = ood_m or m  # out-of-distribution is judged on mast-free features (see assess_features)
+    ood = [f for f in FEATURES if not ds[f].min() - OOD_TOLERANCE.get(f, 0.0) <= om[f] <= ds[f].max() + OOD_TOLERANCE.get(f, 0.0)]
     class_conf = float(pred["proba"].max())
     live = all(("offline" not in v) and ("fallback" not in v) for v in sources.values())
     agree = pred["ml_class"] == rule_class
@@ -644,8 +645,9 @@ GUARDRAILS = (
 )
 STATUS_LABELS = {"Optimal": "GO / Optimal", "Acceptable": "CONDITIONAL / Acceptable", "Hazardous": "NO-GO / Hazardous"}
 UNCERTAINTY_MODEL_FILE = "uncertainty_ensemble.joblib"
-# A mast raises every Sun/Earth elevation by up to 0.275 deg (20 m), which can push an angle feature just past the
-# dataset's [min, max]. That is a hardware effect, not an unfamiliar site, so angle features get this tolerance.
+# Maximum supported mast (m). The horizon dip it adds (acos(R/(R+h)): 0.275 deg at 20 m, 0.753 deg at 150 m) is a hardware
+# effect; out-of-distribution checks therefore use mast-free features (raw['_ood_ref']) and only this small angle tolerance.
+MAX_TOWER_HEIGHT_M = 150.0
 OOD_ANGLE_TOLERANCE_DEG = 0.35
 OOD_TOLERANCE = {"Sun_Avg_El": OOD_ANGLE_TOLERANCE_DEG, "Sun_Max_El": OOD_ANGLE_TOLERANCE_DEG,
                  "Earth_Avg_El": OOD_ANGLE_TOLERANCE_DEG, "Earth_Max_El": OOD_ANGLE_TOLERANCE_DEG}
@@ -812,6 +814,9 @@ def assess_features(lat: float, lon: float, raw: dict, sources: dict, warnings: 
     power-first mode can never relax it; Hazardous verdicts stay capped.
     """
     metrics = {f: float(raw[f]) for f in FEATURES}
+    # The model was trained on mast-free features, so 'is this site unfamiliar?' is asked of the mast-free values (raw['_ood_ref']);
+    # a taller mast legitimately raises the Sun/Earth angles and visibility and must not read as an out-of-range site.
+    ood_ref = {**metrics, **{f: float(v) for f, v in raw['_ood_ref'].items() if f in FEATURES}} if raw.get('_ood_ref') else metrics
     tele = {"sun_longest_dark_h": raw.get("Sun_Longest_Dark_h"), "sun_longest_lit_h": raw.get("Sun_Longest_Lit_h"),
             "earth_longest_blackout_h": raw.get("Earth_Longest_Blackout_h"),
             "slope_baseline_ew_m": None if raw.get("_dx_m") is None else round(2 * raw["_dx_m"], 1)}
@@ -845,7 +850,7 @@ def assess_features(lat: float, lon: float, raw: dict, sources: dict, warnings: 
         "HAZARD_PROB": (f"WARNING: P(Hazardous) = {p_haz:.2f} >= {HAZARD_PROB_THRESHOLD:g} risk-averse threshold; "
                         "class overridden to Hazardous."),
     }
-    ood_feats = [f for f in FEATURES if not _dataset()[f].min() - OOD_TOLERANCE.get(f, 0.0) <= metrics[f] <= _dataset()[f].max() + OOD_TOLERANCE.get(f, 0.0)]
+    ood_feats = [f for f in FEATURES if not _dataset()[f].min() - OOD_TOLERANCE.get(f, 0.0) <= ood_ref[f] <= _dataset()[f].max() + OOD_TOLERANCE.get(f, 0.0)]
     for _, msg, _ in triggered:
         warnings.append(msg)
     for layer in sf_layers:
@@ -859,7 +864,7 @@ def assess_features(lat: float, lon: float, raw: dict, sources: dict, warnings: 
     comp_p, ideal_p, limit_p = _components(metrics, prof)
     score_p = W_TERRAIN * comp_p["terrain"] + W_SOLAR * comp_p["solar"] + W_COMMS * comp_p["comms"]
     class_p = str(safety_class(metrics["Slope_deg"], score_p, ideal_p, limit_p))
-    conf = confidence(metrics, pred, sources, rule_class, safety)
+    conf = confidence(metrics, pred, sources, rule_class, safety, ood_m=ood_ref)
     flags = hazard_flags(metrics, tele, prof, sources, conf, lat)
     for layer in sf_layers:
         flags.insert(0, _flag(f"SAFETY_FACTOR_{layer}", "CRITICAL", sf_msgs[layer]))
