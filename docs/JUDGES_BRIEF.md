@@ -36,11 +36,30 @@ lander, and in view of Earth often enough to talk to it. Our tool scores all thr
 - The **offline engine** in the browser mirrors the backend, so the demo works without internet.
 - Out-of-range inputs are flagged ("outside model training range") instead of silently extrapolated.
 
+- **100-case data and system suite** passes: dataset integrity, derived-file consistency, physics, safety rules, API, input validation, and browser-vs-backend parity.
+
+## Validation against real NASA measurements
+We compared our 100 sites with NASA LRO LOLA **terrain-shadowed** illumination maps (60 m/px, averaged 2009–2013),
+which include shadowing by real crater walls and mountains (`python src/analysis/validate_illumination.py`).
+The map orientation was first verified: six known permanently shadowed craters (Shackleton, Haworth, Faustini…) all read 0% sunlight.
+
+| | Our model | NASA measured | Verdict |
+|---|---|---|---|
+| **Sunlight**, mean of 100 sites | 66% | 21% | **Over-estimated by ~45 points**; no correlation with reality (r = −0.25) |
+| **Earth visibility**, mean | 43% | 26% | Over-estimated by ~16 points; follows the real pattern moderately (r = 0.54) |
+| **Overall site ranking** | — | — | Largely preserved (rank correlation 0.88); our top 2 sites are also NASA's top 2 |
+
+What this means: our smooth-horizon model cannot see crater walls, so it gives every site about 60% sunlight. In reality,
+half of the 100 sites are lit less than 20% of the time. The **ranking still holds** because terrain safety dominates the
+score, and our #1 site (Auto_SP_099) stays near the top when real illumination is used (NASA: 35% Sun, 56% Earth).
+**Absolute sunlight and power numbers should not be used for mission design until terrain shadowing is added.**
+
 ## Honest limits
+- **Sunlight is over-estimated by ~45 points** compared with NASA terrain-shadowed maps (see above); Earth visibility by ~16 points.
 - The heatmap is **interpolated** from 100 scored sites. Only clicked points get a full evaluation.
 - Sun and Earth visibility use a **smooth-horizon** model: local crater-rim shadowing is not yet ray-traced from the elevation model.
 - Terrain for custom points comes from a **118 m/px** elevation model; a 20 m/px polar model would resolve smaller hazards.
 - Crater names mark crater **centres**, not NASA's exact Artemis III region boundaries.
 
 ## Next steps
-Horizon ray-tracing from the elevation model · higher-resolution polar terrain · water-ice proximity (permanently shadowed regions) · landing-ellipse scoring · traverse planning.
+Use NASA's measured illumination directly in the score (closes the 45-point gap) · horizon ray-tracing from the elevation model · higher-resolution polar terrain · water-ice proximity (permanently shadowed regions) · landing-ellipse scoring · traverse planning.

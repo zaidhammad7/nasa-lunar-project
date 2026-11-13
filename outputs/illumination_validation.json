@@ -1,0 +1,87 @@
+{
+ "reference": "NASA PDS LOLA AVGVISIB_85S_060M_201608 (+ _EARTH), terrain-shadowed, 2009-2013 average",
+ "orientation_check_psr_sun_pct": {
+  "Shackleton": 0.0,
+  "de Gerlache": 0.12,
+  "Faustini": 0.0,
+  "Haworth": 0.0,
+  "Shoemaker": 0.0,
+  "Sverdrup": 0.0
+ },
+ "n_sites": 100,
+ "sample_box_m": 300,
+ "sun": {
+  "mean_ours_pct": 66.22,
+  "mean_nasa_pct": 20.96,
+  "bias_pct_points": 45.26,
+  "mae_pct_points": 45.26,
+  "rmse_pct_points": 49.61,
+  "pearson_r": -0.251,
+  "spearman_rho": -0.373,
+  "within_10_points": 1
+ },
+ "earth": {
+  "mean_ours_pct": 42.64,
+  "mean_nasa_pct": 26.38,
+  "bias_pct_points": 16.27,
+  "mae_pct_points": 21.29,
+  "rmse_pct_points": 25.9,
+  "pearson_r": 0.538,
+  "spearman_rho": 0.463,
+  "within_10_points": 29
+ },
+ "sites_mostly_shadowed_in_reality": 50,
+ "sites_we_rate_50pct_sun_but_reality_below_20": 50,
+ "ranking_spearman_ours_vs_nasa_corrected": 0.878,
+ "top10_overlap": 5,
+ "our_best_site": {
+  "id": "Auto_SP_099",
+  "our_sun_pct": 58.4,
+  "nasa_sun_pct": 34.6,
+  "our_earth_pct": 67.7,
+  "nasa_earth_pct": 56.2,
+  "nasa_corrected_rank": 2
+ },
+ "best_sites_by_nasa_illumination": [
+  {
+   "Site_ID": "Auto_SP_075",
+   "NASA_Sun_Pct": 50.37,
+   "NASA_Earth_Pct": 78.34,
+   "Slope_deg": 4.81,
+   "NASA_Corrected_Score": 82.01,
+   "Our_Rank": 2
+  },
+  {
+   "Site_ID": "Auto_SP_099",
+   "NASA_Sun_Pct": 34.55,
+   "NASA_Earth_Pct": 56.23,
+   "Slope_deg": 2.97,
+   "NASA_Corrected_Score": 74.61,
+   "Our_Rank": 1
+  },
+  {
+   "Site_ID": "Auto_SP_073",
+   "NASA_Sun_Pct": 19.2,
+   "NASA_Earth_Pct": 73.98,
+   "Slope_deg": 5.91,
+   "NASA_Corrected_Score": 71.08,
+   "Our_Rank": 4
+  },
+  {
+   "Site_ID": "Auto_SP_072",
+   "NASA_Sun_Pct": 37.82,
+   "NASA_Earth_Pct": 91.11,
+   "Slope_deg": 12.26,
+   "NASA_Corrected_Score": 67.78,
+   "Our_Rank": 33
+  },
+  {
+   "Site_ID": "Auto_SP_051",
+   "NASA_Sun_Pct": 27.27,
+   "NASA_Earth_Pct": 45.0,
+   "Slope_deg": 2.19,
+   "NASA_Corrected_Score": 66.3,
+   "Our_Rank": 9
+  }
+ ]
+}
