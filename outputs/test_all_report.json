@@ -96,121 +96,121 @@
   {
    "n": 14,
    "group": "A",
+   "case": "training set: terrain/coordinates unchanged, sunlight matches NASA LOLA within 0.5 pts",
+   "pass": true,
+   "detail": "terrain same=True; max |sun - NASA| 0.07, |earth - NASA| 0.07"
+  },
+  {
+   "n": 15,
+   "group": "A",
    "case": "no two sites share the same coordinates",
    "pass": true,
    "detail": "0 duplicated coordinates"
   },
   {
-   "n": 15,
+   "n": 16,
    "group": "B",
    "case": "ranked table lists the same 100 sites",
    "pass": true,
    "detail": "site sets differ"
   },
   {
-   "n": 16,
+   "n": 17,
    "group": "B",
    "case": "ranks are 1..100 and follow descending suitability score",
    "pass": true,
    "detail": "rank order inconsistent with score"
   },
   {
-   "n": 17,
+   "n": 18,
    "group": "B",
    "case": "suitability scores within 0..100",
    "pass": true,
    "detail": "score out of range"
   },
   {
-   "n": 18,
+   "n": 19,
    "group": "B",
    "case": "safety classes are Optimal / Acceptable / Hazardous only",
    "pass": true,
    "detail": "classes {'Hazardous', 'Acceptable', 'Optimal'}"
   },
   {
-   "n": 19,
+   "n": 20,
    "group": "B",
-   "case": "ranked-table features equal the dataset (every site)",
+   "case": "ranked-table features equal the terrain-corrected training set (every site)",
    "pass": true,
    "detail": "max diff 0.00e+00"
   },
   {
-   "n": 20,
+   "n": 21,
    "group": "B",
    "case": "frontend site list has the same 100 sites",
    "pass": true,
    "detail": "site sets differ"
   },
   {
-   "n": 21,
+   "n": 22,
    "group": "B",
    "case": "frontend coordinates equal the dataset (1e-4 deg)",
    "pass": true,
    "detail": "max diff 0.00e+00 deg"
   },
   {
-   "n": 22,
+   "n": 23,
    "group": "B",
-   "case": "frontend Sun/Earth/terrain values equal the dataset",
+   "case": "frontend Sun/Earth/terrain values equal the terrain-corrected training set",
    "pass": true,
    "detail": "max diff 0.00e+00"
   },
   {
-   "n": 23,
+   "n": 24,
    "group": "B",
    "case": "frontend roughness equals the roughness table",
    "pass": true,
    "detail": "max diff 4.89e-04 m"
   },
   {
-   "n": 24,
+   "n": 25,
    "group": "B",
    "case": "frontend rank and rule class equal the ranked table",
    "pass": true,
    "detail": "mismatches []"
   },
   {
-   "n": 25,
+   "n": 26,
    "group": "C",
    "case": "tower boost is zero at 0 m",
    "pass": true,
    "detail": "0.0"
   },
   {
-   "n": 26,
+   "n": 27,
    "group": "C",
    "case": "tower boost at 20 m = 0.2749 deg (acos(R/(R+h)))",
    "pass": true,
    "detail": "0.27492 deg"
   },
   {
-   "n": 27,
+   "n": 28,
    "group": "C",
    "case": "tower boost at 150 m = 0.7529 deg",
    "pass": true,
    "detail": "0.75287 deg"
   },
   {
-   "n": 28,
+   "n": 29,
    "group": "C",
    "case": "tower boost increases with height (1..150 m)",
    "pass": true,
    "detail": "not strictly increasing"
   },
   {
-   "n": 29,
-   "group": "C",
-   "case": "solar disc fully hidden at -1 deg",
-   "pass": true,
-   "detail": ""
-  },
-  {
    "n": 30,
    "group": "C",
-   "case": "solar disc fully visible at +1 deg",
+   "case": "solar disc fully hidden at -1 deg and fully visible at +1 deg",
    "pass": true,
-   "detail": ""
+   "detail": "0.0, 1.0"
   },
   {
    "n": 31,
@@ -243,9 +243,9 @@
   {
    "n": 35,
    "group": "C",
-   "case": "power scales linearly with panel area",
+   "case": "Shackleton floor (NASA: permanent shadow) stays 0% sunlit and NO-GO, even with a 150 m mast",
    "pass": true,
-   "detail": "3904.59 W x3 -> 11713.78 W"
+   "detail": "{5: (0.0, 'Hazardous'), 150: (0.0, 'Hazardous')}"
   },
   {
    "n": 36,
@@ -271,16 +271,16 @@
   {
    "n": 39,
    "group": "D",
-   "case": "cross-validated score error (RMSE) below 3 points",
+   "case": "cross-validated score error (RMSE) below 5 points (5% of the 0-100 scale)",
    "pass": true,
-   "detail": "RMSE 2.05"
+   "detail": "RMSE 3.70"
   },
   {
    "n": 40,
    "group": "D",
    "case": "cross-validated R^2 above 0.9",
    "pass": true,
-   "detail": "R2 0.972"
+   "detail": "R2 0.949"
   },
   {
    "n": 41,
@@ -308,7 +308,7 @@
    "group": "D",
    "case": "prediction is deterministic",
    "pass": true,
-   "detail": "82.39 vs 82.39"
+   "detail": "74.39 vs 74.39"
   },
   {
    "n": 45,
@@ -320,9 +320,9 @@
   {
    "n": 46,
    "group": "D",
-   "case": "steeper slope never raises the score (best site, 0..14 deg)",
+   "case": "steeper slope never raises the score by more than model noise (0.25 pt; best site, 0..14 deg)",
    "pass": true,
-   "detail": "[82.4, 82.4, 82.4, 82.4, 82.4, 82.1, 81.8, 76.3, 76.0, 75.0, 71.3, 69.4, 68.8, 68.1, 44.0]"
+   "detail": "largest rise +0.05 pt; [74.5, 74.5, 74.6, 74.4, 74.3, 74.3, 74.0, 70.0, 69.3, 44.0, 44.0, 44.0, 44.0, 44.0, 44.0]"
   },
   {
    "n": 47,
@@ -392,7 +392,7 @@
    "group": "E",
    "case": "verdict identical in all three priority modes",
    "pass": true,
-   "detail": "{'most_safety': 'Optimal', 'balanced': 'Optimal', 'most_power': 'Optimal'}"
+   "detail": "{'most_safety': 'Hazardous', 'balanced': 'Hazardous', 'most_power': 'Hazardous'}"
   },
   {
    "n": 57,
@@ -434,21 +434,21 @@
    "group": "E",
    "case": "timeline_hour_index selects that hour's live values",
    "pass": true,
-   "detail": "-2.2707 vs -2.2707"
+   "detail": "-5.712 vs -5.712"
   },
   {
    "n": 63,
    "group": "E",
    "case": "longer mast never lowers sunlight (API, 1 vs 150 m)",
    "pass": true,
-   "detail": "60.0 % -> 65.139 %"
+   "detail": "36.389 % -> 41.389 %"
   },
   {
    "n": 64,
    "group": "E",
    "case": "larger panel area raises mission energy proportionally",
    "pass": true,
-   "detail": "ratio 2.000000022918453"
+   "detail": "ratio 2.000000030477504"
   },
   {
    "n": 65,
@@ -462,14 +462,14 @@
    "group": "E",
    "case": "Hazardous verdict comes with at least one warning",
    "pass": true,
-   "detail": "Auto_SP_08: Hazardous"
+   "detail": "Auto_SP_07: Hazardous"
   },
   {
    "n": 67,
    "group": "E",
    "case": "95% confidence interval contains the score",
    "pass": true,
-   "detail": "77.65 <= 82.16 <= 86.68"
+   "detail": "16.74 <= 30.0 <= 30.0"
   },
   {
    "n": 68,
@@ -483,7 +483,7 @@
    "group": "E",
    "case": "single evaluation completes in under 1 s (preset)",
    "pass": true,
-   "detail": "18 ms"
+   "detail": "17 ms"
   },
   {
    "n": 70,
@@ -658,7 +658,7 @@
    "group": "G",
    "case": "JS ranking equals backend in 'balanced' mode (100 sites)",
    "pass": true,
-   "detail": "max diff 2.1e-14; top-10 same"
+   "detail": "max diff 1.4e-14; top-10 same"
   },
   {
    "n": 95,

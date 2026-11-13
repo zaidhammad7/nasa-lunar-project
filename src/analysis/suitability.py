@@ -16,6 +16,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_CSV = REPO_ROOT / "final_lunar_dataset_fixed.csv"
 MODELS_DIR = REPO_ROOT / "models"
 OUTPUTS_DIR = REPO_ROOT / "outputs"
+# Original features with real terrain shadowing applied (built by build_corrected_dataset.py); used for training,
+# ranking and out-of-distribution checks. DATA_CSV itself is never modified.
+TRAINING_CSV = OUTPUTS_DIR / "terrain_corrected_dataset.csv"
 
 # Features fed to the ML models (Lat/Lon excluded: not physical drivers, and
 # longitude is circular).

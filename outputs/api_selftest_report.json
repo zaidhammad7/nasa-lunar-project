@@ -1,17 +1,17 @@
 {
-  "generated_utc": "2026-11-13T18:10:25.615738+00:00",
+  "generated_utc": "2026-11-13T18:26:27.782072+00:00",
   "passed": 107,
   "total": 107,
   "checks": [
     {
       "test": "GET /api/health 200",
       "pass": true,
-      "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor_active': True, 'warmup_latency_ms': 1478.6, 'dem_error': None, 'response_cache_entries': 5, 'schema_version': '3.1', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
+      "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor_active': True, 'warmup_latency_ms': 1631.3, 'dem_error': None, 'response_cache_entries': 5, 'schema_version': '3.1', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
     },
     {
       "test": "health has models_ready, dem_ready, cached_demo_sites, safety_factor_active, warmup_latency_ms",
       "pass": true,
-      "detail": "warm-up 1478.6 ms, 5/5 demo sites cached"
+      "detail": "warm-up 1631.3 ms, 5/5 demo sites cached"
     },
     {
       "test": "CORS header allows any origin",
@@ -66,7 +66,7 @@
     {
       "test": "200 OK",
       "pass": true,
-      "detail": "18 ms round trip incl. 1440-row timeline JSON"
+      "detail": "19 ms round trip incl. 1440-row timeline JSON"
     },
     {
       "test": "all dashboard output blocks present",
@@ -76,12 +76,12 @@
     {
       "test": "#1 decision fields",
       "pass": true,
-      "detail": "81.98 GO / Optimal conf 71.7%"
+      "detail": "67.8 GO / Optimal conf 80.3%"
     },
     {
       "test": "#1 95% CI brackets the score",
       "pass": true,
-      "detail": "[76.97, 86.99] +/-5.01"
+      "detail": "[58.06, 77.53] +/-9.74"
     },
     {
       "test": "#1 status label matches class",
@@ -111,7 +111,7 @@
     {
       "test": "#3 illumination_state follows the 0.265 deg disc rule",
       "pass": true,
-      "detail": "el -0.212 -> Partial Shadow"
+      "detail": "el -3.653 -> Total Darkness"
     },
     {
       "test": "#3 mission-window Sun_Visible_Pct matches timeline",
@@ -121,7 +121,7 @@
     {
       "test": "illumination state correct for all 1440 hours",
       "pass": true,
-      "detail": "direct 842, partial 54, dark 544"
+      "detail": "direct 501, partial 55, dark 884"
     },
     {
       "test": "power per hour = S0*eta*A*f*max(0,sin(el+tilt))",
@@ -131,7 +131,7 @@
     {
       "test": "#5 total energy = sum(P)/1000 kWh",
       "pass": true,
-      "detail": "4431.017 kWh"
+      "detail": "2693.75 kWh"
     },
     {
       "test": "#5 real-time/peak/average power",
@@ -141,22 +141,22 @@
     {
       "test": "#4 DTE status matches Earth elevation",
       "pass": true,
-      "detail": "Connected (Line-of-Sight Clear), Earth el 3.878"
+      "detail": "Connected (Line-of-Sight Clear), Earth el 2.064"
     },
     {
       "test": "#6 sun countdown matches independent horizon crossing",
       "pass": true,
-      "detail": "0d 5h 38m (expected 5.633 h)"
+      "detail": "3d 19h 3m (expected 91.047 h)"
     },
     {
       "test": "#6 formatted string 'Xd Xh Xm'",
       "pass": true,
-      "detail": "0d 5h 38m"
+      "detail": "3d 19h 3m"
     },
     {
       "test": "#6 earth countdown present",
       "pass": true,
-      "detail": "{'currently_above_horizon': True, 'event': 'set', 'hours': 375.608, 'days': 15, 'hours_component': 15, 'minutes': 36, 'formatted': '15d 15h 36m', 'event_time_utc': '2026-12-02T19:36:28Z', 'note': None}"
+      "detail": "{'currently_above_horizon': True, 'event': 'set', 'hours': 343.405, 'days': 14, 'hours_component': 7, 'minutes': 24, 'formatted': '14d 7h 24m', 'event_time_utc': '2026-12-01T11:24:19Z', 'note': None}"
     },
     {
       "test": "#6 only one of sunset/sunrise populated",
@@ -166,12 +166,12 @@
     {
       "test": "#7 justifications, warnings, component_scores",
       "pass": true,
-      "detail": "{'terrain': 100.0, 'solar': 69.96, 'comms': 77.57}"
+      "detail": "{'terrain': 100.0, 'solar': 38.64, 'comms': 63.96}"
     },
     {
       "test": "#8 top-5 alternatives satisfy user filters and exclude the selected site",
       "pass": true,
-      "detail": "[('Auto_SP_50', 57.046, 266.0), ('Auto_SP_36', 73.617, 173.2), ('Auto_SP_051', 184.698, 149.0)]"
+      "detail": "[]"
     },
     {
       "test": "#9 returns up to 3 windows",
@@ -186,7 +186,7 @@
     {
       "test": "#9 rank-1 window equals brute-force optimum",
       "pass": true,
-      "detail": "start 2026-11-17T00:00:00Z, 1953.519 kWh"
+      "detail": "start 2026-11-17T00:00:00Z, 1949.755 kWh"
     },
     {
       "test": "#9 windows are non-overlapping",
@@ -206,7 +206,7 @@
     {
       "test": "custom (lat, lon) evaluates without hanging (<= 3.6 s Horizons budget)",
       "pass": true,
-      "detail": "0.01 s; ephemeris source: JPL Horizons (cached hourly series)"
+      "detail": "0.02 s; ephemeris source: JPL Horizons (cached hourly series)"
     },
     {
       "test": "duration_days=10 -> 240 h and timestamp_utc -> hour 54",
@@ -221,7 +221,7 @@
     {
       "test": "slow Horizons -> analytic fallback returned within budget (never hangs)",
       "pass": true,
-      "detail": "210 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
+      "detail": "211 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
     },
     {
       "test": "coordinate equal to a preset snaps to that preset",
@@ -231,22 +231,22 @@
     {
       "test": "slope > 15 deg -> Hazardous, score <= 35, exact warning",
       "pass": true,
-      "detail": "35.0 {'triggered': ['TIP_OVER'], 'score_cap': 35.0, 'class_overridden': False}"
+      "detail": "2.19 {'triggered': ['TIP_OVER', 'PSR', 'DTE_BLACKOUT'], 'score_cap': 30.0, 'class_overridden': False}"
     },
     {
       "test": "test setup: found a 24 h window with Sun fully dark and Earth visible",
       "pass": true,
-      "detail": "257 candidate starts"
+      "detail": "325 candidate starts"
     },
     {
       "test": "Sun_Visible_Pct < 25 -> Hazardous, score <= 30, exact PSR warning",
       "pass": true,
-      "detail": "30.0 (raw ML 78.75) window start 2026-12-14T12:00:00Z"
+      "detail": "30.0 (raw ML 53.97) window start 2026-12-15T07:00:00Z"
     },
     {
       "test": "ood_warning raised when a feature leaves the training range",
       "pass": true,
-      "detail": "['Sun_Visible_Pct', 'Sun_Avg_El', 'Sun_Max_El', 'Earth_Visible_Pct', 'Earth_Avg_El']"
+      "detail": "['Sun_Max_El', 'Earth_Visible_Pct']"
     },
     {
       "test": "test setup: found a 24 h window with Earth fully blocked and Sun fully lit",
@@ -261,7 +261,7 @@
     {
       "test": "healthy site: no guardrail, uncapped",
       "pass": true,
-      "detail": "82.1 GO / Optimal"
+      "detail": "67.88 GO / Optimal"
     },
     {
       "test": "422 for lat outside -90..-85",
@@ -321,12 +321,12 @@
     {
       "test": "all required delta keys",
       "pass": true,
-      "detail": "{'delta_suitability_score': -1.39, 'delta_sunlight_hours': -155.0, 'delta_power_watts': 2148.4795, 'delta_peak_power_watts': 7023.0585, 'delta_energy_kwh': 1031.2702, 'delta_comms_uptime_pct': -33.5417, 'delta_slope_deg': 1.843}"
+      "detail": "{'delta_suitability_score': 2.46, 'delta_sunlight_hours': -88.0, 'delta_power_watts': 2062.8196, 'delta_peak_power_watts': 7182.1912, 'delta_energy_kwh': 990.1534, 'delta_comms_uptime_pct': -5.4167, 'delta_slope_deg': 1.843}"
     },
     {
       "test": "deltas equal (B - A) of the two standalone evaluations",
       "pass": true,
-      "detail": "d_suitability_score=-1.390, d_sunlight_hours=-155.000, d_power_watts=+2148.479, d_energy_kwh=+1031.270, d_comms_uptime_pct=-33.542, d_slope_deg=+1.843"
+      "detail": "d_suitability_score=+2.460, d_sunlight_hours=-88.000, d_power_watts=+2062.820, d_energy_kwh=+990.153, d_comms_uptime_pct=-5.417, d_slope_deg=+1.843"
     },
     {
       "test": "identical scenarios -> all deltas exactly 0",
@@ -351,7 +351,7 @@
     {
       "test": "cumulative energy monotone and equals sum(P)/1000",
       "pass": true,
-      "detail": "1775.183 kWh"
+      "detail": "1559.786 kWh"
     },
     {
       "test": "CSV total energy equals /api/evaluate total",
@@ -366,7 +366,7 @@
     {
       "test": "illumination_state values are valid",
       "pass": true,
-      "detail": "{'Direct Sunlight'}"
+      "detail": "{'Partial Shadow', 'Direct Sunlight', 'Total Darkness'}"
     },
     {
       "test": "dte_status values are valid",
@@ -376,7 +376,7 @@
     {
       "test": "returns stress_test + cross_validation",
       "pass": true,
-      "detail": "CV regressors: ['GradientBoosting', 'RandomForest', 'SVR', 'Ridge']"
+      "detail": "CV regressors: ['GradientBoosting', 'SVR', 'RandomForest', 'Ridge']"
     },
     {
       "test": "stress-test summary exposes the four panel verdicts",
@@ -386,7 +386,7 @@
     {
       "test": "14.7 deg site (below 15 deg limit) -> NO-GO via 13.5 deg operational limit",
       "pass": true,
-      "detail": "score 30.0 (before SF 30.0, Hazardous)"
+      "detail": "score 22.46 (before SF 22.46, Hazardous)"
     },
     {
       "test": "margin warning/justification present",
@@ -411,7 +411,7 @@
     {
       "test": "/api/sites top-5 respects the derated slope limit",
       "pass": true,
-      "detail": "{'max_slope_deg': 15.0, 'effective_max_slope_deg': 13.5, 'slope_safety_margin_deg': 1.5, 'min_sun_pct': 50.0, 'min_earth_pct': 40.0}"
+      "detail": "{'max_slope_deg': 15.0, 'effective_max_slope_deg': 13.5, 'slope_safety_margin_deg': 1.5, 'min_sun_pct': 25.0, 'min_earth_pct': 20.0}"
     },
     {
       "test": "P(Hazardous) >= 0.28 always yields Hazardous (20 probe sites)",
@@ -446,12 +446,12 @@
     {
       "test": "POST /api/warmup 200 with 5 demo sites",
       "pass": true,
-      "detail": "5.4 s total (DEM open included)"
+      "detail": "5.1 s total (DEM open included)"
     },
     {
       "test": "warm-up reports cache status + eval latency per site",
       "pass": true,
-      "detail": "A:7.9ms, B:8.4ms, C:7.9ms, D:9.4ms, E:7.9ms"
+      "detail": "A:8.0ms, B:9.3ms, C:9.1ms, D:9.9ms, E:9.5ms"
     },
     {
       "test": "warm-up: all 5 demo sites served from cache",
@@ -461,7 +461,7 @@
     {
       "test": "warm-up opened the LOLA DEM (dem_ready) or reported why not",
       "pass": true,
-      "detail": "{'ready': True, 'open_ms': 5260.2, 'read_ms': 62.1, 'warm_point': {'lat_deg': -88.3448, 'lon_deg_east': 225.8806}, 'elevation_m': -2553.5, '"
+      "detail": "{'ready': True, 'open_ms': 4969.8, 'read_ms': 43.2, 'warm_point': {'lat_deg': -88.3448, 'lon_deg_east': 225.8806}, 'elevation_m': -2553.5, '"
     },
     {
       "test": "health after warm-up: dem_ready mirrors warm-up, 5/5 cached",
@@ -491,7 +491,7 @@
     {
       "test": "score = balanced score + change of the weighted composite (flat site: safety > balanced > power)",
       "pass": true,
-      "detail": "most_safety 87.15, balanced 82.16, most_power 72.41"
+      "detail": "most_safety 77.85, balanced 67.88, most_power 54.06"
     },
     {
       "test": "safety verdict is identical in every mode",
@@ -501,7 +501,7 @@
     {
       "test": "MOST POWER cannot relax a NO-GO: derated-slope site stays Hazardous and <= 44",
       "pass": true,
-      "detail": "{'most_safety': 30.0, 'most_power': 30.0}"
+      "detail": "{'most_safety': 30.0, 'most_power': 11.64}"
     },
     {
       "test": "/api/sites re-ranks per mode (ranks 1..100 unique, top-5 sorted by mode score)",
@@ -511,7 +511,7 @@
     {
       "test": "top-5 list differs between MOST SAFETY and MOST POWER",
       "pass": true,
-      "detail": "{'most_safety': ['Auto_SP_099', 'Auto_SP_075', 'Auto_SP_50', 'Auto_SP_36', 'Auto_SP_073'], 'balanced': ['Auto_SP_099', 'Auto_SP_075', 'Auto_SP_50', 'Auto_SP_073', 'Auto_SP_36'], 'most_power': ['Auto_SP_099', 'Auto_SP_075', 'Auto_SP_50', 'Auto_SP_073', 'Auto_SP_080']}"
+      "detail": "{'most_safety': ['Auto_SP_075', 'Auto_SP_099', 'Auto_SP_061', 'Auto_SP_051', 'Auto_SP_058'], 'balanced': ['Auto_SP_075', 'Auto_SP_099', 'Auto_SP_072', 'Auto_SP_04', 'Auto_SP_051'], 'most_power': ['Auto_SP_075', 'Auto_SP_04', 'Auto_SP_072', 'Auto_SP_099', 'Auto_SP_03']}"
     },
     {
       "test": "sites carry display_class with the 13.5 deg derating (no site >13.5 deg is coloured safe)",
@@ -531,12 +531,12 @@
     {
       "test": "preset /api/evaluate incl. 1440-row timeline: median < 250 ms",
       "pass": true,
-      "detail": "median 18 ms, p95 19 ms"
+      "detail": "median 19 ms, p95 21 ms"
     },
     {
       "test": "hourly series generator < 50 ms",
       "pass": true,
-      "detail": "0.20 ms"
+      "detail": "0.27 ms"
     }
   ]
 }

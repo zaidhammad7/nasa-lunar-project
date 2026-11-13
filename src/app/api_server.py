@@ -171,8 +171,8 @@ class ScenarioIn(BaseModel):
     timestamp_utc: datetime | None = None
     # 3. Vehicle constraints
     max_slope_deg: float = Field(15.0, ge=0.0, le=15.0)
-    min_sun_pct: float = Field(50.0, ge=0.0, le=100.0)
-    min_earth_pct: float = Field(40.0, ge=0.0, le=100.0)
+    min_sun_pct: float = Field(ps.DEFAULT_MIN_SUN_PCT, ge=0.0, le=100.0)
+    min_earth_pct: float = Field(ps.DEFAULT_MIN_EARTH_PCT, ge=0.0, le=100.0)
     # 4-6. Hardware
     tower_height_m: float = Field(5.0, ge=1.0, le=ps.MAX_TOWER_HEIGHT_M)
     panel_tilt_deg: float = Field(45.0, ge=0.0, le=90.0)
@@ -242,8 +242,8 @@ def warmup() -> dict:
 
 
 @app.get("/api/sites")
-def sites(max_slope_deg: float = Query(15.0, ge=0, le=15), min_sun_pct: float = Query(50.0, ge=0, le=100),
-          min_earth_pct: float = Query(40.0, ge=0, le=100), lat: float = Query(-90.0, ge=-90, le=-85),
+def sites(max_slope_deg: float = Query(15.0, ge=0, le=15), min_sun_pct: float = Query(ps.DEFAULT_MIN_SUN_PCT, ge=0, le=100),
+          min_earth_pct: float = Query(ps.DEFAULT_MIN_EARTH_PCT, ge=0, le=100), lat: float = Query(-90.0, ge=-90, le=-85),
           lon: float = Query(0.0, ge=0, le=360),
           priority_mode: Literal["most_safety", "balanced", "most_power"] = Query("balanced")):
     """All 100 preset sites (with passes_filters) + the Top 5 that satisfy the vehicle filters (slope safety-derated)."""

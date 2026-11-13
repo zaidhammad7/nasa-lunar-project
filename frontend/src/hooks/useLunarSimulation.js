@@ -6,13 +6,13 @@ import { evaluate, compare, buildBody, checkHealth, onBackendStatus, backendStat
 import { offlineEvaluate } from '../api/mockSimulationData.js'
 import { siteById, rankSites } from '../lib/sites.js'
 import { timeStore } from '../lib/timeStore.js'
-import { BASELINE_START_MS, HOUR_MS, iso, modeAdjusted } from '../lib/physics.js'
+import { BASELINE_START_MS, HOUR_MS, iso, modeAdjusted, DEFAULT_MIN_SUN, DEFAULT_MIN_EARTH } from '../lib/physics.js'
 
 const START_ISO = iso(BASELINE_START_MS)
 
 const makeScenario = (id) => {
   const s = siteById(id)
-  return { siteId: id, lat: s.lat, lon: s.lon, startISO: START_ISO, durationHours: 1440, maxSlope: 15, minSun: 50, minEarth: 40, tower: 5, tilt: 80, area: 10 }
+  return { siteId: id, lat: s.lat, lon: s.lon, startISO: START_ISO, durationHours: 1440, maxSlope: 15, minSun: DEFAULT_MIN_SUN, minEarth: DEFAULT_MIN_EARTH, tower: 5, tilt: 80, area: 10 }
 }
 
 function useStored(key, initial) {

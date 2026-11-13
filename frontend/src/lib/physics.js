@@ -32,6 +32,8 @@ export const ROUGHNESS_WEIGHT = 0.5
 export const SCORE_BUFFER = 3.0
 export const ACCEPTABLE_MIN = 45.0
 export const SAFETY_CAP = 44.0
+export const DEFAULT_MIN_SUN = 25 // % of time; keep equal to predict_site.DEFAULT_MIN_SUN_PCT (real, terrain-shadowed sunlight)
+export const DEFAULT_MIN_EARTH = 20 // keep equal to predict_site.DEFAULT_MIN_EARTH_PCT
 
 const RAD = Math.PI / 180
 const DEG = 180 / Math.PI
@@ -143,6 +145,18 @@ export function analyticSeries(lat, lon) {
   const sun = new Float64Array(N_SAMPLES), earth = new Float64Array(N_SAMPLES)
   for (let i = 0; i < N_SAMPLES; i++) { sun[i] = sunElevation(lat, lon, i); earth[i] = earthElevation(lat, lon, i) }
   return { sun, earth }
+}
+
+export const PERMANENT_MARGIN_DEG = 1.6 // keep equal to terrain_illumination.PERMANENT_MARGIN_DEG
+/** Effective terrain horizon (deg): the fraction of samples with el > h equals visPct (mirrors terrain_illumination.horizon_for). */
+export function horizonFor(el, visPct) {
+  const p = clamp(visPct, 0, 100) / 100
+  let mx = -Infinity, mn = Infinity
+  for (const v of el) { if (v > mx) mx = v; if (v < mn) mn = v }
+  if (p <= 0) return mx + PERMANENT_MARGIN_DEG // never lit in NASA's 4-year record: stays dark in every season, with any mast
+  if (p >= 1) return Math.min(mn - PERMANENT_MARGIN_DEG, 0)
+  const s = Float64Array.from(el).sort(), q = (1 - p) * (s.length - 1), i = Math.floor(q)
+  return s[i] + (s[Math.min(i + 1, s.length - 1)] - s[i]) * (q - i) // linear-interpolated quantile, as numpy
 }
 
 // ---------------------------------------------------------------- calibration to a site's dataset statistics

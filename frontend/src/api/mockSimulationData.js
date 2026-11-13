@@ -3,9 +3,9 @@
 // It returns the same response shape as the backend; ML-only fields (model confidence, class probabilities)
 // are null and the score is the rule-based composite (flagged via data_sources / _source = "offline").
 import {
-  N_SAMPLES, BASELINE_START_MS, HOUR_MS, analyticSeries, calibrate, towerBoostDeg, sunDiscFraction, stateCode, STATE_NAMES,
+  N_SAMPLES, BASELINE_START_MS, HOUR_MS, analyticSeries, calibrate, horizonFor, towerBoostDeg, sunDiscFraction, stateCode, STATE_NAMES,
   powerWatts, nextEvent, components, compositeScore, MODES, terrainScore, effectiveMaxSlope, ROUGHNESS_WEIGHT, SCORE_BUFFER,
-  ACCEPTABLE_MIN, SAFETY_CAP, SLOPE_MARGIN_DEG, DTE_CONNECTED, DTE_BLOCKED, iso, clamp, MODE_KEYS,
+  ACCEPTABLE_MIN, SAFETY_CAP, DEFAULT_MIN_SUN, DEFAULT_MIN_EARTH, SLOPE_MARGIN_DEG, DTE_CONNECTED, DTE_BLOCKED, iso, clamp, MODE_KEYS,
 } from '../lib/physics.js'
 import { SITES, siteById, nearestPreset, rankSites, idw } from '../lib/sites.js'
 
@@ -20,7 +20,10 @@ function series(lat, lon, site) {
   const a = analyticSeries(lat, lon)
   const s = site
     ? { sun: calibrate(a.sun, site.sun, site.sunAvg, site.sunMax), earth: calibrate(a.earth, site.earth, site.earthAvg, site.earthMax), calibrated: true }
-    : { ...a, calibrated: false }
+    : (() => { // custom point: terrain shadowing from NASA-measured visibility interpolated from the nearby sites
+        const hs = horizonFor(a.sun, idw(lat, lon, 'sun')), he = horizonFor(a.earth, idw(lat, lon, 'earth'))
+        return { sun: a.sun.map((v) => v - hs), earth: a.earth.map((v) => v - he), calibrated: false }
+      })()
   cache.set(key, s)
   return s
 }
@@ -74,7 +77,7 @@ export function offlineEvaluate(body) {
   if (idx < 0 || idx >= L) throw err422(`timeline index ${idx} outside the mission window [0, ${L - 1}]`)
 
   const tower = body.tower_height_m ?? 5, tilt = body.panel_tilt_deg ?? 45, area = body.panel_area_m2 ?? 10
-  const maxSlope = body.max_slope_deg ?? 15, minSun = body.min_sun_pct ?? 50, minEarth = body.min_earth_pct ?? 40
+  const maxSlope = body.max_slope_deg ?? 15, minSun = body.min_sun_pct ?? DEFAULT_MIN_SUN, minEarth = body.min_earth_pct ?? DEFAULT_MIN_EARTH
   const boost = towerBoostDeg(tower)
   const ser = series(lat, lon, preset)
   const sunEff = ser.sun.map((v) => v + boost), earthEff = ser.earth.map((v) => v + boost)
@@ -95,7 +98,7 @@ export function offlineEvaluate(body) {
   const mlClass = slope <= 5 && ruleBal >= 65 ? 'Optimal' : slope <= 15 && ruleBal >= ACCEPTABLE_MIN ? 'Acceptable' : 'Hazardous'
   const guards = []
   if (slope > 15) guards.push(['TIP_OVER', 35, 'CRITICAL: Terrain slope exceeds 15Â° lander tip-over limit.'])
-  if (f.sunPct < 25) guards.push(['PSR', 30, 'CRITICAL: Permanently Shadowed Region (PSR) risk â€” prolonged crater shadowing and extreme cryogenic hazard.'])
+  if (f.sunPct < 25) guards.push(['PSR', 30, 'CRITICAL: Sun visible less than 25% of the time (terrain shadowing) — long dark periods and extreme cold; permanently shadowed region risk.'])
   if (f.earthPct < 10) guards.push(['DTE_BLACKOUT', 35, 'CRITICAL: Severe Direct-to-Earth (DTE) communication blackout.'])
   const eff = effectiveMaxSlope(maxSlope)
   const layers = []

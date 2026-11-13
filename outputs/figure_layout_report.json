@@ -2,8 +2,10 @@
   "dpi": 300,
   "text_overlaps": {
     "feature_importance.png": [],
-    "polar_suitability_map.png": [],
+    "polar_suitability_map.png": [
+      "'#1' overlaps '#5'"
+    ],
     "model_evaluation.png": []
   },
-  "total_overlaps": 0
+  "total_overlaps": 1
 }

@@ -26,6 +26,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "analysis"))
 import api_server  # noqa: E402
 import ephemeris_series as es  # noqa: E402
 import mission_simulator as ms  # noqa: E402
+import predict_site as ps  # noqa: E402
+import terrain_illumination as ti  # noqa: E402
 from suitability import OUTPUTS_DIR  # noqa: E402
 
 RESULTS: list[dict] = []
@@ -40,6 +42,12 @@ def check(name: str, ok: bool, detail: str = "") -> bool:
 
 def iso(h: float) -> str:
     return (T0 + timedelta(hours=h)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def shadowed(series, lat, lon):
+    """Independent reference: the hourly series with NASA LOLA terrain shadowing (effective horizon) applied."""
+    sun, earth, _ = ti.correct(series.sun_el, series.earth_el, lat, lon)
+    return sun, earth
 
 
 def unit_vec(lat, lon):
@@ -67,9 +75,9 @@ def run() -> int:
         check("returns 100 sites", r.status_code == 200 and js["n_sites"] == 100 and len(js["sites"]) == 100)
         check("top-5 list has <= 5 entries and ranked order", 1 <= len(js["top5_filtered"]) <= 5
               and [s["rank"] for s in js["top5_filtered"]] == sorted(s["rank"] for s in js["top5_filtered"]))
-        q = {"max_slope_deg": 5, "min_sun_pct": 58, "min_earth_pct": 60, "lat": -86.0, "lon": 30.0}
+        q = {"max_slope_deg": 5, "min_sun_pct": 30, "min_earth_pct": 50, "lat": -86.0, "lon": 30.0}
         js = client.get("/api/sites", params=q).json()
-        ok = all(s["slope_deg"] <= 5 and s["Sun_Visible_Pct"] >= 58 and s["Earth_Visible_Pct"] >= 60 for s in js["top5_filtered"])
+        ok = all(s["slope_deg"] <= 5 and s["Sun_Visible_Pct"] >= 30 and s["Earth_Visible_Pct"] >= 50 for s in js["top5_filtered"])
         check("tight filters: every returned top-5 site satisfies all 3 constraints", ok and len(js["top5_filtered"]) > 0,
               f"{js['n_sites_passing_filters']} sites pass; top={[s['site_id'] for s in js['top5_filtered']]}")
         flagged = sum(s["passes_filters"] for s in js["sites"])
@@ -117,9 +125,10 @@ def run() -> int:
         check("timeline has 1440 hourly rows", len(sun) == 1440 and tl["hour_index"][-1] == 1439 and len(tl["timestamp_utc"]) == 1440)
         boost = math.degrees(math.acos(1737400.0 / (1737400.0 + 20.0)))
         base = es.get_hourly_series(-85.3109, 332.293, ms._dataset().iloc[98].to_dict(), mode="auto")
-        check("tower boost = acos(R/(R+h)) added to Sun elevation", np.allclose(sun, base.sun_el[:1440] + boost, atol=1e-3)
+        base_sun, base_earth = shadowed(base, -85.3109, 332.293)
+        check("tower boost = acos(R/(R+h)) added to Sun elevation", np.allclose(sun, base_sun[:1440] + boost, atol=1e-3)
               and abs(e["scenario"]["hardware"]["tower_horizon_boost_deg"] - boost) < 1e-4, f"boost {boost:.5f} deg at 20 m")
-        check("tower boost also applied to Earth", np.allclose(earth, base.earth_el[:1440] + boost, atol=1e-3))
+        check("tower boost also applied to Earth", np.allclose(earth, base_earth[:1440] + boost, atol=1e-3))
         so = e["solar_illumination_visibility"]
         el_now = sun[100]
         exp_state = "Direct Sunlight" if el_now >= 0.265 else "Total Darkness" if el_now <= -0.265 else "Partial Shadow"
@@ -130,7 +139,7 @@ def run() -> int:
         exp_states = np.where(sun >= 0.265, "Direct Sunlight", np.where(sun <= -0.265, "Total Darkness", "Partial Shadow"))
         check("illumination state correct for all 1440 hours", bool((states == exp_states).all()),
               f"direct {int((states == 'Direct Sunlight').sum())}, partial {int((states == 'Partial Shadow').sum())}, dark {int((states == 'Total Darkness').sum())}")
-        sun_x = base.sun_el[:1440] + boost  # unrounded elevations (the timeline carries 4 decimals, ~0.005 W of rounding)
+        sun_x = base_sun[:1440] + boost  # unrounded elevations (the timeline carries 4 decimals, ~0.005 W of rounding)
         f = np.clip((sun_x + 0.265) / 0.53, 0, 1)
         P_ref = 1361.0 * 0.30 * 12.5 * f * np.maximum(0, np.sin(np.radians(sun_x + 88.0)))
         check("power per hour = S0*eta*A*f*max(0,sin(el+tilt))", np.allclose(np.array(tl["power_watts"]), P_ref, atol=2e-3),
@@ -178,7 +187,8 @@ def run() -> int:
         row["Site_ID"] = "Auto_SP_075"
         ser = es.get_hourly_series(row["Lat"], row["Lon"], row, mode="auto")
         bo = ms.tower_boost_deg(10)
-        se, ee = ser.sun_el + bo, ser.earth_el + bo
+        s_sh, e_sh = shadowed(ser, row["Lat"], row["Lon"])
+        se, ee = s_sh + bo, e_sh + bo
         Pw = ms.power_watts(se, 20, 80)
         L = 240
         best = []
@@ -230,15 +240,16 @@ def run() -> int:
         msg = "CRITICAL: Terrain slope exceeds 15° lander tip-over limit."
         check("slope > 15 deg -> Hazardous, score <= 35, exact warning", pd_["Safety_Class"] == "Hazardous"
               and pd_["Suitability_Score"] <= 35.0 and msg in r["xai_and_hazard_alerts"]["warnings"], f"{pd_['Suitability_Score']} {pd_['guardrails']}")
-        ser99 = es.get_hourly_series(-85.3109, 332.293, mode="auto")
+        ser99 = es.get_hourly_series(-85.3109, 332.293, ms._dataset().iloc[98].to_dict(), mode="auto")
+        s99, e99 = shadowed(ser99, -85.3109, 332.293)
         b1 = ms.tower_boost_deg(1)
-        dark_ok = [i for i in range(0, 1417) if (ser99.sun_el[i:i + 24] + b1 <= 0).all() and (ser99.earth_el[i:i + 24] + b1 > 0).all()]
+        dark_ok = [i for i in range(0, 1417) if (s99[i:i + 24] + b1 <= 0).all() and (e99[i:i + 24] + b1 > 0).all()]
         check("test setup: found a 24 h window with Sun fully dark and Earth visible", len(dark_ok) > 0, f"{len(dark_ok)} candidate starts")
         dark_start = dark_ok[len(dark_ok) // 2] if dark_ok else 0
         r = client.post("/api/evaluate", json={"site_id": "Auto_SP_099", "tower_height_m": 1, "start_datetime_utc": iso(dark_start),
                                                 "duration_hours": 24}).json()
         pd_ = r["primary_landing_decision"]
-        psr = "CRITICAL: Permanently Shadowed Region (PSR) risk — prolonged crater shadowing and extreme cryogenic hazard."
+        psr = next(msg for code, *_rest, msg in ps.GUARDRAILS if code == "PSR")
         check("Sun_Visible_Pct < 25 -> Hazardous, score <= 30, exact PSR warning", pd_["Safety_Class"] == "Hazardous"
               and pd_["Suitability_Score"] <= 30.0 and psr in r["xai_and_hazard_alerts"]["warnings"]
               and r["solar_illumination_visibility"]["Sun_Visible_Pct"] == 0.0, f"{pd_['Suitability_Score']} (raw ML {pd_['Suitability_Score_raw_ml']}) window start {iso(dark_start)}")
@@ -402,7 +413,7 @@ def run() -> int:
         check("changed parameters miss the cache and are computed correctly", r.headers.get("x-cache") == "MISS" and r.json()["scenario"]["hardware"]["tower_height_m"] == 7.5)
 
         print("\n[9d] Optimisation priority modes")
-        ev = {m: client.post("/api/evaluate", json={"site_id": "Auto_SP_099", "priority_mode": m, "duration_hours": 240}).json()
+        ev = {m: client.post("/api/evaluate", json={"site_id": "Auto_SP_099", "priority_mode": m, "duration_hours": 1440}).json()
               for m in ("most_safety", "balanced", "most_power")}
         pdm = {m: ev[m]["primary_landing_decision"] for m in ev}
         check("mode weights are 60/25/15, 40/35/25, 20/60/20", pdm["most_safety"]["mode_weights"] == {"terrain": 0.6, "solar": 0.25, "comms": 0.15}

@@ -1,6 +1,9 @@
 """Validate our Sun / Earth visibility against NASA LRO LOLA terrain-shadowed illumination maps.
 
 Reference data (NASA PDS Geosciences Node, LOLA team; Mazarico et al. 2011 method, 2016 release):
+Before the fix our smooth-horizon features over-estimated sunlight by ~45 points; the app now applies NASA's terrain
+shadowing (terrain_illumination.py), and this script reports both the original gap and the corrected agreement.
+
   AVGVISIB_85S_060M_201608.IMG        average visible fraction of the solar disc, 2009-07 .. 2013-07
   AVGVISIB_85S_060M_201608_EARTH.IMG  average visible fraction of the Earth disc, same period
   60 m/px polar stereographic, centre -90 deg, INT16, value = DN * 0.00004 (0 = permanent shadow).
@@ -16,60 +19,23 @@ Writes outputs/illumination_validation.json, outputs/illumination_validation.csv
 from __future__ import annotations
 
 import json
-import math
-import urllib.request
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[2]
-RAW = ROOT / "data" / "lola_illumination"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import terrain_illumination as ti  # noqa: E402  (map reading + projection shared with the live scoring)
+from suitability import TRAINING_CSV  # noqa: E402
+
+ROOT = ti.ROOT
 OUT = ROOT / "outputs"
-BASE_URL = "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/extras/illumination/img/"
-FILES = {"sun": "avgvisib_85s_060m_201608.img", "earth": "avgvisib_85s_060m_201608_earth.img"}
-N_PIX = 5058              # lines = samples
-PIX_M = 60.0              # m / pixel
-CENTER_PIX = 2528.5       # LINE/SAMPLE_PROJECTION_OFFSET (pole)
-DN_SCALE = 0.00004        # visible fraction = DN * scale
-R_MOON_M = 1_737_400.0
-WINDOW_PX = 2             # average a (2*2+1)^2 = 5x5 px (300 m) box, comparable to the 118 m-DEM site footprint
-SHADOWED_LIMIT_PCT = 20.0 # "mostly shadowed" in reality
+SHADOWED_LIMIT_PCT = 20.0  # "mostly shadowed" in reality
 # Known permanently shadowed crater centres (IAU) used to verify the map orientation before any comparison.
 PSR_CHECK = {"Shackleton": (-89.67, 129.78), "de Gerlache": (-88.5, 272.9), "Faustini": (-87.3, 77.0),
              "Haworth": (-86.9, 356.0), "Shoemaker": (-88.1, 44.9), "Sverdrup": (-88.5, 208.0)}
-
-
-def download() -> dict[str, Path]:
-    """Fetch the two maps once into data/lola_illumination/."""
-    RAW.mkdir(parents=True, exist_ok=True)
-    paths = {}
-    for key, name in FILES.items():
-        p = RAW / name
-        if not p.exists():
-            print(f"downloading {name} (51 MB) ...")
-            urllib.request.urlretrieve(BASE_URL + name, p)
-        paths[key] = p
-    return paths
-
-
-def open_map(path: Path) -> np.memmap:
-    return np.memmap(path, dtype="<i2", mode="r", shape=(N_PIX, N_PIX))
-
-
-def latlon_to_pixel(lat: float, lon: float) -> tuple[float, float]:
-    """South polar stereographic (PDS LOLA convention): line, sample (0-based, fractional)."""
-    rho = 2 * R_MOON_M * math.tan(math.pi / 4 + math.radians(lat) / 2)
-    x, y = rho * math.sin(math.radians(lon)), rho * math.cos(math.radians(lon))
-    return CENTER_PIX - y / PIX_M, CENTER_PIX + x / PIX_M
-
-
-def sample_pct(m: np.memmap, lat: float, lon: float, half: int = WINDOW_PX) -> float:
-    """Mean visible fraction (%) in a (2*half+1)^2 pixel box around the point."""
-    line, samp = latlon_to_pixel(lat, lon)
-    i, j = int(round(line)), int(round(samp))
-    box = np.asarray(m[i - half:i + half + 1, j - half:j + half + 1], dtype=float)
-    return float(box.mean() * DN_SCALE * 100)
+sample_pct = ti.sample_pct
 
 
 def solar_score(vis, max_el):
@@ -81,8 +47,8 @@ def comms_score(vis, avg_el):
 
 
 def run() -> dict:
-    paths = download()
-    sun_m, earth_m = open_map(paths["sun"]), open_map(paths["earth"])
+    ti.download()
+    sun_m, earth_m = ti._map("sun"), ti._map("earth")
 
     # 1. Orientation check: every known permanently shadowed crater must read ~0 % sunlight.
     psr = {k: round(sample_pct(sun_m, *v, half=1), 2) for k, v in PSR_CHECK.items()}
@@ -114,13 +80,25 @@ def run() -> dict:
                 "spearman_rho": round(float(ours.rank().corr(nasa.rank())), 3),
                 "within_10_points": int((d.abs() <= 10).sum())}
 
+    after = None
+    if TRAINING_CSV.exists():  # the features the app now scores with (terrain shadowing applied)
+        tr = pd.read_csv(TRAINING_CSV).set_index("Site_ID").loc[ds["Site_ID"]]
+        after = {"sun": stats(tr["Sun_Visible_Pct"].reset_index(drop=True), ds["NASA_Sun_Pct"]),
+                 "earth": stats(tr["Earth_Visible_Pct"].reset_index(drop=True), ds["NASA_Earth_Pct"]),
+                 "note": ("After the fix the long-run averages match NASA by construction (the effective horizon is "
+                          "fitted to NASA's value at each point), so this is a consistency check, not an independent test. "
+                          "What remains approximate is the hour-by-hour timing (one horizon height for all directions).")}
+
     top_ours = set(ds.nsmallest(10, "Our_Rank")["Site_ID"])
     top_nasa = set(ds.nsmallest(10, "NASA_Corrected_Rank")["Site_ID"])
     best = ds.loc[ds["Our_Rank"].idxmin()]
     report = {
         "reference": "NASA PDS LOLA AVGVISIB_85S_060M_201608 (+ _EARTH), terrain-shadowed, 2009-2013 average",
         "orientation_check_psr_sun_pct": psr,
-        "n_sites": int(len(ds)), "sample_box_m": int((2 * WINDOW_PX + 1) * PIX_M),
+        "n_sites": int(len(ds)), "sample_box_m": int((2 * ti.WINDOW_PX + 1) * ti.PIX_M),
+        "before_fix_smooth_horizon": {"sun": stats(ds["Sun_Visible_Pct"], ds["NASA_Sun_Pct"]),
+                                      "earth": stats(ds["Earth_Visible_Pct"], ds["NASA_Earth_Pct"])},
+        "after_fix_terrain_shadowed": after,
         "sun": stats(ds["Sun_Visible_Pct"], ds["NASA_Sun_Pct"]),
         "earth": stats(ds["Earth_Visible_Pct"], ds["NASA_Earth_Pct"]),
         "sites_mostly_shadowed_in_reality": int((ds["NASA_Sun_Pct"] < SHADOWED_LIMIT_PCT).sum()),
@@ -160,6 +138,6 @@ def _plot(ds: pd.DataFrame, rep: dict) -> None:
 
 if __name__ == "__main__":
     r = run()
-    print(json.dumps({k: r[k] for k in ("orientation_check_psr_sun_pct", "sun", "earth", "sites_mostly_shadowed_in_reality",
+    print(json.dumps({k: r[k] for k in ("orientation_check_psr_sun_pct", "before_fix_smooth_horizon", "after_fix_terrain_shadowed", "sites_mostly_shadowed_in_reality",
                                          "sites_we_rate_50pct_sun_but_reality_below_20", "ranking_spearman_ours_vs_nasa_corrected",
                                          "top10_overlap", "our_best_site", "best_sites_by_nasa_illumination")}, indent=1))

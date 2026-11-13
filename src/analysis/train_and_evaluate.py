@@ -30,7 +30,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from suitability import CLASSES, DATA_CSV, FEATURES, MODELS_DIR, OUTPUTS_DIR, add_labels  # noqa: E402
+from suitability import CLASSES, DATA_CSV, FEATURES, MODELS_DIR, OUTPUTS_DIR, TRAINING_CSV, add_labels  # noqa: E402
 
 SEED = 42
 N_SPLITS = 5
@@ -180,7 +180,9 @@ def plot_evaluation(y, oof, labels, oof_cls, path):
 def main() -> None:
     MODELS_DIR.mkdir(exist_ok=True)
     OUTPUTS_DIR.mkdir(exist_ok=True)
-    df = add_labels(pd.read_csv(DATA_CSV))
+    src = TRAINING_CSV if TRAINING_CSV.exists() else DATA_CSV
+    print(f"training data: {src.name}")
+    df = add_labels(pd.read_csv(src))
     X, y, labels = df[FEATURES], df["Suitability_Score"].to_numpy(), df["Safety_Class"].to_numpy()
     print("Class counts:", df["Safety_Class"].value_counts().to_dict())
 

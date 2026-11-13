@@ -1,42 +1,42 @@
 {
   "regressors": {
     "GradientBoosting": {
-      "R2_mean": 0.97204,
-      "R2_std": 0.00781,
-      "RMSE_mean": 2.05039,
-      "RMSE_std": 0.4555,
-      "MAE_mean": 1.58574,
-      "MAE_std": 0.32497
-    },
-    "RandomForest": {
-      "R2_mean": 0.95213,
-      "R2_std": 0.01829,
-      "RMSE_mean": 2.65476,
-      "RMSE_std": 0.68612,
-      "MAE_mean": 2.13291,
-      "MAE_std": 0.48892
+      "R2_mean": 0.9488,
+      "R2_std": 0.01763,
+      "RMSE_mean": 3.69948,
+      "RMSE_std": 0.69268,
+      "MAE_mean": 2.64946,
+      "MAE_std": 0.41906
     },
     "SVR": {
-      "R2_mean": 0.9389,
-      "R2_std": 0.05469,
-      "RMSE_mean": 2.68401,
-      "RMSE_std": 1.44365,
-      "MAE_mean": 1.59628,
-      "MAE_std": 0.65072
+      "R2_mean": 0.91949,
+      "R2_std": 0.07601,
+      "RMSE_mean": 4.07695,
+      "RMSE_std": 2.17008,
+      "MAE_mean": 2.22939,
+      "MAE_std": 0.80354
+    },
+    "RandomForest": {
+      "R2_mean": 0.92618,
+      "R2_std": 0.03143,
+      "RMSE_mean": 4.39819,
+      "RMSE_std": 0.82945,
+      "MAE_mean": 3.14046,
+      "MAE_std": 0.59393
     },
     "Ridge": {
-      "R2_mean": 0.68431,
-      "R2_std": 0.20622,
-      "RMSE_mean": 6.71348,
-      "RMSE_std": 2.61771,
-      "MAE_mean": 4.65309,
-      "MAE_std": 0.66889
+      "R2_mean": 0.79936,
+      "R2_std": 0.14127,
+      "RMSE_mean": 7.15658,
+      "RMSE_std": 2.54889,
+      "MAE_mean": 4.94391,
+      "MAE_std": 0.41218
     }
   },
   "classifier": {
-    "accuracy_mean": 0.97,
-    "accuracy_std": 0.039999999999999994,
-    "macro_f1_mean": 0.9687134502923976,
-    "macro_f1_std": 0.045383281978010954
+    "accuracy_mean": 0.8699999999999999,
+    "accuracy_std": 0.05999999999999997,
+    "macro_f1_mean": 0.7681208461425852,
+    "macro_f1_std": 0.17946822800308004
   }
 }

@@ -36,7 +36,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ephemeris_series import (START_TIME, STEP, STEP_HOURS, STOP_TIME, get_hourly_series, load_terrain_cache,
                               save_terrain_cache,  # noqa: E402
                               series_stats)
-from suitability import (ACCEPTABLE_MIN_SCORE, DATA_CSV, FEATURES, MODELS_DIR, OUTPUTS_DIR, SLOPE_IDEAL_DEG, SLOPE_LIMIT_DEG,  # noqa: E402
+import terrain_illumination  # noqa: E402
+from suitability import (ACCEPTABLE_MIN_SCORE, DATA_CSV, TRAINING_CSV, FEATURES, MODELS_DIR, OUTPUTS_DIR, SLOPE_IDEAL_DEG, SLOPE_LIMIT_DEG,  # noqa: E402
                          W_COMMS, W_SOLAR, W_TERRAIN, comms_score, safety_class, solar_score, terrain_score)
 
 SCHEMA_VERSION = "2.1"
@@ -51,10 +52,14 @@ _DEM_WARMING = False
 _DEM_HANDLE = None            # (dataset, geodetic->proj, proj->geodetic); opening costs ~15 s, so cached
 
 # ---- Lander profiles (ILLUSTRATIVE engineering envelopes - tune to your vehicle) ----
+# Visibility minima are set against REAL (terrain-shadowed, NASA LOLA) illumination, where the best South Pole sites in
+# the dataset are lit ~50% of the time; the old smooth-horizon values (50 / 40 %) excluded almost every site.
+DEFAULT_MIN_SUN_PCT = 25.0    # = the low-sunlight guardrail
+DEFAULT_MIN_EARTH_PCT = 20.0
 PROFILES = {
-    "generic":       {"max_slope_deg": 15.0, "min_sun_pct": 50.0, "min_earth_pct": 40.0},
-    "small_robotic": {"max_slope_deg": 10.0, "min_sun_pct": 40.0, "min_earth_pct": 30.0},
-    "crewed_heavy":  {"max_slope_deg": 5.0,  "min_sun_pct": 65.0, "min_earth_pct": 50.0},
+    "generic":       {"max_slope_deg": 15.0, "min_sun_pct": DEFAULT_MIN_SUN_PCT, "min_earth_pct": DEFAULT_MIN_EARTH_PCT},
+    "small_robotic": {"max_slope_deg": 10.0, "min_sun_pct": 20.0, "min_earth_pct": 15.0},
+    "crewed_heavy":  {"max_slope_deg": 5.0,  "min_sun_pct": 35.0, "min_earth_pct": 40.0},
 }
 DEFAULT_PROFILE = "generic"
 IDEAL_TO_LIMIT_RATIO = SLOPE_IDEAL_DEG / SLOPE_LIMIT_DEG  # "ideal" slope scales with the lander limit
@@ -128,7 +133,8 @@ def ephemeris_features(sun_el: np.ndarray, earth_el: np.ndarray) -> dict:
 def get_ephemeris_metrics(lat: float, lon: float) -> dict:
     """Sun/Earth visibility metrics from real Horizons data (cache first, live otherwise; raises on failure)."""
     s = get_hourly_series(lat, lon, mode="live")
-    return ephemeris_features(s.sun_el, s.earth_el)
+    sun, earth, _ = terrain_illumination.correct(s.sun_el, s.earth_el, lat, lon)  # real terrain shadowing (NASA LOLA)
+    return ephemeris_features(sun, earth)
 
 
 # ----------------------------------------------------------------------------
@@ -356,7 +362,8 @@ def interpolate_from_dataset(lat: float, lon: float, columns: list[str]) -> dict
 # ----------------------------------------------------------------------------
 @lru_cache(maxsize=1)
 def _dataset() -> pd.DataFrame:
-    return pd.read_csv(DATA_CSV)
+    """The training distribution: terrain-corrected features when built, else the original dataset."""
+    return pd.read_csv(TRAINING_CSV if TRAINING_CSV.exists() else DATA_CSV)
 
 
 @lru_cache(maxsize=1)
@@ -640,7 +647,8 @@ GUARDRAILS = (
     # code, feature, test, cap, message
     ("TIP_OVER", "Slope_deg", lambda v: v > 15.0, 35.0, "CRITICAL: Terrain slope exceeds 15° lander tip-over limit."),
     ("PSR", "Sun_Visible_Pct", lambda v: v < 25.0, 30.0,
-     "CRITICAL: Permanently Shadowed Region (PSR) risk — prolonged crater shadowing and extreme cryogenic hazard."),
+     "CRITICAL: Sun visible less than 25% of the time (terrain shadowing) — long dark periods and extreme cold; "
+     "permanently shadowed region risk."),
     ("DTE_BLACKOUT", "Earth_Visible_Pct", lambda v: v < 10.0, 35.0, "CRITICAL: Severe Direct-to-Earth (DTE) communication blackout."),
 )
 STATUS_LABELS = {"Optimal": "GO / Optimal", "Acceptable": "CONDITIONAL / Acceptable", "Hazardous": "NO-GO / Hazardous"}
@@ -749,7 +757,7 @@ def apply_safety_factor(df: pd.DataFrame, score, cls, p_haz, half_width, max_slo
 
 
 def ood_mask(df: pd.DataFrame) -> np.ndarray:
-    """True where any feature lies outside the [min, max] of final_lunar_dataset_fixed.csv."""
+    """True where any feature lies outside the [min, max] of the training dataset."""
     ds = _dataset()
     bad = np.zeros(len(df), dtype=bool)
     for f in FEATURES:

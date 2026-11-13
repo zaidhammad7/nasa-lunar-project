@@ -23,7 +23,7 @@ import csv
 import math
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from pathlib import Path
@@ -33,6 +33,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import predict_site as ps  # noqa: E402
+import terrain_illumination as ti  # noqa: E402
 from ephemeris_series import BASELINE_START, N_SAMPLES, STEP_HOURS, HourlySeries, get_hourly_series  # noqa: E402
 from suitability import DATA_CSV, FEATURES, OUTPUTS_DIR, comms_score, solar_score, terrain_score  # noqa: E402
 
@@ -72,8 +73,8 @@ class Scenario:
     timeline_hour_index: int | None = None       # hour inside the mission window (0-based)
     timestamp_utc: datetime | None = None        # alternative to timeline_hour_index
     max_slope_deg: float = 15.0
-    min_sun_pct: float = 50.0
-    min_earth_pct: float = 40.0
+    min_sun_pct: float = ps.DEFAULT_MIN_SUN_PCT
+    min_earth_pct: float = ps.DEFAULT_MIN_EARTH_PCT
     tower_height_m: float = 5.0
     panel_tilt_deg: float = 45.0
     panel_area_m2: float = 10.0
@@ -229,10 +230,11 @@ class Context:
     row: dict | None
     series: HourlySeries
     boost_deg: float
-    sun_eff: np.ndarray          # full 1441-sample baseline, tower boost applied
+    sun_eff: np.ndarray          # full 1441-sample baseline: terrain horizon removed, tower boost applied
     earth_eff: np.ndarray
     start_idx: int
     length: int                  # mission duration in samples/hours
+    terrain_horizon: dict = field(default_factory=dict)  # NASA LOLA effective-horizon correction (see terrain_illumination)
 
     @property
     def win(self) -> slice:
@@ -260,7 +262,8 @@ def build_context(s: Scenario, series_mode: str = "auto") -> Context:
                          f"{N_SAMPLES - start_idx} h")
     series = get_hourly_series(lat, lon, site_row=row, mode=series_mode)
     boost = tower_boost_deg(s.tower_height_m)
-    return Context(lat, lon, row, series, boost, series.sun_el + boost, series.earth_el + boost, start_idx, length)
+    sun_t, earth_t, horizon = ti.correct(series.sun_el, series.earth_el, lat, lon)  # real crater/mountain shadowing
+    return Context(lat, lon, row, series, boost, sun_t + boost, earth_t + boost, start_idx, length, horizon)
 
 
 def timeline_index(s: Scenario, ctx: Context) -> int:
@@ -373,7 +376,7 @@ def top_alternatives(lat: float, lon: float, s: Scenario, n: int = 5, exclude_si
             "note": "Ranked by the rule-based composite under the active priority mode; distances on a 1737.4 km sphere."}
 
 
-def sites_overview(max_slope_deg: float = 15.0, min_sun_pct: float = 50.0, min_earth_pct: float = 40.0,
+def sites_overview(max_slope_deg: float = 15.0, min_sun_pct: float = ps.DEFAULT_MIN_SUN_PCT, min_earth_pct: float = ps.DEFAULT_MIN_EARTH_PCT,
                    lat: float = -90.0, lon: float = 0.0, priority_mode: str = "balanced") -> dict:
     """All 100 preset sites (with passes_filters, mode score/rank) plus the filtered top 5 from (lat, lon)."""
     s = Scenario(lat=lat, lon=lon, max_slope_deg=max_slope_deg, min_sun_pct=min_sun_pct, min_earth_pct=min_earth_pct,
@@ -475,7 +478,8 @@ def evaluate_scenario(s: Scenario, include_timeline: bool = True, series_mode: s
                "analytic_calibrated": "analytic curve calibrated to dataset statistics",
                "analytic_model": "analytic physics model (uncalibrated fallback)"}[ctx.series.source]
     prof = ps.resolve_profile(None, s.max_slope_deg, s.min_sun_pct, s.min_earth_pct)
-    res = ps.assess_features(ctx.lat, ctx.lon, raw, {"ephemeris": eph_src, "terrain": terrain_src},
+    res = ps.assess_features(ctx.lat, ctx.lon, raw, {"ephemeris": eph_src, "terrain": terrain_src,
+                                                     "illumination": ctx.terrain_horizon.get("source", "smooth horizon")},
                              tw + list(ctx.series.notes), prof, explain_result=explain, priority_mode=s.priority_mode)
 
     f_sun = sun_disc_fraction(ctx.sun_eff)
@@ -533,7 +537,8 @@ def evaluate_scenario(s: Scenario, include_timeline: bool = True, series_mode: s
             "Sun_Visible_Pct": round(feats["Sun_Visible_Pct"], 3), "live_sun_elevation_deg": round(sun_now, 4),
             "Sun_Max_El": round(feats["Sun_Max_El"], 3), "Sun_Avg_El": round(feats["Sun_Avg_El"], 3),
             "sunlight_hours": sun_hours, "longest_dark_hours": feats["Sun_Longest_Dark_h"],
-            "tower_horizon_boost_deg": round(ctx.boost_deg, 5), "ephemeris_source": ctx.series.source},
+            "tower_horizon_boost_deg": round(ctx.boost_deg, 5), "ephemeris_source": ctx.series.source,
+            "terrain_horizon": ctx.terrain_horizon},
         "earth_communication_status": {
             "dte_status": DTE_CONNECTED if earth_now > 0 else DTE_BLOCKED,
             "Earth_Visible_Pct": round(feats["Earth_Visible_Pct"], 3), "live_earth_elevation_deg": round(earth_now, 4),
