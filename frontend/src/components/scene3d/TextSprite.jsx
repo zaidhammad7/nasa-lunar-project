@@ -20,7 +20,7 @@ export default function TextSprite({ text, color = '#f1f5f9', border = true, pos
   }, [text, color, border])
   useEffect(() => () => tex.dispose(), [tex])
   return (
-    <sprite position={position} scale={[height * aspect, height, 1]} renderOrder={10} center={anchorTop ? [0.5, 1.15] : [0.5, 0.5]}>
+    <sprite raycast={() => null} position={position} scale={[height * aspect, height, 1]} renderOrder={10} center={anchorTop ? [0.5, 1.15] : [0.5, 0.5]}>
       <spriteMaterial map={tex} sizeAttenuation={false} depthTest={false} transparent toneMapped={false} />
     </sprite>
   )

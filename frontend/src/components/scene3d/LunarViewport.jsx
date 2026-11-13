@@ -5,12 +5,14 @@ import * as THREE from 'three'
 import MoonSphere from './MoonSphere.jsx'
 import CelestialBodies, { SkyClock } from './CelestialBodies.jsx'
 import VectorsOverlay from './VectorsOverlay.jsx'
+import { HeatmapCap, CraterLabels } from './MapLayers.jsx'
 import CameraPill from '../controls/CameraPill.jsx'
 import { sky } from './sky.js'
 import { latLonToVec } from '../../lib/physics.js'
 import { perfFlag } from '../../lib/perf.js'
 
 const BASE_FOV = 42
+const MIN_CAMERA_RADIUS = 1.02 // scene units from the Moon's centre (~35 km above the surface)
 const DEG = 180 / Math.PI
 
 /** Smooth fly-to: frame-interpolated camera position, orbit target and field of view; any user drag cancels it. */
@@ -39,6 +41,9 @@ function CameraRig({ fly, controlsRef }) {
       g.pos.copy(aim).multiplyScalar(-3.5).addScaledVector(side, 1.9).add(new THREE.Vector3(0, 0, 0.9))
       g.target.copy(g.pos).addScaledVector(aim, 8)
       g.fov = sep < 30 ? 58 : 88 // widen so both bodies fit when they are far apart in the sky
+    } else if (fly.kind === 'cap') { // close view of the whole -85..-90 deg study cap (demo / heatmap)
+      g.pos.set(0, -1.34, 0.17)
+      g.target.set(0, -1, 0)
     } else { // south-pole view
       g.pos.set(0, -2.3, 0.95)
       g.target.set(0, -0.92, 0)
@@ -47,6 +52,8 @@ function CameraRig({ fly, controlsRef }) {
   }, [fly])
 
   useFrame((_, dt) => {
+    // keep the camera above the surface (OrbitControls' minDistance is measured from the target, not the Moon's centre)
+    if (camera.position.length() < MIN_CAMERA_RADIUS) camera.position.setLength(MIN_CAMERA_RADIUS)
     const g = goal.current, c = controlsRef.current
     if (!g.active || !c) return
     const k = 1 - Math.exp(-dt * 3.4)
@@ -57,11 +64,11 @@ function CameraRig({ fly, controlsRef }) {
     if (camera.position.distanceTo(g.pos) < 0.012 && c.target.distanceTo(g.target) < 0.012 && Math.abs(camera.fov - g.fov) < 0.2) g.active = false
   })
 
-  return <OrbitControls ref={controlsRef} makeDefault enableDamping dampingFactor={0.08} minDistance={1.04} maxDistance={4000}
+  return <OrbitControls ref={controlsRef} makeDefault enableDamping dampingFactor={0.08} minDistance={0.05} maxDistance={4000}
     rotateSpeed={0.7} zoomSpeed={0.9} onStart={() => { goal.current.active = false }} />
 }
 
-function Scene({ sites, showPresets, pins, rays, fly, onPick }) {
+function Scene({ sites, showPresets, pins, rays, fly, onPick, heatSites, showCraters }) {
   const controlsRef = useRef()
   return (
     <>
@@ -69,6 +76,8 @@ function Scene({ sites, showPresets, pins, rays, fly, onPick }) {
       <color attach="background" args={['#070b14']} />
       <CelestialBodies />
       <MoonSphere sites={sites} showPresets={showPresets} pins={pins} onPick={onPick} />
+      {heatSites && <HeatmapCap sites={heatSites} />}
+      {showCraters && <CraterLabels />}
       {!perfFlag('nolines') && <VectorsOverlay rays={rays} />}
       <CameraRig fly={fly} controlsRef={controlsRef} />
     </>
@@ -76,14 +85,14 @@ function Scene({ sites, showPresets, pins, rays, fly, onPick }) {
 }
 
 /** The 3-D viewport at true astronomical scale: a logarithmic depth buffer keeps the Moon (r = 1) and the Sun (86,105 units away) artefact-free. */
-export default function LunarViewport({ sites, showPresets, pins, rays, fly, onPick, onPreset, activePreset }) {
+export default function LunarViewport({ sites, showPresets, pins, rays, fly, onPick, onPreset, activePreset, heatSites, showCraters }) {
   return (
     <div className="relative h-full w-full">
       <Canvas shadows={!perfFlag('noshadow')} dpr={perfFlag('lowres') ? 1 : [1, 2]}
         gl={{ logarithmicDepthBuffer: true, antialias: true, powerPreference: 'high-performance' }}
         camera={{ position: [0, -2.8, 2.2], up: [0, 0, 1], fov: BASE_FOV, near: 0.01, far: 200000 }} style={{ cursor: 'crosshair' }}>
         <Suspense fallback={null}>
-          <Scene sites={sites} showPresets={showPresets} pins={pins} rays={rays} fly={fly} onPick={onPick} />
+          <Scene sites={sites} showPresets={showPresets} pins={pins} rays={rays} fly={fly} onPick={onPick} heatSites={heatSites} showCraters={showCraters} />
         </Suspense>
       </Canvas>
       <CameraPill active={activePreset} onPreset={onPreset} />

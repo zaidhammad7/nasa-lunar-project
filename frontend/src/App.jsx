@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import DashboardShell from './components/layout/DashboardShell.jsx'
 import TopHeader from './components/layout/TopHeader.jsx'
 import PanelToggles from './components/layout/PanelToggles.jsx'
@@ -15,6 +15,8 @@ import { Card } from './components/ui/primitives.jsx'
 import { useLunarSimulation } from './hooks/useLunarSimulation.js'
 import { useSolarPowerCalc } from './hooks/useSolarPowerCalc.js'
 import { useCsvExporter } from './hooks/useCsvExporter.js'
+import { useDemoTour } from './hooks/useDemoTour.js'
+import { HEAT_RANGE, rampColor } from './lib/heatmap.js'
 import { useTimeMeta, timeStore } from './lib/timeStore.js'
 import { warmup } from './api/lunarModelApi.js'
 import { sky } from './components/scene3d/sky.js'
@@ -32,6 +34,11 @@ export default function App() {
   calcRef.current = { A: calc, B: calcB }
   const meta = useTimeMeta()
   const csv = useCsvExporter(scn, mode, active, calc, sim.liveScore)
+  const [heatmap, setHeatmap] = useState(false)
+  const [craters, setCraters] = useState(true)
+  const demo = useDemoTour({ sim, setHeatmap, setCraters })
+  // Heatmap input: every scored site with its score in the current priority mode (re-interpolated when the mode changes)
+  const heatSites = useMemo(() => (heatmap ? sim.ranking.all.map((s) => ({ lat: s.lat, lon: s.lon, score: s.modeScore })) : null), [heatmap, sim.ranking])
 
   // ---- 3-D scene inputs: Site A (and Site B while comparing)
   const pins = useMemo(() => {
@@ -64,6 +71,10 @@ export default function App() {
     <>
       <Card title="Location" icon="📍" accent="text-earth">
         <SiteSelector scenario={scn} onSelect={sim.selectSite} onLatLon={(la, lo) => sim.setLatLon(la, lo)} showPresets={sim.showPresets} onTogglePresets={() => sim.setShowPresets(!sim.showPresets)} />
+        <div className="mt-2 space-y-2 text-[12.5px]">
+          <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" checked={heatmap} onChange={(e) => setHeatmap(e.target.checked)} />Suitability heatmap</label>
+          <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" checked={craters} onChange={(e) => setCraters(e.target.checked)} />Named craters (IAU)</label>
+        </div>
       </Card>
       <Card title="Priority & mission time" icon="🎚" accent="text-go">
         <div className="space-y-4">
@@ -79,8 +90,17 @@ export default function App() {
   const viewport = (
     <div className="relative h-full w-full">
       <LunarViewport sites={sim.ranking.all} showPresets={sim.showPresets} pins={pins} rays={rays} fly={sim.fly} activePreset={sim.activePreset}
-        onPick={(la, lo) => sim.setLatLon(la, lo, { fromPick: true })} onPreset={onPreset} />
+        onPick={(la, lo) => sim.setLatLon(la, lo, { fromPick: true })} onPreset={onPreset} heatSites={heatSites} showCraters={craters} />
       <PanelToggles panels={sim.panels} onToggle={sim.togglePanel} />
+      {heatmap && (
+        <div className="glass num absolute bottom-3 left-3 z-10 rounded-lg border border-line px-3 py-2 text-[10.5px] text-mute">
+          <div className="mb-1 text-ink">Suitability score</div>
+          <div className="h-2 w-40 rounded" style={{ background: `linear-gradient(90deg, rgb(${rampColor(HEAT_RANGE[0])}), rgb(${rampColor((HEAT_RANGE[0] + HEAT_RANGE[1]) / 2)}), rgb(${rampColor(HEAT_RANGE[1])}))` }} />
+          <div className="mt-0.5 flex justify-between"><span>≤{HEAT_RANGE[0]}</span><span>≥{HEAT_RANGE[1]}</span></div>
+          <div className="mt-1">interpolated from 100 scored sites</div>
+        </div>
+      )}
+      <button onClick={demo.toggle} className={`absolute bottom-3 right-3 z-10 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold shadow-lg ${demo.running ? 'border-nogo/60 bg-nogo/20 text-nogo' : 'border-earth/60 bg-earth/15 text-earth hover:bg-earth/25'}`}>{demo.running ? '■ Stop demo' : '▶ Judge demo'}</button>
       {(sim.toast || csv.note) && <div className="glass num absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-lg border border-line px-4 py-2 text-xs shadow-xl" role="status">{sim.toast || csv.note}</div>}
     </div>
   )
