@@ -15,7 +15,6 @@ import { Card } from './components/ui/primitives.jsx'
 import { useLunarSimulation } from './hooks/useLunarSimulation.js'
 import { useSolarPowerCalc } from './hooks/useSolarPowerCalc.js'
 import { useCsvExporter } from './hooks/useCsvExporter.js'
-import { useDemoTour } from './hooks/useDemoTour.js'
 import { HEAT_RANGE, rampColor } from './lib/heatmap.js'
 import { useTimeMeta, timeStore } from './lib/timeStore.js'
 import { warmup } from './api/lunarModelApi.js'
@@ -36,7 +35,6 @@ export default function App() {
   const csv = useCsvExporter(scn, mode, active, calc, sim.liveScore)
   const [heatmap, setHeatmap] = useState(false)
   const [craters, setCraters] = useState(true)
-  const demo = useDemoTour({ sim, setHeatmap, setCraters })
   // Heatmap input: every scored site with its score in the current priority mode (re-interpolated when the mode changes)
   const heatSites = useMemo(() => (heatmap ? sim.ranking.all.map((s) => ({ lat: s.lat, lon: s.lon, score: s.modeScore })) : null), [heatmap, sim.ranking])
 
@@ -54,8 +52,8 @@ export default function App() {
   const rays = useMemo(() => pins.map((p) => ({ key: p.key, lat: p.lat, lon: p.lon, tower: p.tower, getLive: getLive(p.key) })), [pins, getLive])
 
   const onWarmup = useCallback(async () => {
-    sim.showToast('Warming up DEM + demo sites…')
-    try { const r = await warmup(); sim.showToast(`Warm-up done in ${Math.round(r.total_ms)} ms · cache ${r.cached_demo_sites}/5 · DEM ${r.dem_ready ? 'ready' : 'unavailable'}`) } catch (e) { sim.showToast(`Warm-up failed: ${e.message}`) }
+    sim.showToast('Preloading terrain data and reference sites…')
+    try { const r = await warmup(); sim.showToast(`System ready in ${Math.round(r.total_ms)} ms · reference sites ${r.cached_demo_sites}/5 · terrain model ${r.dem_ready ? 'ready' : 'unavailable'}`) } catch (e) { sim.showToast(`Preload failed: ${e.message}`) }
   }, [sim])
 
   const onPreset = useCallback((kind) => {
@@ -100,7 +98,6 @@ export default function App() {
           <div className="mt-1">interpolated from 100 scored sites</div>
         </div>
       )}
-      <button onClick={demo.toggle} className={`absolute bottom-3 right-3 z-10 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold shadow-lg ${demo.running ? 'border-nogo/60 bg-nogo/20 text-nogo' : 'border-earth/60 bg-earth/15 text-earth hover:bg-earth/25'}`}>{demo.running ? '■ Stop demo' : '▶ Judge demo'}</button>
       {(sim.toast || csv.note) && <div className="glass num absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-lg border border-line px-4 py-2 text-xs shadow-xl" role="status">{sim.toast || csv.note}</div>}
     </div>
   )

@@ -41,9 +41,6 @@ function CameraRig({ fly, controlsRef }) {
       g.pos.copy(aim).multiplyScalar(-3.5).addScaledVector(side, 1.9).add(new THREE.Vector3(0, 0, 0.9))
       g.target.copy(g.pos).addScaledVector(aim, 8)
       g.fov = sep < 30 ? 58 : 88 // widen so both bodies fit when they are far apart in the sky
-    } else if (fly.kind === 'cap') { // close view of the whole -85..-90 deg study cap (demo / heatmap)
-      g.pos.set(0, -1.34, 0.17)
-      g.target.set(0, -1, 0)
     } else { // south-pole view
       g.pos.set(0, -2.3, 0.95)
       g.target.set(0, -0.92, 0)

@@ -6,7 +6,7 @@ Artemis is going to the lunar South Pole for water ice. The terrain there is ste
 and Earth often drops out of view. A good landing site has to be flat enough to land on, lit long enough to power the
 lander, and in view of Earth often enough to talk to it. Our tool scores all three, for any point, at any time.
 
-## What it does (try it: press **▶ Judge demo**, about 45 seconds)
+## What it does
 | Feature | What you see | Why it matters |
 |---|---|---|
 | **Real NASA Moon** | 3-D Moon at true scale (Moon, Earth and Sun at real sizes and distances), textured with NASA's CGI Moon Kit (LRO LROC colour + LOLA elevation) | Planners see the real South Pole, not an artist's sphere |

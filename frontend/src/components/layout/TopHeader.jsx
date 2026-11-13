@@ -12,7 +12,7 @@ function BackendBadge({ backend, loading, onWarmup }) {
     )
   }
   return (
-    <button onClick={onWarmup} title={h ? `models ${h.models_ready ? 'ready' : 'loading'} · DEM ${h.dem_ready ? 'ready' : 'opening'} · demo cache ${h.cached_demo_sites}/${h.demo_sites_total ?? 5} · warm-up ${h.warmup_latency_ms} ms · click to run POST /api/warmup` : 'backend live'}
+    <button onClick={onWarmup} title={h ? `models ${h.models_ready ? 'ready' : 'loading'} · DEM ${h.dem_ready ? 'ready' : 'opening'} · reference sites ${h.cached_demo_sites}/${h.demo_sites_total ?? 5} · preload ${h.warmup_latency_ms} ms · click to preload` : 'backend live'}
       className="num flex items-center gap-2 rounded-md border border-go/40 bg-go/10 px-2 py-1 text-[11px] text-go hover:bg-go/15">
       <i className={cx('h-2 w-2 rounded-full bg-go', loading && 'animate-pulse')} />BACKEND LIVE
       {h && <span className="hidden text-mute xl:inline">DEM {h.dem_ready ? '✓' : '…'} · cache {h.cached_demo_sites}/5 · SF {h.safety_factor_active ? '✓' : '✗'}</span>}
