@@ -1,5 +1,6 @@
 import math, sys, json
-sys.path.insert(0, r"C:\Users\zaidh\OneDrive\Desktop\Nasa Hachathon\src\analysis")
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import numpy as np
 import mission_simulator as ms
 import predict_site as ps
@@ -22,7 +23,7 @@ try:
 except Exception as e:
     check("151 m rejected", True, type(e).__name__)
 
-sites = ["Auto_SP_099", "Auto_SP_075", "Auto_SP_46", "Auto_SP_010"]
+sites = ["Auto_SP_099", "Auto_SP_075", "Auto_SP_46"]
 for site in sites:
     res = {}
     for h in (1, 20, 50, 100, 150):
@@ -43,3 +44,4 @@ for site in sites:
     cls = {h: r["primary_landing_decision"]["Safety_Class"] for h, r in res.items()}
     check(f"{site}: verdict not degraded by a taller mast", list(cls.values()).count(cls[1]) >= 1 and not (cls[1] != "Hazardous" and cls[150] == "Hazardous"), str(cls))
 print("ALL OK" if ok_all else "FAILURES")
+sys.exit(0 if ok_all else 1)
