@@ -1,12 +1,17 @@
 {
-  "generated_utc": "2026-11-13T11:43:15.838883+00:00",
-  "passed": 77,
-  "total": 77,
+  "generated_utc": "2026-11-13T12:50:57.062435+00:00",
+  "passed": 98,
+  "total": 98,
   "checks": [
     {
       "test": "GET /api/health 200",
       "pass": true,
-      "detail": "{'status': 'ok', 'dem_ready': False, 'schema_version': '3.0', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
+      "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor_active': True, 'warmup_latency_ms': 5395.0, 'dem_error': None, 'response_cache_entries': 5, 'schema_version': '3.1', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
+    },
+    {
+      "test": "health has models_ready, dem_ready, cached_demo_sites, safety_factor_active, warmup_latency_ms",
+      "pass": true,
+      "detail": "warm-up 5395.0 ms, 5/5 demo sites cached"
     },
     {
       "test": "CORS header allows any origin",
@@ -26,7 +31,7 @@
     {
       "test": "tight filters: every returned top-5 site satisfies all 3 constraints",
       "pass": true,
-      "detail": "2 sites pass; top=['Auto_SP_099', 'Auto_SP_075']"
+      "detail": "1 sites pass; top=['Auto_SP_099']"
     },
     {
       "test": "passes_filters flags agree with n_sites_passing_filters",
@@ -61,7 +66,7 @@
     {
       "test": "200 OK",
       "pass": true,
-      "detail": "58 ms round trip incl. 1440-row timeline JSON"
+      "detail": "52 ms round trip incl. 1440-row timeline JSON"
     },
     {
       "test": "all dashboard output blocks present",
@@ -166,7 +171,7 @@
     {
       "test": "#8 top-5 alternatives satisfy user filters and exclude the selected site",
       "pass": true,
-      "detail": "[('Auto_SP_075', 133.139, 120.3), ('Auto_SP_50', 57.046, 266.0), ('Auto_SP_36', 73.617, 173.2)]"
+      "detail": "[('Auto_SP_50', 57.046, 266.0), ('Auto_SP_36', 73.617, 173.2), ('Auto_SP_051', 184.698, 149.0)]"
     },
     {
       "test": "#9 returns up to 3 windows",
@@ -216,7 +221,7 @@
     {
       "test": "slow Horizons -> analytic fallback returned within budget (never hangs)",
       "pass": true,
-      "detail": "250 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
+      "detail": "207 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
     },
     {
       "test": "coordinate equal to a preset snaps to that preset",
@@ -379,14 +384,114 @@
       "detail": ""
     },
     {
+      "test": "14.7 deg site (below 15 deg limit) -> NO-GO via 13.5 deg operational limit",
+      "pass": true,
+      "detail": "score 30.0 (before SF 30.0, Hazardous)"
+    },
+    {
+      "test": "margin warning/justification present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Hazardous verdict never shows an Acceptable-looking score (<= 44)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "derating follows the user's max_slope_deg (10 -> 8.5 deg)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "every dataset site with 13.5 < slope <= 15 deg is NO-GO",
+      "pass": true,
+      "detail": "5 sites: ['Auto_SP_33', 'Auto_SP_39', 'Auto_SP_056', 'Auto_SP_069', 'Auto_SP_076']"
+    },
+    {
+      "test": "/api/sites top-5 respects the derated slope limit",
+      "pass": true,
+      "detail": "{'max_slope_deg': 15.0, 'effective_max_slope_deg': 13.5, 'slope_safety_margin_deg': 1.5, 'min_sun_pct': 50.0, 'min_earth_pct': 40.0}"
+    },
+    {
+      "test": "P(Hazardous) >= 0.28 always yields Hazardous (20 probe sites)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "SCORE_BUFFER: 46.9 (<48) and 52 with +/-5 CI (lower 47) -> ok only if both bounds hold",
+      "pass": true,
+      "detail": "classes ['Hazardous', 'Acceptable', 'Acceptable']"
+    },
+    {
+      "test": "SCORE_BUFFER: wide CI (lower bound 40 < 45) demotes a score-60 site",
+      "pass": true,
+      "detail": "classes ['Acceptable', 'Hazardous']"
+    },
+    {
+      "test": "HAZARD_PROB threshold: 0.279 stays, 0.28 flips to Hazardous",
+      "pass": true,
+      "detail": "classes ['Acceptable', 'Hazardous']"
+    },
+    {
+      "test": "roughness clause: slope 12.9 + 0.5*4 m = 14.9 ok, but + 0.5*5 > 15 would flip; 12.9 vs 13.5 limit passes",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "roughness clause: slope 13.0 + 0.5*5 = 15.5 > 15 -> SLOPE_DERATING",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "POST /api/warmup 200 with 5 demo sites",
+      "pass": true,
+      "detail": "10.5 s total (DEM open included)"
+    },
+    {
+      "test": "warm-up reports cache status + eval latency per site",
+      "pass": true,
+      "detail": "A:27.8ms, B:25.1ms, C:58.7ms, D:27.7ms, E:21.9ms"
+    },
+    {
+      "test": "warm-up: all 5 demo sites served from cache",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "warm-up opened the LOLA DEM (dem_ready) or reported why not",
+      "pass": true,
+      "detail": "{'ready': True, 'open_ms': 9905.1, 'read_ms': 136.0, 'warm_point': {'lat_deg': -88.3448, 'lon_deg_east': 225.8806}, 'elevation_m': -2553.5, "
+    },
+    {
+      "test": "health after warm-up: dem_ready mirrors warm-up, 5/5 cached",
+      "pass": true,
+      "detail": "{'dem_ready': True, 'cached_demo_sites': 5, 'response_cache_entries': 21}"
+    },
+    {
+      "test": "demo A first request served from the pre-computed response cache (X-Cache: HIT)",
+      "pass": true,
+      "detail": "39 ms"
+    },
+    {
+      "test": "custom demo site E (cached terrain + series) is a cache HIT",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "changed parameters miss the cache and are computed correctly",
+      "pass": true,
+      "detail": ""
+    },
+    {
       "test": "preset /api/evaluate incl. 1440-row timeline: median < 250 ms",
       "pass": true,
-      "detail": "median 41 ms, p95 49 ms"
+      "detail": "median 60 ms, p95 69 ms"
     },
     {
       "test": "hourly series generator < 50 ms",
       "pass": true,
-      "detail": "0.71 ms"
+      "detail": "0.78 ms"
     }
   ]
 }

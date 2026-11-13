@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-11-13T11:43:03.367597+00:00",
+  "generated_utc": "2026-11-13T12:45:20.355534+00:00",
   "seed": 42,
   "panel1_adversarial_boundary": {
     "cases": [
@@ -9,9 +9,11 @@
         "sun_pct": 95.0,
         "ml_only_class": "Optimal",
         "ml_only_score": 82.46,
+        "before_safety_factor_class": "Optimal",
         "guardrailed_class": "Optimal",
         "guardrailed_score": 82.46,
         "guardrails_triggered": [],
+        "safety_layers_triggered": [],
         "rule_truth_class": "Optimal",
         "expected_class": "Optimal",
         "pass": true
@@ -22,10 +24,16 @@
         "sun_pct": 100.0,
         "ml_only_class": "Hazardous",
         "ml_only_score": 42.24,
+        "before_safety_factor_class": "Hazardous",
         "guardrailed_class": "Hazardous",
         "guardrailed_score": 35.0,
         "guardrails_triggered": [
           "TIP_OVER"
+        ],
+        "safety_layers_triggered": [
+          "SLOPE_DERATING",
+          "SCORE_BUFFER",
+          "HAZARD_PROB"
         ],
         "rule_truth_class": "Hazardous",
         "expected_class": "Hazardous",
@@ -37,10 +45,14 @@
         "sun_pct": 0.0,
         "ml_only_class": "Optimal",
         "ml_only_score": 82.12,
+        "before_safety_factor_class": "Hazardous",
         "guardrailed_class": "Hazardous",
         "guardrailed_score": 30.0,
         "guardrails_triggered": [
           "PSR"
+        ],
+        "safety_layers_triggered": [
+          "SCORE_BUFFER"
         ],
         "rule_truth_class": "Acceptable",
         "expected_class": "Hazardous",
@@ -52,9 +64,11 @@
         "sun_pct": 95.0,
         "ml_only_class": "Optimal",
         "ml_only_score": 82.49,
+        "before_safety_factor_class": "Optimal",
         "guardrailed_class": "Optimal",
         "guardrailed_score": 82.49,
         "guardrails_triggered": [],
+        "safety_layers_triggered": [],
         "rule_truth_class": "Optimal",
         "expected_class": "Optimal",
         "pass": true
@@ -65,9 +79,11 @@
         "sun_pct": 95.0,
         "ml_only_class": "Acceptable",
         "ml_only_score": 82.22,
+        "before_safety_factor_class": "Acceptable",
         "guardrailed_class": "Acceptable",
         "guardrailed_score": 82.22,
         "guardrails_triggered": [],
+        "safety_layers_triggered": [],
         "rule_truth_class": "Acceptable",
         "expected_class": "Acceptable",
         "pass": true
@@ -78,11 +94,16 @@
         "sun_pct": 95.0,
         "ml_only_class": "Acceptable",
         "ml_only_score": 61.74,
-        "guardrailed_class": "Acceptable",
-        "guardrailed_score": 61.74,
+        "before_safety_factor_class": "Acceptable",
+        "guardrailed_class": "Hazardous",
+        "guardrailed_score": 44.0,
         "guardrails_triggered": [],
+        "safety_layers_triggered": [
+          "SLOPE_DERATING",
+          "HAZARD_PROB"
+        ],
         "rule_truth_class": "Acceptable",
-        "expected_class": "Acceptable",
+        "expected_class": "Hazardous",
         "pass": true
       },
       {
@@ -91,10 +112,16 @@
         "sun_pct": 95.0,
         "ml_only_class": "Hazardous",
         "ml_only_score": 59.79,
+        "before_safety_factor_class": "Hazardous",
         "guardrailed_class": "Hazardous",
         "guardrailed_score": 35.0,
         "guardrails_triggered": [
           "TIP_OVER"
+        ],
+        "safety_layers_triggered": [
+          "SLOPE_DERATING",
+          "SCORE_BUFFER",
+          "HAZARD_PROB"
         ],
         "rule_truth_class": "Hazardous",
         "expected_class": "Hazardous",
@@ -106,7 +133,9 @@
       "psr_score_capped_le_30": true,
       "cliff_15_6_score_capped_le_35": true,
       "ideal_score_ge_65": true,
-      "guardrails_changed_ml_verdict_on_traps": true
+      "guardrails_changed_ml_verdict_on_traps": true,
+      "safety_factor_flags_14_5_deg_but_rule_says_acceptable": true,
+      "13_0_deg_not_over_derated": true
     },
     "all_pass": true
   },
@@ -134,64 +163,166 @@
         "solar_pct": 2.0
       }
     ],
+    "noise_free_effect": {
+      "classes_before": {
+        "Acceptable": 49,
+        "Hazardous": 32,
+        "Optimal": 19
+      },
+      "classes_after": {
+        "Acceptable": 44,
+        "Hazardous": 37,
+        "Optimal": 19
+      },
+      "sites_reclassified": [
+        {
+          "site_id": "Auto_SP_33",
+          "slope_deg": 14.703,
+          "from": "Acceptable",
+          "to": "Hazardous"
+        },
+        {
+          "site_id": "Auto_SP_39",
+          "slope_deg": 13.834,
+          "from": "Acceptable",
+          "to": "Hazardous"
+        },
+        {
+          "site_id": "Auto_SP_056",
+          "slope_deg": 13.855,
+          "from": "Acceptable",
+          "to": "Hazardous"
+        },
+        {
+          "site_id": "Auto_SP_069",
+          "slope_deg": 14.0,
+          "from": "Acceptable",
+          "to": "Hazardous"
+        },
+        {
+          "site_id": "Auto_SP_076",
+          "slope_deg": 14.561,
+          "from": "Acceptable",
+          "to": "Hazardous"
+        }
+      ]
+    },
     "levels": [
       {
         "name": "low",
         "slope_deg": 0.5,
         "elevation_m": 1.0,
         "solar_pct": 0.5,
-        "evaluations": 100000,
-        "seconds": 1.23,
-        "mean_delta_score": 0.0547,
-        "mean_abs_delta_score": 0.6127,
-        "p95_abs_delta_score": 2.896,
-        "classification_stability_pct": 98.669,
-        "accuracy_vs_rule_truth_pct": 98.669,
-        "fatal_errors_hazardous_as_optimal": 0,
-        "fatal_errors_vs_pipeline_baseline": 0,
-        "hazardous_called_acceptable": 224,
-        "hazardous_called_not_hazardous": 224,
-        "hazardous_called_not_hazardous_pct": 0.7
+        "evaluations_per_pipeline": 100000,
+        "seconds_both_pipelines": 4.56,
+        "before": {
+          "mean_delta_score": 0.0547,
+          "mean_abs_delta_score": 0.6127,
+          "classification_stability_pct": 98.669,
+          "accuracy_vs_rule_truth_pct": 98.669,
+          "fatal_errors_hazardous_as_optimal": 0,
+          "hazardous_leaked_to_acceptable": 224,
+          "hazardous_leakage_pct": 0.7,
+          "hazardous_leakage_to_acceptable_pct": 0.7,
+          "false_alarm_pct_safe_called_hazardous": 0.774
+        },
+        "after": {
+          "mean_delta_score": -0.0995,
+          "mean_abs_delta_score": 0.7016,
+          "classification_stability_pct": 97.31,
+          "accuracy_vs_rule_truth_pct": 93.678,
+          "fatal_errors_hazardous_as_optimal": 0,
+          "hazardous_leaked_to_acceptable": 0,
+          "hazardous_leakage_pct": 0.0,
+          "hazardous_leakage_to_acceptable_pct": 0.0,
+          "false_alarm_pct_safe_called_hazardous": 8.443
+        },
+        "leakage_reduction_pct_points": 0.7,
+        "leakage_reduction_relative_pct": 100.0,
+        "safety_layer_trigger_rate_pct": {
+          "SLOPE_DERATING": 37.741,
+          "SCORE_BUFFER": 32.945,
+          "HAZARD_PROB": 32.837
+        }
       },
       {
         "name": "medium",
         "slope_deg": 1.0,
         "elevation_m": 2.0,
         "solar_pct": 1.0,
-        "evaluations": 100000,
-        "seconds": 1.18,
-        "mean_delta_score": 0.0634,
-        "mean_abs_delta_score": 1.2885,
-        "p95_abs_delta_score": 5.238,
-        "classification_stability_pct": 95.75,
-        "accuracy_vs_rule_truth_pct": 95.75,
-        "fatal_errors_hazardous_as_optimal": 0,
-        "fatal_errors_vs_pipeline_baseline": 0,
-        "hazardous_called_acceptable": 881,
-        "hazardous_called_not_hazardous": 881,
-        "hazardous_called_not_hazardous_pct": 2.753
+        "evaluations_per_pipeline": 100000,
+        "seconds_both_pipelines": 5.46,
+        "before": {
+          "mean_delta_score": 0.0634,
+          "mean_abs_delta_score": 1.2885,
+          "classification_stability_pct": 95.75,
+          "accuracy_vs_rule_truth_pct": 95.75,
+          "fatal_errors_hazardous_as_optimal": 0,
+          "hazardous_leaked_to_acceptable": 881,
+          "hazardous_leakage_pct": 2.753,
+          "hazardous_leakage_to_acceptable_pct": 2.753,
+          "false_alarm_pct_safe_called_hazardous": 1.95
+        },
+        "after": {
+          "mean_delta_score": -0.1486,
+          "mean_abs_delta_score": 1.4015,
+          "classification_stability_pct": 94.27,
+          "accuracy_vs_rule_truth_pct": 91.77,
+          "fatal_errors_hazardous_as_optimal": 0,
+          "hazardous_leaked_to_acceptable": 42,
+          "hazardous_leakage_pct": 0.131,
+          "hazardous_leakage_to_acceptable_pct": 0.131,
+          "false_alarm_pct_safe_called_hazardous": 9.037
+        },
+        "leakage_reduction_pct_points": 2.622,
+        "leakage_reduction_relative_pct": 95.2,
+        "safety_layer_trigger_rate_pct": {
+          "SLOPE_DERATING": 38.041,
+          "SCORE_BUFFER": 33.139,
+          "HAZARD_PROB": 33.398
+        }
       },
       {
         "name": "high",
         "slope_deg": 2.0,
         "elevation_m": 5.0,
         "solar_pct": 2.0,
-        "evaluations": 100000,
-        "seconds": 1.47,
-        "mean_delta_score": -0.0725,
-        "mean_abs_delta_score": 2.652,
-        "p95_abs_delta_score": 16.541,
-        "classification_stability_pct": 88.799,
-        "accuracy_vs_rule_truth_pct": 88.799,
-        "fatal_errors_hazardous_as_optimal": 0,
-        "fatal_errors_vs_pipeline_baseline": 0,
-        "hazardous_called_acceptable": 2160,
-        "hazardous_called_not_hazardous": 2160,
-        "hazardous_called_not_hazardous_pct": 6.75
+        "evaluations_per_pipeline": 100000,
+        "seconds_both_pipelines": 6.36,
+        "before": {
+          "mean_delta_score": -0.0725,
+          "mean_abs_delta_score": 2.652,
+          "classification_stability_pct": 88.799,
+          "accuracy_vs_rule_truth_pct": 88.799,
+          "fatal_errors_hazardous_as_optimal": 0,
+          "hazardous_leaked_to_acceptable": 2160,
+          "hazardous_leakage_pct": 6.75,
+          "hazardous_leakage_to_acceptable_pct": 6.75,
+          "false_alarm_pct_safe_called_hazardous": 4.515
+        },
+        "after": {
+          "mean_delta_score": -0.3677,
+          "mean_abs_delta_score": 2.7412,
+          "classification_stability_pct": 87.385,
+          "accuracy_vs_rule_truth_pct": 86.047,
+          "fatal_errors_hazardous_as_optimal": 0,
+          "hazardous_leaked_to_acceptable": 497,
+          "hazardous_leakage_pct": 1.553,
+          "hazardous_leakage_to_acceptable_pct": 1.553,
+          "false_alarm_pct_safe_called_hazardous": 11.007
+        },
+        "leakage_reduction_pct_points": 5.197,
+        "leakage_reduction_relative_pct": 77.0,
+        "safety_layer_trigger_rate_pct": {
+          "SLOPE_DERATING": 38.627,
+          "SCORE_BUFFER": 33.949,
+          "HAZARD_PROB": 34.43
+        }
       }
     ],
     "zero_fatal_errors": true,
-    "note": "Fatal error = rule-based Hazardous site predicted Optimal under noise. Noise is 1-sigma Gaussian; slope noise is folded to stay >= 0, Sun visibility clipped to [0, 100]."
+    "leakage_reduced_at_every_level": true,
+    "note": "Leakage = % of rule-based Hazardous samples classified Acceptable or Optimal under noise. Fatal error = Hazardous predicted Optimal. Both pipelines see the same noisy samples; noise is 1-sigma Gaussian, slope noise folded to stay >= 0, Sun visibility clipped to [0, 100]. False alarm = non-Hazardous site called Hazardous (the cost)."
   },
   "panel3_monotonicity_hardware": {
     "slope": {
@@ -354,12 +485,12 @@
         67.096,
         67.096,
         65.531,
-        61.559,
-        61.78,
-        61.78,
-        61.745,
-        61.559,
-        61.443,
+        44.0,
+        44.0,
+        44.0,
+        44.0,
+        44.0,
+        44.0,
         35.0,
         35.0,
         35.0,
@@ -508,7 +639,7 @@
         "direction": "nonincreasing",
         "tolerance": 0.5,
         "violations": 0,
-        "worst_reversal": 0.2211,
+        "worst_reversal": 0.0356,
         "pass": true
       },
       "monotone_ml_only": {
@@ -758,22 +889,22 @@
   },
   "panel4_throughput": {
     "n_sites": 10000,
-    "batch_ms_best": 207.0,
+    "batch_ms_best": 418.9,
     "batch_ms_all_runs": [
-      207.0,
-      214.0,
-      259.9
+      516.1,
+      494.6,
+      418.9
     ],
-    "sites_per_second": 48320,
-    "ms_per_1000_sites": 20.7,
+    "sites_per_second": 23871,
+    "ms_per_1000_sites": 41.89,
     "class_mix": {
-      "Acceptable": 4942,
-      "Hazardous": 3192,
+      "Acceptable": 4370,
+      "Hazardous": 3764,
       "Optimal": 1866
     },
-    "full_scenario_eval_ms_median": 24.4,
-    "full_scenario_eval_ms_p95": 40.7,
-    "hourly_series_generation_ms": 0.56,
+    "full_scenario_eval_ms_median": 18.4,
+    "full_scenario_eval_ms_p95": 27.3,
+    "hourly_series_generation_ms": 0.5,
     "scope": "batch = regressor + classifier + guardrails + OOD check; full scenario = 1441-h series, physics, XAI, top-3 windows, timeline, ML + 300-tree uncertainty"
   },
   "figure_layout": {
@@ -791,8 +922,23 @@
   "summary": {
     "panel1_all_pass": true,
     "panel2_zero_fatal_errors": true,
+    "panel2_leakage_before_after_pct": {
+      "low": [
+        0.7,
+        0.0
+      ],
+      "medium": [
+        2.753,
+        0.131
+      ],
+      "high": [
+        6.75,
+        1.553
+      ]
+    },
+    "panel2_leakage_reduced_at_every_level": true,
     "panel3_all_pass": true,
-    "panel4_sites_per_second": 48320,
+    "panel4_sites_per_second": 23871,
     "stress_figure_text_overlaps": 0,
     "model_evaluation_text_overlaps": []
   }

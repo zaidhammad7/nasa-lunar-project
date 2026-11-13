@@ -305,11 +305,19 @@ def terrain_for(ctx: Context) -> tuple[dict, str, list[str]]:
 # ----------------------------------------------------------------------------
 # Map + alternatives
 # ----------------------------------------------------------------------------
+def passes_filters(r: pd.DataFrame, max_slope_deg: float, min_sun_pct: float, min_earth_pct: float) -> pd.Series:
+    """Vehicle-constraint mask. Slope uses the derated operational limit (max - 1.5 deg safety margin) and
+    must also satisfy slope + 0.5 * roughness <= max, so the dashboard never recommends a site the engine rates NO-GO."""
+    eff = ps.effective_max_slope(max_slope_deg)
+    rough = r["Site_ID"].map(_roughness_table()).fillna(0.0)
+    return ((r["Slope_deg"] <= eff) & (r["Slope_deg"] + ps.ROUGHNESS_SLOPE_WEIGHT * rough <= max_slope_deg)
+            & (r["Sun_Visible_Pct"] >= min_sun_pct) & (r["Earth_Visible_Pct"] >= min_earth_pct))
+
+
 def filter_sites(max_slope_deg: float, min_sun_pct: float, min_earth_pct: float) -> pd.DataFrame:
     """Rows of ranked_lunar_sites.csv that satisfy all vehicle constraints (rank order kept)."""
     r = _ranked()
-    return r[(r["Slope_deg"] <= max_slope_deg) & (r["Sun_Visible_Pct"] >= min_sun_pct)
-             & (r["Earth_Visible_Pct"] >= min_earth_pct)]
+    return r[passes_filters(r, max_slope_deg, min_sun_pct, min_earth_pct)]
 
 
 def _site_record(r: pd.Series, lat: float, lon: float) -> dict:
@@ -322,13 +330,15 @@ def _site_record(r: pd.Series, lat: float, lon: float) -> dict:
 
 
 def top_alternatives(lat: float, lon: float, s: Scenario, n: int = 5, exclude_site_id: str | None = None) -> dict:
-    """Top-n ranked sites that pass the vehicle filters, with distance and bearing from (lat, lon)."""
+    """Top-n ranked sites that pass the (safety-derated) vehicle filters, with distance and bearing from (lat, lon)."""
     f = filter_sites(s.max_slope_deg, s.min_sun_pct, s.min_earth_pct)
     f = f[f["Site_ID"] != exclude_site_id] if exclude_site_id else f
     top = [_site_record(r, lat, lon) for _, r in f.head(n).iterrows()]
     return {"selected": {"lat_deg": lat, "lon_deg_east": lon, "polar_x_deg": round((90 + lat) * math.cos(math.radians(lon)), 4),
                          "polar_y_deg": round((90 + lat) * math.sin(math.radians(lon)), 4)},
-            "filters": {"max_slope_deg": s.max_slope_deg, "min_sun_pct": s.min_sun_pct, "min_earth_pct": s.min_earth_pct},
+            "filters": {"max_slope_deg": s.max_slope_deg, "effective_max_slope_deg": ps.effective_max_slope(s.max_slope_deg),
+                        "slope_safety_margin_deg": ps.SLOPE_SAFETY_MARGIN_DEG, "min_sun_pct": s.min_sun_pct,
+                        "min_earth_pct": s.min_earth_pct},
             "n_sites_passing_filters": int(len(f)), "top5_filtered": top,
             "note": "Ranked by the dataset Suitability_Score (default 5/15 deg rules); distances on a 1737.4 km sphere."}
 
@@ -339,8 +349,7 @@ def sites_overview(max_slope_deg: float = 15.0, min_sun_pct: float = 50.0, min_e
     s = Scenario(lat=lat, lon=lon, max_slope_deg=max_slope_deg, min_sun_pct=min_sun_pct, min_earth_pct=min_earth_pct)
     validate(s)
     r = _ranked().copy()
-    ok = ((r["Slope_deg"] <= max_slope_deg) & (r["Sun_Visible_Pct"] >= min_sun_pct)
-          & (r["Earth_Visible_Pct"] >= min_earth_pct))
+    ok = passes_filters(r, max_slope_deg, min_sun_pct, min_earth_pct)
     sites = []
     for (_, row), passes in zip(r.iterrows(), ok):
         rec = _site_record(row, lat, lon)
@@ -479,6 +488,7 @@ def evaluate_scenario(s: Scenario, include_timeline: bool = True, series_mode: s
             "Safety_Class": res["Safety_Class"], "mission_status_label": res["mission_status_label"],
             "model_confidence_pct": res["model_confidence_pct"], "class_probabilities": res["class_probabilities"],
             "Suitability_Score_raw_ml": res["Suitability_Score_raw_ml"], "guardrails": res["guardrails"],
+            "safety_factor": res["safety_factor"],
             "mission_readiness": res["mission_readiness"], "ood_warning": res["ood_warning"]},
         "terrain_topography_physics": {"Slope_deg": round(terrain["Slope_deg"], 3),
                                        "Elevation_m": round(terrain["Elevation_m"], 2),

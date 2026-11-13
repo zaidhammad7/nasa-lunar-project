@@ -33,9 +33,10 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ephemeris_series import (START_TIME, STEP, STEP_HOURS, STOP_TIME, get_hourly_series,  # noqa: E402
+from ephemeris_series import (START_TIME, STEP, STEP_HOURS, STOP_TIME, get_hourly_series, load_terrain_cache,
+                              save_terrain_cache,  # noqa: E402
                               series_stats)
-from suitability import (DATA_CSV, FEATURES, MODELS_DIR, OUTPUTS_DIR, SLOPE_IDEAL_DEG, SLOPE_LIMIT_DEG,  # noqa: E402
+from suitability import (ACCEPTABLE_MIN_SCORE, DATA_CSV, FEATURES, MODELS_DIR, OUTPUTS_DIR, SLOPE_IDEAL_DEG, SLOPE_LIMIT_DEG,  # noqa: E402
                          W_COMMS, W_SOLAR, W_TERRAIN, comms_score, safety_class, solar_score, terrain_score)
 
 SCHEMA_VERSION = "2.1"
@@ -195,13 +196,41 @@ def plane_detrended_roughness(z: np.ndarray, dx_m: float, dy_m: float) -> float:
     return float(np.std(z.ravel() - A @ coef))
 
 
+DEM_WARM_POINT = (-88.3448, 225.8806)  # (lat, lon) read at start-up so GDAL's HTTP + TIFF-header caches are hot
+_DEM_HOT = False
+_DEM_ERROR: str | None = None
+
+
 def dem_ready() -> bool:
-    """True once the remote DEM handle has been opened (so reads are fast)."""
-    return _DEM_HANDLE is not None
+    """True once the remote DEM is open AND a warm-up 3x3 read has succeeded (reads are then ~1 s or less)."""
+    return _DEM_HOT
+
+
+def dem_error() -> str | None:
+    """Last DEM warm-up failure message (None if none)."""
+    return _DEM_ERROR
+
+
+def warm_dem() -> dict:
+    """Open the LOLA DEM and read a 3x3 window at DEM_WARM_POINT (blocking, idempotent). Returns timings in ms."""
+    global _DEM_HOT, _DEM_ERROR
+    t0 = time.perf_counter()
+    try:
+        _dem()
+        t1 = time.perf_counter()
+        t = get_terrain_metrics(*DEM_WARM_POINT)
+        t2 = time.perf_counter()
+        _DEM_HOT, _DEM_ERROR = True, None
+    except Exception as exc:
+        _DEM_ERROR = f"{type(exc).__name__}: {str(exc)[:160]}"
+        raise
+    return {"open_ms": round((t1 - t0) * 1000, 1), "read_ms": round((t2 - t1) * 1000, 1),
+            "warm_point": {"lat_deg": DEM_WARM_POINT[0], "lon_deg_east": DEM_WARM_POINT[1]},
+            "elevation_m": t["Elevation_m"], "slope_deg": round(t["Slope_deg"], 3)}
 
 
 def warm_dem_async() -> None:
-    """Open the DEM in a background thread (idempotent); first open costs ~15 s."""
+    """Warm the DEM in a background thread (idempotent); first open costs ~15 s."""
     global _DEM_WARMING
     if dem_ready() or _DEM_WARMING:
         return
@@ -210,7 +239,7 @@ def warm_dem_async() -> None:
     def _run():
         global _DEM_WARMING
         try:
-            _dem()
+            warm_dem()
         except Exception:
             pass
         finally:
@@ -220,14 +249,20 @@ def warm_dem_async() -> None:
 
 
 def get_terrain_metrics_fast(lat: float, lon: float) -> dict:
-    """Like get_terrain_metrics but never blocks on the slow first DEM open.
+    """Terrain for a custom point without ever blocking on the slow first DEM open.
 
-    Raises TimeoutError (after starting a background warm-up) if the DEM is not open yet.
+    Order: on-disk terrain cache -> hot DEM read (result is then cached) -> TimeoutError
+    (after starting a background warm-up) so callers can fall back to CSV interpolation.
     """
-    if not dem_ready():
+    cached = load_terrain_cache(lat, lon)
+    if cached is not None:
+        return {**cached, "_from_cache": True}
+    if _DEM_HANDLE is None:
         warm_dem_async()
         raise TimeoutError("DEM is still opening in the background; retry in ~15 s")
-    return get_terrain_metrics(lat, lon)
+    t = get_terrain_metrics(lat, lon)
+    save_terrain_cache(lat, lon, t)
+    return t
 
 
 # ----------------------------------------------------------------------------
@@ -620,11 +655,26 @@ def _uncertainty_model():
 
 
 def ensemble_std(X: pd.DataFrame) -> np.ndarray:
-    """Per-row std (score points) of the individual trees' predictions."""
+    """Per-row std (score points) of the individual trees' predictions (running sums, low memory)."""
     rf = _uncertainty_model()
     if rf is None:
         return np.full(len(X), np.nan)
-    return np.std(_tree_values(rf, X[FEATURES].to_numpy(dtype=float))[:, :, 0], axis=0)
+    v = np.ascontiguousarray(X[FEATURES].to_numpy(dtype=np.float32))
+    s, s2 = np.zeros(len(v)), np.zeros(len(v))
+    for e in rf.estimators_:
+        p = np.asarray(e.tree_.predict(v)).reshape(len(v), -1)[:, 0].astype(float)
+        s += p
+        s2 += p * p
+    n = len(rf.estimators_)
+    return np.sqrt(np.maximum(s2 / n - (s / n) ** 2, 0.0))
+
+
+def ci_half_width(X: pd.DataFrame) -> np.ndarray:
+    """95% half-width (score points): 1.96 x tree std, or 1.96 x CV RMSE if the ensemble is unavailable."""
+    std = ensemble_std(X)
+    if np.isnan(std).any():
+        return np.full(len(X), CI_Z * _cv_rmse()[0])
+    return CI_Z * std
 
 
 def apply_guardrails(df: pd.DataFrame, score: np.ndarray, cls: np.ndarray):
@@ -639,6 +689,46 @@ def apply_guardrails(df: pd.DataFrame, score: np.ndarray, cls: np.ndarray):
     return score, cls, masks
 
 
+# ---- 3-layer aerospace safety factor (margin of safety + risk-averse asymmetric thresholds) ----
+SAFETY_FACTOR_ACTIVE = True
+SLOPE_SAFETY_MARGIN_DEG = 1.5      # operational slope limit = max_slope - margin (FS ~ 15/13.5 = 1.11)
+ROUGHNESS_SLOPE_WEIGHT = 0.5       # slope + 0.5 * roughness_m must also stay within the mechanical limit
+SCORE_SAFETY_BUFFER = 3.0          # Acceptable needs score >= 45 + 3 = 48 ...
+# ... and the lower 95% bound (score - CI half-width) must stay >= 45
+HAZARD_PROB_THRESHOLD = 0.28       # classifier override: P(Hazardous) >= 0.28 -> Hazardous (argmax would need ~0.5)
+SAFETY_CAP_SCORE = ACCEPTABLE_MIN_SCORE - 1.0  # a Hazardous verdict never displays an Acceptable-looking score
+SAFETY_LAYERS = ("SLOPE_DERATING", "SCORE_BUFFER", "HAZARD_PROB")
+
+
+def effective_max_slope(max_slope_deg: float) -> float:
+    """Derated operational slope limit (deg) = max_slope - 1.5 (never below 0)."""
+    return max(0.0, float(max_slope_deg) - SLOPE_SAFETY_MARGIN_DEG)
+
+
+def apply_safety_factor(df: pd.DataFrame, score, cls, p_haz, half_width, max_slope_deg=15.0, roughness=None):
+    """Vectorised 3-layer safety factor applied after the hard guardrails.
+
+    L1 SLOPE_DERATING: Slope > max_slope - 1.5, or Slope + 0.5*Roughness_m > max_slope.
+    L2 SCORE_BUFFER  : score < 45 + 3 or lower 95% bound (score - half_width) < 45.
+    L3 HAZARD_PROB   : classifier P(Hazardous) >= 0.28.
+    Any layer forces Hazardous; every Hazardous verdict is capped at 44 (below the 45 Acceptable cutoff).
+    Returns (score, class, {layer: bool mask}).
+    """
+    score, cls = np.asarray(score, dtype=float).copy(), np.asarray(cls, dtype=object).copy()
+    slope = df["Slope_deg"].to_numpy(dtype=float)
+    rough = np.zeros(len(df)) if roughness is None else np.nan_to_num(np.asarray(roughness, dtype=float))
+    masks = {  # reported for every site, so telemetry shows which margins are violated even if ML already said Hazardous
+        "SLOPE_DERATING": (slope > effective_max_slope(max_slope_deg)) | (slope + ROUGHNESS_SLOPE_WEIGHT * rough > max_slope_deg),
+        "SCORE_BUFFER": (score < ACCEPTABLE_MIN_SCORE + SCORE_SAFETY_BUFFER)
+                        | (score - np.asarray(half_width, dtype=float) < ACCEPTABLE_MIN_SCORE),
+        "HAZARD_PROB": np.asarray(p_haz, dtype=float) >= HAZARD_PROB_THRESHOLD,
+    }
+    hit = masks["SLOPE_DERATING"] | masks["SCORE_BUFFER"] | masks["HAZARD_PROB"]
+    cls = np.where(hit, "Hazardous", cls)
+    score = np.where(cls == "Hazardous", np.minimum(score, SAFETY_CAP_SCORE), score)  # Hazardous never looks Acceptable
+    return score, cls, masks
+
+
 def ood_mask(df: pd.DataFrame) -> np.ndarray:
     """True where any feature lies outside the [min, max] of final_lunar_dataset_fixed.csv."""
     ds = _dataset()
@@ -649,20 +739,30 @@ def ood_mask(df: pd.DataFrame) -> np.ndarray:
     return bad
 
 
-def predict_batch(df: pd.DataFrame) -> pd.DataFrame:
-    """Batch ML inference + guardrails for many candidate sites (no per-row Python loops).
+def predict_batch(df: pd.DataFrame, safety_factor: bool = True, max_slope_deg: float = 15.0) -> pd.DataFrame:
+    """Batch ML inference + guardrails (+ 3-layer safety factor) for many candidate sites.
 
-    Input needs the FEATURES columns. Output columns: score_raw, class_raw, confidence_pct,
-    Suitability_Score (guardrailed), Safety_Class (guardrailed), guard_<CODE> flags, ood.
+    Input needs the FEATURES columns (optional Roughness_m, m). Output columns: score_raw, class_raw,
+    confidence_pct, p_hazardous, half_width, Suitability_Score, Safety_Class, guard_<CODE>,
+    safety_<LAYER>, ood. `safety_factor=False` reproduces the pre-safety-factor behaviour.
     """
     reg, clf = _load_models()
     X = df[FEATURES]
     score_raw = np.clip(reg["model"].predict(X), 0, 100)
     proba = clf["model"].predict_proba(X)
-    class_raw = np.asarray(clf["model"].classes_)[np.argmax(proba, axis=1)]
+    classes = [str(c) for c in clf["model"].classes_]
+    class_raw = np.asarray(classes)[np.argmax(proba, axis=1)]
+    p_haz = proba[:, classes.index("Hazardous")]
     score, cls, masks = apply_guardrails(df, score_raw, class_raw)
+    half = ci_half_width(X)
     out = pd.DataFrame({"score_raw": score_raw, "class_raw": class_raw, "confidence_pct": proba.max(axis=1) * 100,
-                        "Suitability_Score": score, "Safety_Class": cls, "ood": ood_mask(df)}, index=df.index)
+                        "p_hazardous": p_haz, "half_width": half}, index=df.index)
+    if safety_factor:
+        rough = df["Roughness_m"].to_numpy() if "Roughness_m" in df.columns else None
+        score, cls, sf = apply_safety_factor(df, score, cls, p_haz, half, max_slope_deg, rough)
+        for layer, m in sf.items():
+            out[f"safety_{layer}"] = m
+    out["Suitability_Score"], out["Safety_Class"], out["ood"] = score, cls, ood_mask(df)
     for code, m in masks.items():
         out[f"guard_{code}"] = m
     return out
@@ -699,11 +799,35 @@ def assess_features(lat: float, lon: float, raw: dict, sources: dict, warnings: 
     row = pred["X"]
     score_g, cls_g, masks = apply_guardrails(row, [pred["score"]], [pred["ml_class"]])
     triggered = [(code, msg, cap) for (code, _, _, cap, msg) in GUARDRAILS if bool(masks[code][0])]
-    score_final, safety = float(score_g[0]), str(cls_g[0])
-    cap = min((c for _, _, c in triggered), default=None)
+    std = float(ensemble_std(row)[0])
+    half = CI_Z * std if math.isfinite(std) else CI_Z * _cv_rmse()[0]
+    rough = float(raw.get("Roughness_m") or 0.0)
+    p_haz = float(pred["proba"][pred["classes"].index("Hazardous")])
+    max_slope = prof["max_slope_deg"]
+    sc_s, cls_s, sfm = apply_safety_factor(row, score_g, cls_g, [p_haz], [half], max_slope, [rough])
+    score_final, safety = float(sc_s[0]), str(cls_s[0])
+    sf_layers = [layer for layer in SAFETY_LAYERS if bool(sfm[layer][0])]
+    cap = min([c for _, _, c in triggered] + ([SAFETY_CAP_SCORE] if sf_layers else []), default=None)
+    eff = effective_max_slope(max_slope)
+    s_ = metrics["Slope_deg"]
+    sf_msgs = {
+        "SLOPE_DERATING": (
+            f"WARNING: Slope {s_:.1f}° exceeds the {eff:.1f}° operational limit ({max_slope:.1f}° tip-over limit minus the "
+            f"{SLOPE_SAFETY_MARGIN_DEG:g}° safety margin for DEM uncertainty, FS≈{max_slope / max(eff, 1e-9):.2f}); NO-GO."
+            if s_ > eff else
+            f"WARNING: Slope {s_:.1f}° + {ROUGHNESS_SLOPE_WEIGHT:g} x roughness {rough:.1f} m = {s_ + ROUGHNESS_SLOPE_WEIGHT * rough:.1f}° "
+            f"exceeds the {max_slope:.1f}° limit once DEM roughness is included; NO-GO."),
+        "SCORE_BUFFER": (f"WARNING: Score {score_g[0]:.1f} (lower 95% bound {score_g[0] - half:.1f}) is inside the "
+                         f"{SCORE_SAFETY_BUFFER:g}-pt safety buffer of the {ACCEPTABLE_MIN_SCORE:g} Acceptable threshold; "
+                         "treated as Hazardous."),
+        "HAZARD_PROB": (f"WARNING: P(Hazardous) = {p_haz:.2f} >= {HAZARD_PROB_THRESHOLD:g} risk-averse threshold; "
+                        "class overridden to Hazardous."),
+    }
     ood_feats = [f for f in FEATURES if not _dataset()[f].min() <= metrics[f] <= _dataset()[f].max()]
     for _, msg, _ in triggered:
         warnings.append(msg)
+    for layer in sf_layers:
+        warnings.append(sf_msgs[layer])
     if ood_feats:
         warnings.append("OOD: features outside the training range: " + ", ".join(ood_feats) + ".")
 
@@ -715,13 +839,17 @@ def assess_features(lat: float, lon: float, raw: dict, sources: dict, warnings: 
     class_p = str(safety_class(metrics["Slope_deg"], score_p, ideal_p, limit_p))
     conf = confidence(metrics, pred, sources, rule_class, safety)
     flags = hazard_flags(metrics, tele, prof, sources, conf, lat)
+    for layer in sf_layers:
+        flags.insert(0, _flag(f"SAFETY_FACTOR_{layer}", "CRITICAL", sf_msgs[layer]))
     for code, msg, _ in triggered:
         flags.insert(0, _flag(f"GUARDRAIL_{code}", "CRITICAL", msg))
     just = engineering_justification(metrics, safety)
     for code, msg, cap_ in triggered:
         just.append(f"Guardrail {code}: {msg} Score capped at {cap_:.0f}.")
+    for layer in sf_layers:
+        just.append(f"Safety factor {layer}: {sf_msgs[layer]} Score capped at {SAFETY_CAP_SCORE:.0f}.")
     state = readiness(flags)
-    ci = score_interval(score_final, float(ensemble_std(row)[0]), cap)
+    ci = score_interval(score_final, std, cap)
 
     result = {
         "schema_version": SCHEMA_VERSION,
@@ -763,6 +891,16 @@ def assess_features(lat: float, lon: float, raw: dict, sources: dict, warnings: 
         "guardrails": {"triggered": [c for c, _, _ in triggered], "score_cap": cap,
                        "class_overridden": bool(triggered) and pred["ml_class"] != "Hazardous"},
         "ood_warning": bool(ood_feats), "ood_features": ood_feats,
+        "safety_factor": {
+            "active": SAFETY_FACTOR_ACTIVE, "layers_triggered": sf_layers,
+            "operational_slope_limit_deg": round(eff, 2), "mechanical_slope_limit_deg": round(float(max_slope), 2),
+            "slope_safety_margin_deg": SLOPE_SAFETY_MARGIN_DEG,
+            "factor_of_safety": round(max_slope / eff, 3) if eff > 0 else None,
+            "slope_plus_half_roughness_deg": round(s_ + ROUGHNESS_SLOPE_WEIGHT * rough, 3),
+            "score_buffer_pts": SCORE_SAFETY_BUFFER, "effective_acceptable_threshold": ACCEPTABLE_MIN_SCORE + SCORE_SAFETY_BUFFER,
+            "conservative_score": round(float(score_g[0]) - half, 2),
+            "hazard_probability_threshold": HAZARD_PROB_THRESHOLD, "p_hazardous": round(p_haz, 3),
+            "class_before_safety_factor": str(cls_g[0]), "score_before_safety_factor": round(float(score_g[0]), 2)},
     }
     if explain_result:
         result["explanation"] = explain(metrics, pred, default_comp)

@@ -11,12 +11,14 @@ import csv
 import io
 import json
 import math
+import os
 import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
+os.environ["LUNAR_SKIP_BG_WARMUP"] = "1"  # the test must not start background network fetches
 from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -50,7 +52,12 @@ def run() -> int:
         # ---------------------------------------------------------------- health / CORS
         print("\n[0] Health, CORS")
         r = client.get("/api/health", headers={"Origin": "http://localhost:3000"})
-        check("GET /api/health 200", r.status_code == 200, str(r.json()))
+        hj = r.json()
+        check("GET /api/health 200", r.status_code == 200, str(hj))
+        check("health has models_ready, dem_ready, cached_demo_sites, safety_factor_active, warmup_latency_ms",
+              {"status", "models_ready", "dem_ready", "cached_demo_sites", "safety_factor_active", "warmup_latency_ms"} <= set(hj)
+              and hj["models_ready"] is True and hj["safety_factor_active"] is True and isinstance(hj["warmup_latency_ms"], float)
+              and 0 <= hj["cached_demo_sites"] <= 5, f"warm-up {hj['warmup_latency_ms']} ms, {hj['cached_demo_sites']}/5 demo sites cached")
         check("CORS header allows any origin", r.headers.get("access-control-allow-origin") in ("*", "http://localhost:3000"))
 
         # ---------------------------------------------------------------- /api/sites
@@ -334,6 +341,65 @@ def run() -> int:
                                                                            "panel4_sites_per_second"} <= set(js["stress_test"]["summary"]))
         else:
             check("stress-test results available", False, "run src/analysis/stress_test.py first")
+
+        # ---------------------------------------------------------------- safety factor + warm-up
+        print("\n[9b] 3-layer safety factor")
+        r = client.post("/api/evaluate", json={"site_id": "Auto_SP_33", "duration_hours": 240}).json()
+        pdx, sf = r["primary_landing_decision"], r["primary_landing_decision"]["safety_factor"]
+        check("14.7 deg site (below 15 deg limit) -> NO-GO via 13.5 deg operational limit",
+              pdx["Safety_Class"] == "Hazardous" and pdx["mission_status_label"] == "NO-GO / Hazardous"
+              and "SLOPE_DERATING" in sf["layers_triggered"] and sf["operational_slope_limit_deg"] == 13.5
+              and abs(sf["factor_of_safety"] - 15 / 13.5) < 1e-3, f"score {pdx['Suitability_Score']} (before SF {sf['score_before_safety_factor']}, {sf['class_before_safety_factor']})")
+        check("margin warning/justification present", any("13.5" in w and "safety margin" in w for w in r["xai_and_hazard_alerts"]["warnings"])
+              and any("Safety factor SLOPE_DERATING" in j for j in r["xai_and_hazard_alerts"]["justifications"]))
+        check("Hazardous verdict never shows an Acceptable-looking score (<= 44)", pdx["Suitability_Score"] <= 44.0)
+        r2_ = client.post("/api/evaluate", json={"site_id": "Auto_SP_33", "duration_hours": 240, "max_slope_deg": 10}).json()["primary_landing_decision"]["safety_factor"]
+        check("derating follows the user's max_slope_deg (10 -> 8.5 deg)", r2_["operational_slope_limit_deg"] == 8.5 and abs(r2_["factor_of_safety"] - 10 / 8.5) < 1e-3)
+        ds_ = ms._dataset()
+        near = ds_[(ds_["Slope_deg"] > 13.5) & (ds_["Slope_deg"] <= 15.0)]["Site_ID"].tolist()
+        bad_n = [s_ for s_ in near if client.post("/api/evaluate", json={"site_id": s_, "duration_hours": 240}).json()["primary_landing_decision"]["Safety_Class"] != "Hazardous"]
+        check("every dataset site with 13.5 < slope <= 15 deg is NO-GO", len(near) > 0 and not bad_n, f"{len(near)} sites: {near}")
+        js = client.get("/api/sites").json()
+        check("/api/sites top-5 respects the derated slope limit", all(s_["slope_deg"] <= 13.5 for s_ in js["top5_filtered"]) and js["filters"]["effective_max_slope_deg"] == 13.5, str(js["filters"]))
+        # asymmetric classifier threshold: lower it knowingly and confirm the override logic with a probe
+        import pandas as pd
+        import predict_site as ps_
+        probe = ps_._dataset()[ps_.FEATURES].head(20).copy()
+        out_ = ps_.predict_batch(probe)
+        flip = (out_["p_hazardous"] >= 0.28) & (out_["Safety_Class"] != "Hazardous")
+        check("P(Hazardous) >= 0.28 always yields Hazardous (20 probe sites)", not bool(flip.any()))
+        sc_, cl_, m_ = ps_.apply_safety_factor(probe.head(3).assign(Slope_deg=[2.0, 2.0, 2.0]), [46.9, 52.0, 70.0], ["Acceptable"] * 3,
+                                               [0.0] * 3, [0.5, 5.0, 0.5], 15.0)
+        check("SCORE_BUFFER: 46.9 (<48) and 52 with +/-5 CI (lower 47) -> ok only if both bounds hold",
+              list(m_["SCORE_BUFFER"]) == [True, False, False] and list(cl_) == ["Hazardous", "Acceptable", "Acceptable"], f"classes {list(cl_)}")
+        sc2, cl2, m2 = ps_.apply_safety_factor(probe.head(2).assign(Slope_deg=[2.0, 2.0]), [60.0, 60.0], ["Acceptable"] * 2, [0.2, 0.2], [0.5, 20.0], 15.0)
+        check("SCORE_BUFFER: wide CI (lower bound 40 < 45) demotes a score-60 site", list(m2["SCORE_BUFFER"]) == [False, True], f"classes {list(cl2)}")
+        sc3, cl3, m3 = ps_.apply_safety_factor(probe.head(2).assign(Slope_deg=[2.0, 2.0]), [60.0, 60.0], ["Acceptable"] * 2, [0.279, 0.28], [0.5, 0.5], 15.0)
+        check("HAZARD_PROB threshold: 0.279 stays, 0.28 flips to Hazardous", list(cl3) == ["Acceptable", "Hazardous"], f"classes {list(cl3)}")
+        sc4, cl4, m4 = ps_.apply_safety_factor(probe.head(2).assign(Slope_deg=[12.9, 12.9]), [60.0, 60.0], ["Acceptable"] * 2, [0.0, 0.0], [0.5, 0.5], 15.0, [0.0, 4.0])
+        check("roughness clause: slope 12.9 + 0.5*4 m = 14.9 ok, but + 0.5*5 > 15 would flip; 12.9 vs 13.5 limit passes",
+              list(m4["SLOPE_DERATING"]) == [False, False])
+        sc5, cl5, m5 = ps_.apply_safety_factor(probe.head(1).assign(Slope_deg=[13.0]), [60.0], ["Acceptable"], [0.0], [0.5], 15.0, [5.0])
+        check("roughness clause: slope 13.0 + 0.5*5 = 15.5 > 15 -> SLOPE_DERATING", bool(m5["SLOPE_DERATING"][0]) and cl5[0] == "Hazardous")
+
+        print("\n[9c] Warm-up")
+        t = time.perf_counter()
+        r = client.post("/api/warmup")
+        wj = r.json()
+        check("POST /api/warmup 200 with 5 demo sites", r.status_code == 200 and len(wj["sites"]) == 5, f"{(time.perf_counter() - t):.1f} s total (DEM open included)")
+        check("warm-up reports cache status + eval latency per site", all({"fully_cached", "eval_hot_ms", "eval_cold_ms", "series_source", "Safety_Class"} <= set(s_) for s_ in wj["sites"]),
+              ", ".join(f"{s_['key']}:{s_['eval_hot_ms']}ms" for s_ in wj["sites"]))
+        check("warm-up: all 5 demo sites served from cache", wj["cached_demo_sites"] == 5 and all(s_["fully_cached"] for s_ in wj["sites"]))
+        check("warm-up opened the LOLA DEM (dem_ready) or reported why not", wj["dem_ready"] is True or ("error" in wj["dem"]), str(wj["dem"])[:140])
+        h2 = client.get("/api/health").json()
+        check("health after warm-up: dem_ready mirrors warm-up, 5/5 cached", h2["cached_demo_sites"] == 5 and h2["dem_ready"] == wj["dem_ready"], str({k: h2[k] for k in ("dem_ready", "cached_demo_sites", "response_cache_entries")}))
+        r = client.post("/api/evaluate", json={"site_id": "Auto_SP_46"})
+        check("demo A first request served from the pre-computed response cache (X-Cache: HIT)", r.headers.get("x-cache") == "HIT",
+              f"{r.elapsed.total_seconds() * 1000:.0f} ms")
+        r = client.post("/api/evaluate", json={"lat": -89.54, "lon": 197.0})
+        check("custom demo site E (cached terrain + series) is a cache HIT", r.headers.get("x-cache") == "HIT" and r.json()["data_sources"]["terrain"] != "")
+        r = client.post("/api/evaluate", json={"site_id": "Auto_SP_46", "tower_height_m": 7.5})
+        check("changed parameters miss the cache and are computed correctly", r.headers.get("x-cache") == "MISS" and r.json()["scenario"]["hardware"]["tower_height_m"] == 7.5)
 
         # ---------------------------------------------------------------- latency
         print("\n[10] Latency")

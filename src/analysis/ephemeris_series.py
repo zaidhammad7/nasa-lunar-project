@@ -13,6 +13,7 @@ The baseline window is 2026-11-13 00:00 .. 2027-01-12 00:00 UTC inclusive (1441 
 """
 from __future__ import annotations
 
+import json
 import math
 import threading
 import time
@@ -166,6 +167,25 @@ def load_cache(lat: float, lon: float) -> HourlySeries | None:
             return HourlySeries(z["sun_el"].astype(float), z["earth_el"].astype(float), "horizons_cache")
     except Exception:
         return None  # corrupt cache entry: ignore and re-derive
+
+
+def terrain_cache_path(lat: float, lon: float) -> Path:
+    return CACHE_DIR / f"terrain_{round(lat, 4):+09.4f}_{round(lon % 360.0, 4):08.4f}.json"
+
+
+def load_terrain_cache(lat: float, lon: float) -> dict | None:
+    """Cached LOLA-DEM terrain (Elevation_m, Slope_deg, Roughness_m, _dx_m) for a coordinate, or None."""
+    p = terrain_cache_path(lat, lon)
+    try:
+        return json.loads(p.read_text()) if p.exists() else None
+    except Exception:
+        return None
+
+
+def save_terrain_cache(lat: float, lon: float, terrain: dict) -> None:
+    CACHE_DIR.mkdir(exist_ok=True)
+    keep = {k: terrain[k] for k in ("Elevation_m", "Slope_deg", "Roughness_m", "_dx_m") if k in terrain}
+    terrain_cache_path(lat, lon).write_text(json.dumps(keep))
 
 
 # ----------------------------------------------------------------------------

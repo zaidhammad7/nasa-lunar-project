@@ -66,11 +66,13 @@ def panel1() -> dict:
         ("3 PSR crater floor, 0% Sun", {"Slope_deg": 3.0, "Sun_Visible_Pct": 0.0, "Sun_Avg_El": -2.5, "Sun_Max_El": -0.2}, "Hazardous"),
         ("4a Boundary 4.8 deg", {"Slope_deg": 4.8}, None),
         ("4b Boundary 5.3 deg", {"Slope_deg": 5.3}, None),
-        ("5a Tip-over cliff 14.5 deg", {"Slope_deg": 14.5}, None),
+        # with the 1.5 deg safety margin the operational cliff is 13.5 deg, so 14.5 deg is already NO-GO
+        ("5a Tip-over cliff 14.5 deg", {"Slope_deg": 14.5}, "Hazardous"),
         ("5b Tip-over cliff 15.6 deg", {"Slope_deg": 15.6}, "Hazardous"),
     ]
     df = _frame([c[1] for c in cases])
     out = ps.predict_batch(df)
+    pre = ps.predict_batch(df, safety_factor=False)
     truth = truth_labels(df)
     rows = []
     for i, (name, _, expect) in enumerate(cases):
@@ -78,17 +80,22 @@ def panel1() -> dict:
         final_cls, final_score = str(out["Safety_Class"].iloc[i]), float(out["Suitability_Score"].iloc[i])
         rows.append({"case": name, "slope_deg": float(df["Slope_deg"].iloc[i]), "sun_pct": float(df["Sun_Visible_Pct"].iloc[i]),
                      "ml_only_class": str(out["class_raw"].iloc[i]), "ml_only_score": round(float(out["score_raw"].iloc[i]), 2),
+                     "before_safety_factor_class": str(pre["Safety_Class"].iloc[i]),
                      "guardrailed_class": final_cls, "guardrailed_score": round(final_score, 2),
                      "guardrails_triggered": [c for c in ("TIP_OVER", "PSR", "DTE_BLACKOUT") if bool(out[f"guard_{c}"].iloc[i])],
+                     "safety_layers_triggered": [c for c in ps.SAFETY_LAYERS if bool(out[f"safety_{c}"].iloc[i])],
                      "rule_truth_class": str(truth.iloc[i]), "expected_class": exp, "pass": final_cls == exp})
-    # extra safety assertions on the capped scores
+    near = ps.predict_batch(_frame([{"Slope_deg": 13.0}]))
     checks = {
         "steep_rim_score_capped_le_35": rows[1]["guardrailed_score"] <= 35.0,
         "psr_score_capped_le_30": rows[2]["guardrailed_score"] <= 30.0,
         "cliff_15_6_score_capped_le_35": rows[6]["guardrailed_score"] <= 35.0,
         "ideal_score_ge_65": rows[0]["guardrailed_score"] >= 65.0,
-        "guardrails_changed_ml_verdict_on_traps": bool(
-            rows[1]["ml_only_class"] != "Hazardous" or rows[2]["ml_only_class"] != "Hazardous"),
+        "guardrails_changed_ml_verdict_on_traps": bool(rows[1]["ml_only_class"] != "Hazardous" or rows[2]["ml_only_class"] != "Hazardous"),
+        "safety_factor_flags_14_5_deg_but_rule_says_acceptable": bool(
+            rows[5]["before_safety_factor_class"] == "Acceptable" and rows[5]["guardrailed_class"] == "Hazardous"
+            and "SLOPE_DERATING" in rows[5]["safety_layers_triggered"]),
+        "13_0_deg_not_over_derated": str(near["Safety_Class"].iloc[0]) != "Hazardous",
     }
     return {"cases": rows, "extra_checks": checks, "all_pass": all(r["pass"] for r in rows) and all(checks.values())}
 
@@ -96,13 +103,35 @@ def panel1() -> dict:
 # ----------------------------------------------------------------------------
 # Panel 2
 # ----------------------------------------------------------------------------
+def _mc_metrics(out: pd.DataFrame, base_cls: np.ndarray, base_score: np.ndarray, truth: np.ndarray, reps: np.ndarray) -> dict:
+    cls_n, cls_b, tr = out["Safety_Class"].to_numpy(), base_cls[reps], truth[reps]
+    d = out["Suitability_Score"].to_numpy() - base_score[reps]
+    haz = tr == "Hazardous"
+    not_haz = tr != "Hazardous"
+    return {"mean_delta_score": round(float(d.mean()), 4), "mean_abs_delta_score": round(float(np.abs(d).mean()), 4),
+            "classification_stability_pct": round(float((cls_n == cls_b).mean() * 100), 3),
+            "accuracy_vs_rule_truth_pct": round(float((cls_n == tr).mean() * 100), 3),
+            "fatal_errors_hazardous_as_optimal": int((haz & (cls_n == "Optimal")).sum()),
+            "hazardous_leaked_to_acceptable": int((haz & (cls_n == "Acceptable")).sum()),
+            "hazardous_leakage_pct": round(float((haz & (cls_n != "Hazardous")).sum() / haz.sum() * 100), 3),
+            "hazardous_leakage_to_acceptable_pct": round(float((haz & (cls_n == "Acceptable")).sum() / haz.sum() * 100), 3),
+            "false_alarm_pct_safe_called_hazardous": round(float((not_haz & (cls_n == "Hazardous")).sum() / not_haz.sum() * 100), 3)}
+
+
 def panel2() -> dict:
     rng = np.random.default_rng(SEED)
     base = pd.read_csv(ps.DATA_CSV)
-    base_feat = base[FEATURES].reset_index(drop=True)
-    base_out = ps.predict_batch(base_feat)
-    truth = truth_labels(base_feat).to_numpy()
+    rough = pd.read_csv(OUTPUTS_DIR / "site_roughness.csv").set_index("Site_ID")["Roughness_m"]
+    base_feat = base[FEATURES].reset_index(drop=True).copy()
+    base_feat["Roughness_m"] = base["Site_ID"].map(rough).to_numpy()
+    b_before, b_after = ps.predict_batch(base_feat, safety_factor=False), ps.predict_batch(base_feat, safety_factor=True)
+    truth = truth_labels(base_feat[FEATURES]).to_numpy()
     n = len(base_feat)
+    changed = np.flatnonzero(b_before["Safety_Class"].to_numpy() != b_after["Safety_Class"].to_numpy())
+    noise_free = {"classes_before": b_before["Safety_Class"].value_counts().to_dict(),
+                  "classes_after": b_after["Safety_Class"].value_counts().to_dict(),
+                  "sites_reclassified": [{"site_id": base["Site_ID"].iloc[i], "slope_deg": float(base["Slope_deg"].iloc[i]),
+                                          "from": b_before["Safety_Class"].iloc[i], "to": b_after["Safety_Class"].iloc[i]} for i in changed]}
     reps = np.tile(np.arange(n), N_RUNS)
     levels, total = [], 0
     for lv in NOISE_LEVELS:
@@ -112,28 +141,24 @@ def panel2() -> dict:
         noisy["Elevation_m"] = noisy["Elevation_m"] + rng.normal(0, lv["elevation_m"], m)
         noisy["Sun_Visible_Pct"] = np.clip(noisy["Sun_Visible_Pct"] + rng.normal(0, lv["solar_pct"], m), 0, 100)
         t0 = time.perf_counter()
-        out = ps.predict_batch(noisy)
+        o_before = ps.predict_batch(noisy, safety_factor=False)
+        o_after = ps.predict_batch(noisy, safety_factor=True)
         dt = time.perf_counter() - t0
         total += m
-        d_score = out["Suitability_Score"].to_numpy() - base_out["Suitability_Score"].to_numpy()[reps]
-        cls_n, cls_b, tr = out["Safety_Class"].to_numpy(), base_out["Safety_Class"].to_numpy()[reps], truth[reps]
-        fatal = int(((tr == "Hazardous") & (cls_n == "Optimal")).sum())
-        fatal_vs_pipeline = int(((cls_b == "Hazardous") & (cls_n == "Optimal")).sum())
-        downgraded_hazard = int(((tr == "Hazardous") & (cls_n == "Acceptable")).sum())
-        optimistic = int((((tr == "Hazardous") & (cls_n != "Hazardous"))).sum())
-        levels.append({
-            **lv, "evaluations": int(m), "seconds": round(dt, 2), "mean_delta_score": round(float(d_score.mean()), 4),
-            "mean_abs_delta_score": round(float(np.abs(d_score).mean()), 4),
-            "p95_abs_delta_score": round(float(np.percentile(np.abs(d_score), 95)), 3),
-            "classification_stability_pct": round(float((cls_n == cls_b).mean() * 100), 3),
-            "accuracy_vs_rule_truth_pct": round(float((cls_n == tr).mean() * 100), 3),
-            "fatal_errors_hazardous_as_optimal": fatal, "fatal_errors_vs_pipeline_baseline": fatal_vs_pipeline,
-            "hazardous_called_acceptable": downgraded_hazard, "hazardous_called_not_hazardous": optimistic,
-            "hazardous_called_not_hazardous_pct": round(100 * optimistic / max(1, int((tr == "Hazardous").sum())), 3)})
+        before = _mc_metrics(o_before, b_before["Safety_Class"].to_numpy(), b_before["Suitability_Score"].to_numpy(), truth, reps)
+        after = _mc_metrics(o_after, b_after["Safety_Class"].to_numpy(), b_after["Suitability_Score"].to_numpy(), truth, reps)
+        layer_rate = {k.replace("safety_", ""): round(float(o_after[k].mean() * 100), 3) for k in o_after.columns if k.startswith("safety_")}
+        levels.append({**lv, "evaluations_per_pipeline": int(m), "seconds_both_pipelines": round(dt, 2), "before": before, "after": after,
+                       "leakage_reduction_pct_points": round(before["hazardous_leakage_pct"] - after["hazardous_leakage_pct"], 3),
+                       "leakage_reduction_relative_pct": round(100 * (1 - after["hazardous_leakage_pct"] / max(before["hazardous_leakage_pct"], 1e-9)), 1),
+                       "safety_layer_trigger_rate_pct": layer_rate})
     return {"runs_per_site": N_RUNS, "sites": n, "total_evaluations": int(total), "noise_sigma_levels": NOISE_LEVELS,
-            "levels": levels, "zero_fatal_errors": all(l["fatal_errors_hazardous_as_optimal"] == 0 for l in levels),
-            "note": "Fatal error = rule-based Hazardous site predicted Optimal under noise. Noise is 1-sigma Gaussian; "
-                    "slope noise is folded to stay >= 0, Sun visibility clipped to [0, 100]."}
+            "noise_free_effect": noise_free, "levels": levels,
+            "zero_fatal_errors": all(l[k]["fatal_errors_hazardous_as_optimal"] == 0 for l in levels for k in ("before", "after")),
+            "leakage_reduced_at_every_level": all(l["leakage_reduction_pct_points"] > 0 for l in levels),
+            "note": "Leakage = % of rule-based Hazardous samples classified Acceptable or Optimal under noise. Fatal error = "
+                    "Hazardous predicted Optimal. Both pipelines see the same noisy samples; noise is 1-sigma Gaussian, slope noise "
+                    "folded to stay >= 0, Sun visibility clipped to [0, 100]. False alarm = non-Hazardous site called Hazardous (the cost)."}
 
 
 # ----------------------------------------------------------------------------
@@ -250,13 +275,13 @@ def make_figure(r1, r2, r3, r4, path: Path) -> dict:
     fig = plt.figure(figsize=(20, 14.5))
     gs = GridSpec(2, 2, figure=fig, hspace=0.42, wspace=0.18)
 
-    # Panel 1: before vs after guardrails
+    # Panel 1: ML only vs guardrails + safety factor
     ax = fig.add_subplot(gs[0, 0])
     cases = r1["cases"]
     x = np.arange(len(cases))
     ax.bar(x - 0.2, [c["ml_only_score"] for c in cases], 0.38, color="#9aa5b1", label="ML only")
     ax.bar(x + 0.2, [c["guardrailed_score"] for c in cases], 0.38,
-           color=[CLASS_COLORS[c["guardrailed_class"]] for c in cases], edgecolor="k", label="With guardrails")
+           color=[CLASS_COLORS[c["guardrailed_class"]] for c in cases], edgecolor="k", label="Guardrails + safety factor")
     for i, c in enumerate(cases):
         ax.text(i + 0.2, c["guardrailed_score"] + 1.5, c["guardrailed_class"][:4] + ("" if c["pass"] else " X"),
                 ha="center", fontsize=8, fontweight="bold")
@@ -271,30 +296,39 @@ def make_figure(r1, r2, r3, r4, path: Path) -> dict:
     ax.legend(loc="upper right", fontsize=9, ncol=2)
     ax.grid(axis="y", alpha=0.3)
 
-    # Panel 2: Monte Carlo
-    ax = fig.add_subplot(gs[0, 1])
+    # Panel 2: Monte Carlo leakage before vs after the 3-layer safety factor
+    sub2 = gs[0, 1].subgridspec(1, 2, wspace=0.28)
+    axl, axr = fig.add_subplot(sub2[0, 0]), fig.add_subplot(sub2[0, 1])
     lv = r2["levels"]
     xs = np.arange(len(lv))
-    ax.bar(xs, [l["classification_stability_pct"] for l in lv], 0.55, color="#1f77b4")
-    for i, l in enumerate(lv):
-        ax.text(i, l["classification_stability_pct"] - 4.5, f"mean |dScore| {l['mean_abs_delta_score']:.2f}\n"
-                f"mean dScore {l['mean_delta_score']:+.2f}", ha="center", color="white", fontsize=9, fontweight="bold")
-        ax.text(i, 100.8, f"fatal errors: {l['fatal_errors_hazardous_as_optimal']}", ha="center", fontsize=9,
-                fontweight="bold", color="#2ca02c" if l["fatal_errors_hazardous_as_optimal"] == 0 else "#d62728")
-    ax.set_xticks(xs)
-    ax.set_xticklabels([f"{l['name']}\nslope ±{l['slope_deg']}°, elev ±{l['elevation_m']:g} m\nSun ±{l['solar_pct']}%"
-                        for l in lv], fontsize=9)
-    ax.set_ylim(60, 106)
-    ax.set_ylabel("Classification stability (%)")
-    ax.set_title(f"Panel 2 - Monte Carlo sensor noise ({r2['total_evaluations']:,} evaluations)", fontweight="bold", fontsize=12)
-    ax.grid(axis="y", alpha=0.3)
+    names = [f"\u00b1{l['slope_deg']}\u00b0" for l in lv]
+    for ax_, key, ttl, ylab in ((axl, "hazardous_leakage_pct", "Hazardous leaked to Acceptable/Optimal", "% of Hazardous samples"),
+                                (axr, "false_alarm_pct_safe_called_hazardous", "Cost: safe sites called Hazardous", "% of non-Hazardous samples")):
+        b1 = ax_.bar(xs - 0.2, [l["before"][key] for l in lv], 0.38, color="#9aa5b1", label="Before")
+        b2 = ax_.bar(xs + 0.2, [l["after"][key] for l in lv], 0.38, color="#2ca02c" if key.startswith("hazardous") else "#ff9f1c",
+                     edgecolor="k", label="After safety factor")
+        top = max(max(l["before"][key], l["after"][key]) for l in lv)
+        for i, l in enumerate(lv):
+            ax_.text(i - 0.2, l["before"][key] + top * 0.02, f"{l['before'][key]:.1f}", ha="center", fontsize=8)
+            ax_.text(i + 0.2, l["after"][key] + top * 0.02, f"{l['after'][key]:.1f}", ha="center", fontsize=8, fontweight="bold")
+        ax_.set_ylim(0, top * 1.22)
+        ax_.set_xticks(xs)
+        ax_.set_xticklabels(names, fontsize=9)
+        ax_.set_xlabel("slope noise (1\u03c3)")
+        ax_.set_ylabel(ylab, fontsize=9)
+        ax_.set_title(ttl, fontsize=9.5, fontweight="bold")
+        ax_.grid(axis="y", alpha=0.3)
+    axl.legend(loc="upper left", fontsize=8)
+    fat = sum(l[k]["fatal_errors_hazardous_as_optimal"] for l in lv for k in ("before", "after"))
+    fig.text(0.515, 0.905, f"Panel 2 - Monte Carlo sensor noise ({r2['total_evaluations']:,} evaluations x 2 pipelines; fatal errors: {fat})",
+             fontsize=12, fontweight="bold")
 
     # Panel 3: three sub-axes
     sub = gs[1, 0].subgridspec(1, 3, wspace=0.75)
     a1, a2, a3 = (fig.add_subplot(sub[0, i]) for i in range(3))
     s3 = r3["slope"]
     a1.plot(s3["slope_deg"], s3["score_ml_only"], color="#9aa5b1", label="ML only")
-    a1.plot(s3["slope_deg"], s3["score_final"], color="#d62728", lw=2, label="Guardrailed")
+    a1.plot(s3["slope_deg"], s3["score_final"], color="#d62728", lw=2, label="Guardrails + SF")
     a1.axvline(15, color="k", ls=":", lw=1)
     a1.set_xlim(0, 25)
     a1.set_xlabel("Slope (deg)")
@@ -362,6 +396,8 @@ def main() -> None:
                "panel4_throughput": r4, "figure_layout": {"stress_test_dashboard.png": layout["overlaps"]},
                "model_evaluation_png_layout": eval_layout,
                "summary": {"panel1_all_pass": r1["all_pass"], "panel2_zero_fatal_errors": r2["zero_fatal_errors"],
+                           "panel2_leakage_before_after_pct": {l["name"]: [l["before"]["hazardous_leakage_pct"], l["after"]["hazardous_leakage_pct"]] for l in r2["levels"]},
+                           "panel2_leakage_reduced_at_every_level": r2["leakage_reduced_at_every_level"],
                            "panel3_all_pass": r3["all_pass"], "panel4_sites_per_second": r4["sites_per_second"],
                            "stress_figure_text_overlaps": len(layout["overlaps"]),
                            "model_evaluation_text_overlaps": (eval_layout.get("text_overlaps", {}) or {}).get("model_evaluation.png")}}
