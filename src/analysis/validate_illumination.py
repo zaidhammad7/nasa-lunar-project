@@ -80,14 +80,23 @@ def run() -> dict:
                 "spearman_rho": round(float(ours.rank().corr(nasa.rank())), 3),
                 "within_10_points": int((d.abs() <= 10).sum())}
 
-    after = None
-    if TRAINING_CSV.exists():  # the features the app now scores with (terrain shadowing applied)
-        tr = pd.read_csv(TRAINING_CSV).set_index("Site_ID").loc[ds["Site_ID"]]
-        after = {"sun": stats(tr["Sun_Visible_Pct"].reset_index(drop=True), ds["NASA_Sun_Pct"]),
-                 "earth": stats(tr["Earth_Visible_Pct"].reset_index(drop=True), ds["NASA_Earth_Pct"]),
-                 "note": ("After the fix the long-run averages match NASA by construction (the effective horizon is "
-                          "fitted to NASA's value at each point), so this is a consistency check, not an independent test. "
-                          "What remains approximate is the hour-by-hour timing (one horizon height for all directions).")}
+    # Independent test: horizons ray-traced from the LOLA elevation model ONLY (no NASA illumination input),
+    # long-run Sun / Earth visibility vs NASA's map. Then the calibrated result the app scores with.
+    after, independent = None, None
+    import horizon as hz
+    if hz.PROFILES_NPZ.exists():
+        z = np.load(hz.PROFILES_NPZ)
+        order = pd.Series(range(len(z["site_id"])), index=z["site_id"]).loc[ds["Site_ID"]].to_numpy()
+        rs, re_ = pd.Series(z["raw_sun_pct"][order]), pd.Series(z["raw_earth_pct"][order])
+        cal = np.array([hz.long_run_visibility(z["profiles"][k], z["lat"][k], z["lon"][k], z["d_sun"][k], z["d_earth"][k]) for k in order])
+        ds["Raytraced_Sun_Pct"], ds["Raytraced_Earth_Pct"] = rs.to_numpy(), re_.to_numpy()
+        independent = {"sun": stats(rs, ds["NASA_Sun_Pct"]), "earth": stats(re_, ds["NASA_Earth_Pct"]),
+                       "note": "Horizons ray-traced from NASA LOLA LDEM_75S_120M only; NASA's illumination map is not used. "
+                               "Long-run (4-year, all seasons) visibility compared with NASA's 2009-2013 average."}
+        after = {"sun": stats(pd.Series(cal[:, 0]), ds["NASA_Sun_Pct"]), "earth": stats(pd.Series(cal[:, 1]), ds["NASA_Earth_Pct"]),
+                 "median_abs_offset_deg": {"sun": round(float(np.median(np.abs(z["d_sun"]))), 3), "earth": round(float(np.median(np.abs(z["d_earth"]))), 3)},
+                 "note": "After a small uniform offset per site (fitted to NASA) the long-run averages match by construction; "
+                         "the mission-window values then differ from the 4-year average because of the season (Nov-Jan is South-Pole summer)."}
 
     top_ours = set(ds.nsmallest(10, "Our_Rank")["Site_ID"])
     top_nasa = set(ds.nsmallest(10, "NASA_Corrected_Rank")["Site_ID"])
@@ -98,6 +107,7 @@ def run() -> dict:
         "n_sites": int(len(ds)), "sample_box_m": int((2 * ti.WINDOW_PX + 1) * ti.PIX_M),
         "before_fix_smooth_horizon": {"sun": stats(ds["Sun_Visible_Pct"], ds["NASA_Sun_Pct"]),
                                       "earth": stats(ds["Earth_Visible_Pct"], ds["NASA_Earth_Pct"])},
+        "independent_raytraced_horizon": independent,
         "after_fix_terrain_shadowed": after,
         "sun": stats(ds["Sun_Visible_Pct"], ds["NASA_Sun_Pct"]),
         "earth": stats(ds["Earth_Visible_Pct"], ds["NASA_Earth_Pct"]),
@@ -122,15 +132,20 @@ def _plot(ds: pd.DataFrame, rep: dict) -> None:
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4.8))
-    for ax, (ours, nasa, name) in zip(axes, [("Sun_Visible_Pct", "NASA_Sun_Pct", "Sunlight"), ("Earth_Visible_Pct", "NASA_Earth_Pct", "Earth visibility")]):
-        ax.scatter(ds[nasa], ds[ours], s=18, alpha=0.75)
-        ax.plot([0, 100], [0, 100], "k--", lw=1, label="perfect agreement")
-        s = rep["sun" if name == "Sunlight" else "earth"]
-        ax.set(xlim=(0, 100), ylim=(0, 100), xlabel=f"NASA LOLA measured {name.lower()} (%)", ylabel=f"Our model {name.lower()} (%)",
-               title=f"{name}: bias {s['bias_pct_points']:+.1f} pts, MAE {s['mae_pct_points']:.1f}, r = {s['pearson_r']:.2f}")
-        ax.legend(loc="lower right"); ax.grid(alpha=0.3)
-    fig.suptitle("Validation of 100 South Pole sites against NASA LRO LOLA terrain-shadowed illumination (2009-2013)")
+    rows = [("before_fix_smooth_horizon", "Sun_Visible_Pct", "Earth_Visible_Pct", "Before: smooth horizon")]
+    if "Raytraced_Sun_Pct" in ds:
+        rows.append(("independent_raytraced_horizon", "Raytraced_Sun_Pct", "Raytraced_Earth_Pct", "Now: horizon ray-traced from LOLA terrain"))
+    fig, axes = plt.subplots(len(rows), 2, figsize=(11, 4.6 * len(rows)), squeeze=False)
+    for r, (key, sun_col, earth_col, label) in enumerate(rows):
+        for c, (col, nasa, name) in enumerate([(sun_col, "NASA_Sun_Pct", "sunlight"), (earth_col, "NASA_Earth_Pct", "Earth visibility")]):
+            ax = axes[r][c]
+            ax.scatter(ds[nasa], ds[col], s=18, alpha=0.75, color="#d62728" if r == 0 else "#1f77b4")
+            ax.plot([0, 100], [0, 100], "k--", lw=1, label="perfect agreement")
+            st = rep[key]["sun" if c == 0 else "earth"]
+            ax.set(xlim=(0, 100), ylim=(0, 100), xlabel=f"NASA LOLA measured {name} (%)", ylabel=f"Model {name} (%)",
+                   title=f"{label}\n{name}: MAE {st['mae_pct_points']:.1f} pts, r = {st['pearson_r']:.2f}")
+            ax.legend(loc="lower right"); ax.grid(alpha=0.3)
+    fig.suptitle("100 South Pole sites vs NASA LRO LOLA terrain-shadowed illumination (2009-2013)", fontsize=12)
     fig.tight_layout()
     fig.savefig(OUT / "illumination_validation.png", dpi=130)
     plt.close(fig)
@@ -138,6 +153,6 @@ def _plot(ds: pd.DataFrame, rep: dict) -> None:
 
 if __name__ == "__main__":
     r = run()
-    print(json.dumps({k: r[k] for k in ("orientation_check_psr_sun_pct", "before_fix_smooth_horizon", "after_fix_terrain_shadowed", "sites_mostly_shadowed_in_reality",
+    print(json.dumps({k: r[k] for k in ("orientation_check_psr_sun_pct", "before_fix_smooth_horizon", "independent_raytraced_horizon", "after_fix_terrain_shadowed", "sites_mostly_shadowed_in_reality",
                                          "sites_we_rate_50pct_sun_but_reality_below_20", "ranking_spearman_ours_vs_nasa_corrected",
                                          "top10_overlap", "our_best_site", "best_sites_by_nasa_illumination")}, indent=1))

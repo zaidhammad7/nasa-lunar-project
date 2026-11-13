@@ -23,11 +23,13 @@ lander, and in view of Earth often enough to talk to it. Our tool scores all thr
 ## How it works
 1. **Terrain:** slope, elevation and roughness from the NASA LRO **LOLA** digital elevation model.
 2. **Sun and Earth:** hourly positions from **JPL Horizons** (Sun = 10, Earth = 399, seen from the Moon = 301), with a calibrated analytic fallback when offline.
-3. **Real terrain shadowing:** NASA LOLA's measured average Sun and Earth visibility (60 m/px, 2009–2013) sets each point's
-   *effective horizon* — how high the surrounding crater walls stand — and every hourly elevation is measured above it.
-   So sunlight, power, battery, countdowns and the verdict all reflect real shadowing, for presets and clicked points alike.
+3. **Real terrain horizons:** for every point we ray-trace the horizon in **720 directions** over NASA's LOLA south-polar
+   elevation model (LDEM_75S_120M, 120 m/px, out to 250 km, Moon's curvature included). Each hour the Sun and Earth count
+   as visible only if they are above the horizon *in their own direction* — so crater walls, ridges and distant massifs
+   shadow a site exactly when the Sun is behind them. A small per-site offset (median 0.25° for the Sun) then aligns the
+   long-run average with NASA's illumination map. Sunlight, power, battery, countdowns and the verdict all follow.
 4. **Machine learning:** a model trained on the 100 sites (terrain-shadowed features) predicts the suitability score
-   (gradient boosting; 5-fold cross-validated error **≈ 3.7 points** out of 100, R² = 0.95).
+   (gradient boosting; 5-fold cross-validated error **≈ 3.6 points** out of 100, R² = 0.96).
 5. **Three-layer safety factor.** A site is NO-GO if any layer fails:
    - Slope must be under the lander limit minus a 1.5° margin (15° → **13.5°**), including a roughness allowance.
    - The *worst-case* score (95% lower bound) must clear the acceptance threshold plus a 3-point buffer.
@@ -42,30 +44,37 @@ lander, and in view of Earth often enough to talk to it. Our tool scores all thr
 - The **offline engine** in the browser mirrors the backend, so the app works without internet.
 - Out-of-range inputs are flagged ("outside model training range") instead of silently extrapolated.
 
-## Validation against real NASA measurements — and the fix
-We compared our first model with NASA LRO LOLA **terrain-shadowed** illumination maps (`python src/analysis/validate_illumination.py`).
-The map reading was verified first: six known permanently shadowed craters (Shackleton, Haworth, Faustini…) all read 0% sunlight.
+## Validation against real NASA measurements
+We test our sunlight and Earth visibility against NASA LRO LOLA **terrain-shadowed illumination maps** (60 m/px, 2009–2013),
+an independent NASA product (`python src/analysis/validate_illumination.py`). Map reading was verified first: six known
+permanently shadowed craters (Shackleton, Haworth, Faustini…) all read 0% sunlight.
 
-| Sunlight, 100 sites | Before (smooth horizon) | After (NASA terrain shadowing) |
+| 100 sites vs NASA | First model (smooth horizon) | Now: horizons from LOLA terrain only (independent) |
 |---|---|---|
-| Mean, ours vs NASA | 66% vs 21% | 21% vs 21% |
-| Average error | **45 points** (no correlation, r = −0.25) | **0.02 points** |
-| Earth visibility error | 21 points (r = 0.54) | 0.02 points |
+| **Sunlight** average error | **45 points** (r = −0.24) | **1.5 points** (r = **0.99**), 99/100 sites within 10 points |
+| **Earth visibility** average error | 21 points (r = 0.53) | **4.3 points** (r = 0.98) |
 
-The first model could not see crater walls, so it gave every site about 60% sunlight; in reality half the sites are lit less
-than 20% of the time. After the fix, the picture is honest: **2 Optimal, 41 Acceptable, 57 NO-GO** sites. The best sites
-survive the correction — **Auto_SP_075** (50% Sun, 78% Earth, 4.8° slope) and **Auto_SP_099** (35% Sun, 56% Earth, 3.0° slope).
-Shackleton's floor reads 0% sunlight and NO-GO, even with a 150 m mast.
+The "now" column uses **no NASA illumination input** — only terrain heights and Sun/Earth geometry — so it is a genuine
+independent test. (The small calibration offset is applied afterwards for scoring.)
 
-*Note:* after the fix the long-run averages match NASA **by construction** (the horizon is fitted to NASA's value), so the
-"after" column is a consistency check, not an independent test. What remains approximate is hour-by-hour timing.
+![validation](../outputs/illumination_validation.png)
+
+**What changed in the results:** the first model gave every site ~60% sunlight because it could not see crater walls.
+With real horizons the picture is honest: **3 Optimal, 48 Acceptable, 49 NO-GO** sites for the mission window. The best
+sites hold up — **Auto_SP_075** (60% Sun, 85% Earth, 4.8° slope) and **Auto_SP_099** (48% Sun, 56% Earth, 3.0° slope).
+Shackleton's floor reads 0% sunlight and NO-GO, even with a 150 m mast. NASA's brightest spot near Shackleton's rim
+(−89.475°, 222.56°E) gets ~100% sunlight in this window but is NO-GO because the rim is too steep — the real trade-off.
+
+**Seasons are now captured:** our window (Nov 2026 – Jan 2027) is South-Pole summer (the Sun ~1.3° south of the lunar
+equator), so sites average 29% sunlight in the window versus NASA's 21% four-year average. A single fixed horizon could not show this.
 
 ## Honest limits
-- **One horizon height in every direction:** averages match NASA, but the timing of individual sunrises and sunsets is approximate (a full horizon profile from the elevation model would fix this).
-- NASA's averages cover **2009–2013**; our timeline covers a 60-day window (Nov 2026 – Jan 2027), scaled so its average matches.
+- Horizons come from a **120 m/px** terrain model: features smaller than ~120 m (boulders, small ridges) are not resolved.
+- The mast's benefit is approximated as a uniform horizon dip (acos(R/(R+h))), not re-ray-traced at mast height.
+- Earth visibility is ~3.5 points low on average versus NASA (simplified libration model); the calibration offset corrects the average.
 - The heatmap is **interpolated** from 100 scored sites. Only clicked points get a full evaluation.
 - Terrain for custom points comes from a **118 m/px** elevation model; a 20 m/px polar model would resolve smaller hazards.
 - Crater names mark crater **centres**, not NASA's exact Artemis III region boundaries.
 
 ## Next steps
-Full horizon profiles from the elevation model (exact sunrise/sunset times) · higher-resolution polar terrain · water-ice proximity (permanently shadowed regions) · landing-ellipse scoring · traverse planning.
+Re-ray-trace horizons at mast height · 20 m/px terrain near the site · JPL Horizons azimuths for every hour · water-ice proximity (permanently shadowed regions) · landing-ellipse scoring · traverse planning.

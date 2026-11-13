@@ -32,7 +32,7 @@ PIX_M = 60.0              # m / pixel
 CENTER_PIX = 2528.5       # LINE/SAMPLE_PROJECTION_OFFSET (pole)
 DN_SCALE = 0.00004        # visible fraction = DN * scale
 R_MOON_M = 1_737_400.0
-WINDOW_PX = 2             # average a 5x5 px (300 m) box: comparable to the 118 m-DEM site footprint
+WINDOW_PX = 1             # average a 3x3 px (180 m) box around the point
 # A point NASA records as never lit (or never seen from Earth) over 4 years must stay so in every season and with any mast:
 # the Sun climbs up to the lunar obliquity (1.54 deg) higher than in our 60-day window, and a 150 m mast adds 0.75 deg.
 PERMANENT_MARGIN_DEG = 1.6
@@ -105,13 +105,47 @@ def horizon_for(el: np.ndarray, visible_pct: float) -> float:
 
 
 def correct(sun_el: np.ndarray, earth_el: np.ndarray, lat: float, lon: float) -> tuple[np.ndarray, np.ndarray, dict]:
-    """Return (sun_el - h_sun, earth_el - h_earth, info). Smooth horizon (h = 0) when NASA data is unavailable."""
-    v = nasa_visibility(round(float(lat), 4), round(float(lon) % 360.0, 4))
+    """Hourly Sun / Earth elevations measured above the real terrain horizon (deg), plus provenance info.
+
+    Priority: (1) direction-dependent horizon ray-traced from the LOLA DEM (horizon.py), with a small uniform offset so the
+    long-run average equals NASA's map; (2) a single NASA-fitted effective horizon; (3) the smooth horizon (h = 0).
+    """
+    import horizon as hz  # local import: horizon imports ephemeris_series lazily
+    lat, lon = round(float(lat), 4), round(float(lon) % 360.0, 4)
+    v = nasa_visibility(lat, lon)
+    prof = hz.profile_for(lat, lon)
+    if prof is not None:
+        t = np.arange(len(sun_el), dtype=float)
+        s_lat, s_lon, e_lat, e_lon = hz.baseline_subpoints(t)
+        h_sun = hz.horizon_at(prof, hz.azimuth_to(lat, lon, s_lat, s_lon))
+        h_earth = hz.horizon_at(prof, hz.azimuth_to(lat, lon, e_lat, e_lon))
+        offs = hz.cached_offsets(lat, lon) or (_fit_offsets(prof, lat, lon, v["sun_pct"], v["earth_pct"]) if v else (0.0, 0.0))
+        raw = hz.long_run_visibility(prof, lat, lon)
+        info = {"terrain_shadowing": True, "method": "horizon profile ray-traced from NASA LOLA DEM (720 directions)",
+                "sun_horizon_deg": round(float(np.mean(h_sun) + offs[0]), 4), "earth_horizon_deg": round(float(np.mean(h_earth) + offs[1]), 4),
+                "horizon_min_max_deg": [round(float(prof.min()), 2), round(float(prof.max()), 2)],
+                "calibration_offset_deg": {"sun": round(offs[0], 3), "earth": round(offs[1], 3)},
+                "raytraced_long_run_pct": {"sun": round(raw[0], 2), "earth": round(raw[1], 2)},
+                "source": "NASA LOLA LDEM_75S_120M terrain horizon" + (" + " + SOURCE if v else "")}
+        if v:
+            info.update(nasa_sun_visible_pct=round(v["sun_pct"], 2), nasa_earth_visible_pct=round(v["earth_pct"], 2))
+        return np.asarray(sun_el) - h_sun - offs[0], np.asarray(earth_el) - h_earth - offs[1], info
     if v is None:
         return np.asarray(sun_el), np.asarray(earth_el), {
-            "terrain_shadowing": False, "sun_horizon_deg": 0.0, "earth_horizon_deg": 0.0,
-            "source": "smooth horizon (NASA LOLA illumination maps not available)"}
+            "terrain_shadowing": False, "method": "smooth horizon", "sun_horizon_deg": 0.0, "earth_horizon_deg": 0.0,
+            "source": "smooth horizon (NASA LOLA data not available)"}
     hs, he = horizon_for(sun_el, v["sun_pct"]), horizon_for(earth_el, v["earth_pct"])
     return np.asarray(sun_el) - hs, np.asarray(earth_el) - he, {
-        "terrain_shadowing": True, "sun_horizon_deg": round(hs, 4), "earth_horizon_deg": round(he, 4),
+        "terrain_shadowing": True, "method": "single effective horizon fitted to NASA illumination map",
+        "sun_horizon_deg": round(hs, 4), "earth_horizon_deg": round(he, 4),
         "nasa_sun_visible_pct": round(v["sun_pct"], 2), "nasa_earth_visible_pct": round(v["earth_pct"], 2), "source": SOURCE}
+
+
+@lru_cache(maxsize=2048)
+def _fit_offsets_cached(lat: float, lon: float, nasa_sun: float, nasa_earth: float) -> tuple[float, float]:
+    import horizon as hz
+    return hz.fit_offsets(hz.profile_for(lat, lon), lat, lon, nasa_sun, nasa_earth)
+
+
+def _fit_offsets(prof, lat, lon, nasa_sun, nasa_earth) -> tuple[float, float]:
+    return _fit_offsets_cached(lat, lon, round(nasa_sun, 3), round(nasa_earth, 3))

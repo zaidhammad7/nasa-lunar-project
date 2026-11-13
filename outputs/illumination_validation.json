@@ -9,124 +9,151 @@
   "Sverdrup": 0.0
  },
  "n_sites": 100,
- "sample_box_m": 300,
+ "sample_box_m": 180,
  "before_fix_smooth_horizon": {
   "sun": {
    "mean_ours_pct": 66.22,
-   "mean_nasa_pct": 20.96,
-   "bias_pct_points": 45.26,
-   "mae_pct_points": 45.26,
-   "rmse_pct_points": 49.61,
-   "pearson_r": -0.251,
-   "spearman_rho": -0.373,
+   "mean_nasa_pct": 20.95,
+   "bias_pct_points": 45.27,
+   "mae_pct_points": 45.27,
+   "rmse_pct_points": 49.63,
+   "pearson_r": -0.236,
+   "spearman_rho": -0.355,
    "within_10_points": 1
   },
   "earth": {
    "mean_ours_pct": 42.64,
-   "mean_nasa_pct": 26.38,
-   "bias_pct_points": 16.27,
-   "mae_pct_points": 21.29,
-   "rmse_pct_points": 25.9,
-   "pearson_r": 0.538,
-   "spearman_rho": 0.463,
-   "within_10_points": 29
+   "mean_nasa_pct": 26.39,
+   "bias_pct_points": 16.25,
+   "mae_pct_points": 21.31,
+   "rmse_pct_points": 25.96,
+   "pearson_r": 0.532,
+   "spearman_rho": 0.456,
+   "within_10_points": 30
   }
+ },
+ "independent_raytraced_horizon": {
+  "sun": {
+   "mean_ours_pct": 20.76,
+   "mean_nasa_pct": 20.95,
+   "bias_pct_points": -0.2,
+   "mae_pct_points": 1.51,
+   "rmse_pct_points": 2.34,
+   "pearson_r": 0.989,
+   "spearman_rho": 0.992,
+   "within_10_points": 99
+  },
+  "earth": {
+   "mean_ours_pct": 22.92,
+   "mean_nasa_pct": 26.39,
+   "bias_pct_points": -3.47,
+   "mae_pct_points": 4.31,
+   "rmse_pct_points": 5.53,
+   "pearson_r": 0.985,
+   "spearman_rho": 0.987,
+   "within_10_points": 90
+  },
+  "note": "Horizons ray-traced from NASA LOLA LDEM_75S_120M only; NASA's illumination map is not used. Long-run (4-year, all seasons) visibility compared with NASA's 2009-2013 average."
  },
  "after_fix_terrain_shadowed": {
   "sun": {
-   "mean_ours_pct": 20.98,
-   "mean_nasa_pct": 20.96,
-   "bias_pct_points": 0.02,
-   "mae_pct_points": 0.02,
-   "rmse_pct_points": 0.02,
+   "mean_ours_pct": 20.95,
+   "mean_nasa_pct": 20.95,
+   "bias_pct_points": -0.0,
+   "mae_pct_points": 0.0,
+   "rmse_pct_points": 0.0,
    "pearson_r": 1.0,
    "spearman_rho": 1.0,
    "within_10_points": 100
   },
   "earth": {
    "mean_ours_pct": 26.39,
-   "mean_nasa_pct": 26.38,
-   "bias_pct_points": 0.01,
-   "mae_pct_points": 0.02,
-   "rmse_pct_points": 0.02,
+   "mean_nasa_pct": 26.39,
+   "bias_pct_points": 0.0,
+   "mae_pct_points": 0.0,
+   "rmse_pct_points": 0.0,
    "pearson_r": 1.0,
    "spearman_rho": 1.0,
    "within_10_points": 100
   },
-  "note": "After the fix the long-run averages match NASA by construction (the effective horizon is fitted to NASA's value at each point), so this is a consistency check, not an independent test. What remains approximate is the hour-by-hour timing (one horizon height for all directions)."
+  "median_abs_offset_deg": {
+   "sun": 0.246,
+   "earth": 0.932
+  },
+  "note": "After a small uniform offset per site (fitted to NASA) the long-run averages match by construction; the mission-window values then differ from the 4-year average because of the season (Nov-Jan is South-Pole summer)."
  },
  "sun": {
   "mean_ours_pct": 66.22,
-  "mean_nasa_pct": 20.96,
-  "bias_pct_points": 45.26,
-  "mae_pct_points": 45.26,
-  "rmse_pct_points": 49.61,
-  "pearson_r": -0.251,
-  "spearman_rho": -0.373,
+  "mean_nasa_pct": 20.95,
+  "bias_pct_points": 45.27,
+  "mae_pct_points": 45.27,
+  "rmse_pct_points": 49.63,
+  "pearson_r": -0.236,
+  "spearman_rho": -0.355,
   "within_10_points": 1
  },
  "earth": {
   "mean_ours_pct": 42.64,
-  "mean_nasa_pct": 26.38,
-  "bias_pct_points": 16.27,
-  "mae_pct_points": 21.29,
-  "rmse_pct_points": 25.9,
-  "pearson_r": 0.538,
-  "spearman_rho": 0.463,
-  "within_10_points": 29
+  "mean_nasa_pct": 26.39,
+  "bias_pct_points": 16.25,
+  "mae_pct_points": 21.31,
+  "rmse_pct_points": 25.96,
+  "pearson_r": 0.532,
+  "spearman_rho": 0.456,
+  "within_10_points": 30
  },
- "sites_mostly_shadowed_in_reality": 50,
- "sites_we_rate_50pct_sun_but_reality_below_20": 50,
- "ranking_spearman_ours_vs_nasa_corrected": 0.982,
+ "sites_mostly_shadowed_in_reality": 51,
+ "sites_we_rate_50pct_sun_but_reality_below_20": 51,
+ "ranking_spearman_ours_vs_nasa_corrected": 0.961,
  "top10_overlap": 7,
  "our_best_site": {
   "id": "Auto_SP_075",
   "our_sun_pct": 59.1,
-  "nasa_sun_pct": 50.4,
+  "nasa_sun_pct": 49.9,
   "our_earth_pct": 67.2,
-  "nasa_earth_pct": 78.3,
+  "nasa_earth_pct": 74.1,
   "nasa_corrected_rank": 1
  },
  "best_sites_by_nasa_illumination": [
   {
    "Site_ID": "Auto_SP_075",
-   "NASA_Sun_Pct": 50.37,
-   "NASA_Earth_Pct": 78.34,
+   "NASA_Sun_Pct": 49.93,
+   "NASA_Earth_Pct": 74.13,
    "Slope_deg": 4.81,
-   "NASA_Corrected_Score": 82.01,
+   "NASA_Corrected_Score": 81.16,
    "Our_Rank": 1
   },
   {
    "Site_ID": "Auto_SP_099",
-   "NASA_Sun_Pct": 34.55,
-   "NASA_Earth_Pct": 56.23,
+   "NASA_Sun_Pct": 35.15,
+   "NASA_Earth_Pct": 58.31,
    "Slope_deg": 2.97,
-   "NASA_Corrected_Score": 74.61,
+   "NASA_Corrected_Score": 75.12,
    "Our_Rank": 2
   },
   {
    "Site_ID": "Auto_SP_073",
-   "NASA_Sun_Pct": 19.2,
-   "NASA_Earth_Pct": 73.98,
+   "NASA_Sun_Pct": 19.57,
+   "NASA_Earth_Pct": 74.87,
    "Slope_deg": 5.91,
-   "NASA_Corrected_Score": 71.08,
+   "NASA_Corrected_Score": 71.33,
    "Our_Rank": 3
   },
   {
    "Site_ID": "Auto_SP_072",
-   "NASA_Sun_Pct": 37.82,
-   "NASA_Earth_Pct": 91.11,
+   "NASA_Sun_Pct": 37.48,
+   "NASA_Earth_Pct": 91.1,
    "Slope_deg": 12.26,
-   "NASA_Corrected_Score": 67.78,
+   "NASA_Corrected_Score": 67.7,
    "Our_Rank": 4
   },
   {
    "Site_ID": "Auto_SP_051",
-   "NASA_Sun_Pct": 27.27,
-   "NASA_Earth_Pct": 45.0,
+   "NASA_Sun_Pct": 26.98,
+   "NASA_Earth_Pct": 45.01,
    "Slope_deg": 2.19,
-   "NASA_Corrected_Score": 66.3,
-   "Our_Rank": 6
+   "NASA_Corrected_Score": 66.23,
+   "Our_Rank": 7
   }
  ]
 }

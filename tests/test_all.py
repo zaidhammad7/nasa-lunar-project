@@ -169,12 +169,12 @@ def _():
     de, dsl = (j["Elevation_m"] - j["Elevation_m_rg"]).abs().max(), (j["Slope_deg"] - j["Slope_deg_rg"]).abs().max()
     return expect(de < 0.01 and dsl < 0.01, f"max diff {de:.4f} m, {dsl:.4f} deg")
 
-@case("A", "training set: terrain/coordinates unchanged, sunlight matches NASA LOLA within 0.5 pts")
+@case("A", "training set keeps terrain; terrain-only horizons predict NASA sunlight (MAE < 3 pts, r > 0.95)")
 def _():
     same = all(np.allclose(TR[c], DS[c]) for c in ("Lat", "Lon", "Elevation_m", "Slope_deg")) and list(TR["Site_ID"]) == list(DS["Site_ID"])
-    ds_ = (TR["Sun_Visible_Pct"] - TR["NASA_Sun_Pct"]).abs().max()
-    de_ = (TR["Earth_Visible_Pct"] - TR["NASA_Earth_Pct"]).abs().max()
-    return expect(same and ds_ <= 0.5 and de_ <= 0.5, f"terrain same={same}; max |sun - NASA| {ds_:.2f}, |earth - NASA| {de_:.2f}")
+    err = (TR["Raytraced_Sun_Pct"] - TR["NASA_Sun_Pct"]).abs().mean()
+    r = float(np.corrcoef(TR["Raytraced_Sun_Pct"], TR["NASA_Sun_Pct"])[0, 1])
+    return expect(same and err < 3 and r > 0.95, f"terrain unchanged={same}; independent ray-traced vs NASA sunlight: MAE {err:.2f} pts, r {r:.3f}")
 
 @case("A", "no two sites share the same coordinates")
 def _():

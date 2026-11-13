@@ -96,9 +96,9 @@
   {
    "n": 14,
    "group": "A",
-   "case": "training set: terrain/coordinates unchanged, sunlight matches NASA LOLA within 0.5 pts",
+   "case": "training set keeps terrain; terrain-only horizons predict NASA sunlight (MAE < 3 pts, r > 0.95)",
    "pass": true,
-   "detail": "terrain same=True; max |sun - NASA| 0.07, |earth - NASA| 0.07"
+   "detail": "terrain unchanged=True; independent ray-traced vs NASA sunlight: MAE 1.51 pts, r 0.989"
   },
   {
    "n": 15,
@@ -133,7 +133,7 @@
    "group": "B",
    "case": "safety classes are Optimal / Acceptable / Hazardous only",
    "pass": true,
-   "detail": "classes {'Optimal', 'Acceptable', 'Hazardous'}"
+   "detail": "classes {'Acceptable', 'Optimal', 'Hazardous'}"
   },
   {
    "n": 20,
@@ -273,14 +273,14 @@
    "group": "D",
    "case": "cross-validated score error (RMSE) below 5 points (5% of the 0-100 scale)",
    "pass": true,
-   "detail": "RMSE 3.70"
+   "detail": "RMSE 3.64"
   },
   {
    "n": 40,
    "group": "D",
    "case": "cross-validated R^2 above 0.9",
    "pass": true,
-   "detail": "R2 0.949"
+   "detail": "R2 0.956"
   },
   {
    "n": 41,
@@ -308,7 +308,7 @@
    "group": "D",
    "case": "prediction is deterministic",
    "pass": true,
-   "detail": "74.39 vs 74.39"
+   "detail": "80.12 vs 80.12"
   },
   {
    "n": 45,
@@ -322,7 +322,7 @@
    "group": "D",
    "case": "steeper slope never raises the score by more than model noise (0.25 pt; best site, 0..14 deg)",
    "pass": true,
-   "detail": "largest rise +0.05 pt; [74.5, 74.5, 74.6, 74.4, 74.3, 74.3, 74.0, 70.0, 69.3, 44.0, 44.0, 44.0, 44.0, 44.0, 44.0]"
+   "detail": "largest rise +0.04 pt; [80.1, 80.1, 80.1, 80.1, 80.2, 80.1, 80.1, 77.1, 76.9, 74.7, 74.7, 44.0, 44.0, 44.0, 44.0]"
   },
   {
    "n": 47,
@@ -434,21 +434,21 @@
    "group": "E",
    "case": "timeline_hour_index selects that hour's live values",
    "pass": true,
-   "detail": "-5.712 vs -5.712"
+   "detail": "-7.9973 vs -7.9973"
   },
   {
    "n": 63,
    "group": "E",
    "case": "longer mast never lowers sunlight (API, 1 vs 150 m)",
    "pass": true,
-   "detail": "36.389 % -> 41.389 %"
+   "detail": "50.0 % -> 52.917 %"
   },
   {
    "n": 64,
    "group": "E",
    "case": "larger panel area raises mission energy proportionally",
    "pass": true,
-   "detail": "ratio 2.000000030477504"
+   "detail": "ratio 1.9999992943275224"
   },
   {
    "n": 65,
@@ -469,7 +469,7 @@
    "group": "E",
    "case": "95% confidence interval contains the score",
    "pass": true,
-   "detail": "16.74 <= 30.0 <= 30.0"
+   "detail": "4.96 <= 30.0 <= 30.0"
   },
   {
    "n": 68,
@@ -483,7 +483,7 @@
    "group": "E",
    "case": "single evaluation completes in under 1 s (preset)",
    "pass": true,
-   "detail": "44 ms"
+   "detail": "52 ms"
   },
   {
    "n": 70,

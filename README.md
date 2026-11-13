@@ -9,7 +9,7 @@ true-scale 3-D mission-control dashboard.
 ## What it does
 - **Click anywhere on the 3-D Moon** (NASA LRO imagery, true-scale Earth and Sun) to evaluate that exact point.
 - **GO / CONDITIONAL / NO-GO decision** with a 0–100 score, 95% confidence interval and an **Evidence** card listing every safety check against its limit.
-- **Real terrain shadowing:** sunlight and Earth visibility follow NASA LOLA's measured illumination maps, not a smooth horizon.
+- **Real terrain horizons:** each point's horizon is ray-traced in 720 directions over NASA's LOLA polar terrain; validated independently against NASA's illumination maps (sunlight error 1.5 points, r = 0.99).
 - **60-day mission timeline** with live sunrise / Earthrise countdowns, solar power, and a **battery survival** check through the longest night.
 - **Suitability heatmap**, named craters (IAU), top-3 landing windows, top-5 backup sites, side-by-side comparison, CSV export.
 - **Hardware what-if:** tower height (1–150 m), panel tilt and area update power instantly.
@@ -21,7 +21,7 @@ Requirements: Python 3.10+, Node.js 20+.
 
 ```bash
 pip install -r requirements.txt
-python src/analysis/build_corrected_dataset.py   # first run only: downloads NASA LOLA illumination maps (~100 MB) into data/
+python src/analysis/build_corrected_dataset.py   # first run only: downloads NASA LOLA terrain + illumination data (~220 MB) into data/
 uvicorn src.app.api_server:app --port 8000        # backend  -> http://localhost:8000/docs
 ```
 
@@ -38,8 +38,8 @@ The frontend falls back to a built-in offline engine if the backend is unreachab
 |---|---|
 | Terrain | Slope, elevation, roughness from the NASA LRO **LOLA** elevation model (118 m/px) |
 | Sun and Earth positions | Hourly ephemeris from **JPL Horizons** (analytic fallback offline) |
-| Terrain shadowing | NASA LOLA **average Sun / Earth visibility maps** (60 m/px, 2009–2013) set each point's effective horizon |
-| Score | Gradient-boosting model on 100 sites (5-fold CV error ≈ 3.7 / 100, R² 0.95) + rule-based components |
+| Terrain shadowing | Horizons ray-traced over the LOLA **LDEM_75S_120M** polar elevation model; calibrated to NASA LOLA **average visibility maps** (60 m/px, 2009–2013) |
+| Score | Gradient-boosting model on 100 sites (5-fold CV error ≈ 3.6 / 100, R² 0.96) + rule-based components |
 | Safety | 3-layer safety factor (13.5° derated slope, worst-case score buffer, hazard probability < 28%) + hard guardrails |
 
 ## Tests and validation
@@ -63,9 +63,9 @@ docs/           judges' brief
 ```
 
 ## Data sources
-NASA LRO LOLA elevation model (USGS) · NASA PDS LOLA illumination products (AVGVISIB_85S_060M) · JPL Horizons ephemeris ·
+NASA LRO LOLA elevation models (USGS LDEM 118 m; PDS LDEM_75S_120M polar) · NASA PDS LOLA illumination products (AVGVISIB_85S_060M) · JPL Horizons ephemeris ·
 NASA SVS CGI Moon Kit (LROC colour, LOLA elevation) · IAU Gazetteer of Planetary Nomenclature (crater positions).
 
 ## Limits
-Hour-by-hour sunrise/sunset timing uses one effective horizon height in all directions; terrain is 118 m/px; the heatmap is
+Horizons use 120 m/px terrain (smaller features unresolved) and the mast effect is approximated; the heatmap is
 interpolated from 100 scored sites. This is a screening tool, not a certified landing-site analysis.
