@@ -1,13 +1,17 @@
 // Moon / Earth surface textures.
 //   1. A fast low-res procedural placeholder is used for the very first frame (no blocking work, no network).
-//   2. Real maps are fetched from CORS-enabled CDNs (three.js example textures, threex.planets bump map). The real 1k
+//   2. PREFERRED: NASA CGI Moon Kit (LROC colour mosaic + LOLA elevation, run scripts/fetch_moon_kit.py) served from /moon/.
+//   3. Otherwise real maps are fetched from CORS-enabled CDNs (three.js example textures, threex.planets bump map). The real 1k
 //      lunar map is upscaled onto a 4096x2048 canvas and overlaid with procedural micro-craters so polar close-ups stay sharp.
-//   3. If every URL fails (offline) a high-detail fully procedural crater canvas is used instead.
+//   4. If every URL fails (offline) a high-detail fully procedural crater canvas is used instead.
 import * as THREE from 'three'
 import { useEffect, useState } from 'react'
 
 const TJS = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/planets/'
+const LOCAL = import.meta.env.BASE_URL + 'moon/'
 export const URLS = {
+  nasaColor: [LOCAL + 'moon_color.jpg'],
+  nasaHeight: [LOCAL + 'moon_height.jpg'],
   moonAlbedo: [TJS + 'moon_1024.jpg', 'https://threejs.org/examples/textures/planets/moon_1024.jpg',
     'https://cdn.jsdelivr.net/gh/jeromeetienne/threex.planets@master/images/moonmap1k.jpg'],
   moonBump: ['https://cdn.jsdelivr.net/gh/jeromeetienne/threex.planets@master/images/moonbump1k.jpg'],
@@ -112,6 +116,13 @@ export function useMoonTextures() {
   useEffect(() => {
     let dead = false
     ;(async () => {
+      const [nCol, nHgt] = await Promise.all([loadImage(URLS.nasaColor, 20000), loadImage(URLS.nasaHeight, 20000)])
+      if (dead) return
+      if (nCol) { // real NASA data: use as-is (no synthetic craters)
+        const real = (img, srgb) => { const x = new THREE.Texture(img); x.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; x.anisotropy = 8; x.wrapS = THREE.RepeatWrapping; x.needsUpdate = true; return x }
+        setTex((old) => { old.map.dispose(); old.bump.dispose(); return { map: real(nCol, true), bump: nHgt ? real(nHgt, false) : old.bump, kind: 'nasa-cgi-moon-kit' } })
+        return
+      }
       const [alb, bmp] = await Promise.all([loadImage(URLS.moonAlbedo), loadImage(URLS.moonBump)])
       if (dead) return
       await new Promise((r) => setTimeout(r, 30)) // let the first frames paint before the heavy canvas work
