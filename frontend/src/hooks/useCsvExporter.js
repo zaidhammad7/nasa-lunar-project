@@ -1,22 +1,10 @@
-// "Export Full CSV": a complete mission file built client-side from the live (instantly recomputed) telemetry, so it always
-// matches what is on screen, including the current tower / tilt / area. Two sections in one file:
-//   1. MISSION SUMMARY   - Field,Value rows (site, coordinates, mode, score, status, terrain, hardware, totals)
-//   2. HOURLY TELEMETRY  - one row per mission hour
+// "Export CSV": a one-point mission summary built client-side from the live (instantly recomputed) telemetry, so it always
+// matches what is on screen, including the current tower / tilt / area. Field,Value rows only (site, coordinates, mode,
+// score, status, terrain, hardware, totals) - no hourly table.
 import { useCallback, useState } from 'react'
-import { crossingTimes, powerWatts } from '../lib/physics.js'
-
-export const HOURLY_COLUMNS = ['Hour_Index', 'Timestamp_UTC', 'Illumination_Status', 'Sun_Elevation_Deg', 'Overall_Sun_Visible_Pct',
-  'Earth_Connection_Status', 'Earth_Elevation_Deg', 'Overall_Earth_Visible_Pct', 'Time_To_Sunset_Hours', 'Time_To_Earthset_Hours',
-  'Real_Time_Power_Watts', 'Cumulative_Energy_kWh', 'Site_Suitability_Score', 'Safety_Status']
 
 const esc = (v) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s }
 const row = (cells) => cells.map(esc).join(',')
-
-/** Hours from each mission hour to the next set (lit -> dark / visible -> blocked) crossing; '' if none before the end. */
-function nextSet(elevation) {
-  const ct = crossingTimes(elevation, 'down')
-  return (i) => { const c = ct.find((x) => x >= i); return c == null ? '' : (c - i).toFixed(3) }
-}
 
 export function buildMissionCsv({ result, calc, scn, mode, liveScore }) {
   const d = result.primary_landing_decision
@@ -36,17 +24,7 @@ export function buildMissionCsv({ result, calc, scn, mode, liveScore }) {
     ['Total_Accumulated_Energy_kWh', calc.stats.totalKwh.toFixed(3)],
     ['Data_Source', result._source === 'live' ? 'live backend' : 'offline analytic fallback'], ['Generated_UTC', new Date().toISOString()],
   ]
-  const sunSet = nextSet(calc.sunEff), earthSet = nextSet(calc.earthEff)
-  const sunPct = calc.stats.sunVisPct.toFixed(2), earthPct = calc.stats.earthVisPct.toFixed(2)
-  const lines = [...summary.map(row), '', 'HOURLY TELEMETRY', row(HOURLY_COLUMNS)]
-  let cum = 0
-  for (let i = 0; i < calc.n; i++) {
-    const p = powerWatts(calc.sunEff[i], scn.area, scn.tilt)
-    cum += p / 1000
-    const at = calc.at(i)
-    lines.push(row([i, result.timeline.timestamp_utc[i], at.state, calc.sunEff[i].toFixed(4), sunPct, at.connected ? 'Connected' : 'Blocked',
-      calc.earthEff[i].toFixed(4), earthPct, sunSet(i), earthSet(i), p.toFixed(2), cum.toFixed(4), Number(score).toFixed(2), d.mission_status_label]))
-  }
+  const lines = summary.map(row)
   return lines.join('\r\n') + '\r\n'
 }
 
@@ -66,7 +44,7 @@ export function useCsvExporter(scn, mode, result, calc, liveScore) {
     const a = Object.assign(document.createElement('a'), { href: url, download: name })
     document.body.appendChild(a); a.click(); a.remove()
     setTimeout(() => URL.revokeObjectURL(url), 2000)
-    setNote(`Saved ${name} (${calc.n} hourly rows)`)
+    setNote(`Saved ${name}`)
     setTimeout(() => setNote(null), 4000)
   }, [scn, mode, result, calc, liveScore])
   return { exportCsv, note }
