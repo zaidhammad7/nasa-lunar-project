@@ -1,0 +1,398 @@
+{
+  "schema_version": "3.0",
+  "scenario": {
+    "lat_deg": -85.3109,
+    "lon_deg_east": 332.293,
+    "site_id": "Auto_SP_099",
+    "is_preset_site": true,
+    "start_datetime_utc": "2026-11-13T00:00:00Z",
+    "end_datetime_utc": "2027-01-12T00:00:00Z",
+    "duration_hours": 1440,
+    "timeline_hour_index": 100,
+    "timestamp_utc": "2026-11-17T04:00:00Z",
+    "vehicle": {
+      "max_slope_deg": 5.0,
+      "min_sun_pct": 50.0,
+      "min_earth_pct": 40.0
+    },
+    "hardware": {
+      "tower_height_m": 10.0,
+      "tower_horizon_boost_deg": 0.1944,
+      "panel_tilt_deg": 80.0,
+      "panel_area_m2": 20.0
+    }
+  },
+  "primary_landing_decision": {
+    "Suitability_Score": 82.09,
+    "score_uncertainty_95ci": {
+      "lower": 77.39,
+      "upper": 86.79,
+      "plus_minus": 4.7,
+      "method": "95% CI = +/-1.96 x std of 300 random-forest tree predictions"
+    },
+    "Safety_Class": "Optimal",
+    "mission_status_label": "GO / Optimal",
+    "model_confidence_pct": 78.3,
+    "class_probabilities": {
+      "Acceptable": 0.16,
+      "Hazardous": 0.057,
+      "Optimal": 0.783
+    },
+    "Suitability_Score_raw_ml": 82.09,
+    "guardrails": {
+      "triggered": [],
+      "score_cap": null,
+      "class_overridden": false
+    },
+    "mission_readiness": "CAUTION",
+    "ood_warning": true
+  },
+  "terrain_topography_physics": {
+    "Slope_deg": 2.966,
+    "Elevation_m": -611.5,
+    "Roughness_m": 2.85,
+    "source": "dataset (LOLA DEM, precomputed)"
+  },
+  "solar_illumination_visibility": {
+    "illumination_state": "Total Darkness",
+    "sun_disc_fraction": 0.0,
+    "Sun_Visible_Pct": 59.792,
+    "live_sun_elevation_deg": -0.2926,
+    "Sun_Max_El": 6.387,
+    "Sun_Avg_El": 1.441,
+    "sunlight_hours": 861.0,
+    "longest_dark_hours": 277.0,
+    "tower_horizon_boost_deg": 0.1944,
+    "ephemeris_source": "horizons_cache"
+  },
+  "earth_communication_status": {
+    "dte_status": "Connected (Line-of-Sight Clear)",
+    "Earth_Visible_Pct": 68.958,
+    "live_earth_elevation_deg": 3.7972,
+    "Earth_Max_El": 10.9,
+    "Earth_Avg_El": 3.555,
+    "longest_blackout_hours": 211.0
+  },
+  "power_generation": {
+    "real_time_power_watts": 0.0,
+    "peak_power_watts": 8149.77,
+    "average_power_watts": 4851.2,
+    "total_accumulated_energy_kwh": 6985.722,
+    "accumulated_energy_to_current_hour_kwh": 0.0,
+    "model": {
+      "solar_constant_w_m2": 1361.0,
+      "pv_efficiency": 0.3,
+      "formula": "S0*eta*A*f_sun*max(0,sin(el_sun_eff+tilt)); sun-tracking in azimuth assumed"
+    }
+  },
+  "sunset_earthset_countdowns": {
+    "from_timestamp_utc": "2026-11-17T04:00:00Z",
+    "time_to_sunset": null,
+    "time_to_sunrise": {
+      "currently_above_horizon": false,
+      "event": "rise",
+      "hours": 7.74,
+      "days": 0,
+      "hours_component": 7,
+      "minutes": 44,
+      "formatted": "0d 7h 44m",
+      "event_time_utc": "2026-11-17T11:44:24Z",
+      "note": null
+    },
+    "time_to_earthset": {
+      "currently_above_horizon": true,
+      "event": "set",
+      "hours": 374.015,
+      "days": 15,
+      "hours_component": 14,
+      "minutes": 1,
+      "formatted": "15d 14h 1m",
+      "event_time_utc": "2026-12-02T18:00:52Z",
+      "note": null
+    },
+    "time_to_earthrise": null,
+    "resolution": "linear interpolation of the hourly horizon crossing (about 1 min); scans to 2027-01-12"
+  },
+  "xai_and_hazard_alerts": {
+    "justifications": [
+      "Terrain: slope 3.0 deg is within the ideal <=5 deg envelope for touchdown stability.",
+      "Power/thermal: Sun above horizon 60% of the window (max elevation 6.4 deg) - moderate; battery/RHU sizing needed for long eclipses.",
+      "Comms: Earth visible 69% of the window (mean elevation 3.6 deg) - good direct-to-Earth link.",
+      "Overall classification: Optimal."
+    ],
+    "warnings": [
+      "OOD: features outside the training range: Sun_Avg_El.",
+      "Prolonged crater shadowing: longest continuous Sun outage 277 h in this window.",
+      "Comms blackout risk: longest continuous Earth outage 211 h in this window."
+    ],
+    "component_scores": {
+      "terrain": 100.0,
+      "solar": 69.23,
+      "comms": 76.94
+    },
+    "hazard_flags": [
+      {
+        "code": "LONG_DARKNESS",
+        "severity": "WARNING",
+        "message": "Longest continuous Sun outage 277 h - size batteries/thermal for survival.",
+        "value": 277.0,
+        "threshold": 100.0
+      },
+      {
+        "code": "OUT_OF_DISTRIBUTION",
+        "severity": "WARNING",
+        "message": "Features outside the training range: Sun_Avg_El.",
+        "value": null,
+        "threshold": null
+      },
+      {
+        "code": "LONG_COMMS_BLACKOUT",
+        "severity": "INFO",
+        "message": "Longest continuous Earth outage 211 h - plan autonomy / store-and-forward.",
+        "value": 211.0,
+        "threshold": 150.0
+      },
+      {
+        "code": "SLOPE_NOISE_LIMITED",
+        "severity": "INFO",
+        "message": "E-W slope baseline only 19 m at this latitude; slope is sensitive to DEM quantisation (0.5 m).",
+        "value": 19.4,
+        "threshold": 20.0
+      }
+    ],
+    "confidence": {
+      "level": "MEDIUM",
+      "score_interval_95": [
+        78.07,
+        86.11
+      ],
+      "interval_basis": "+/-1.96 x 2.05 pts (5-fold CV RMSE (outputs/cv_metrics.json)); assumes homoscedastic errors",
+      "class_confidence": 0.783,
+      "ml_rule_agreement": true,
+      "out_of_distribution_features": [
+        "Sun_Avg_El"
+      ],
+      "live_data": true
+    },
+    "ood_warning": true,
+    "ood_features": [
+      "Sun_Avg_El"
+    ],
+    "explanation": {
+      "weights": {
+        "terrain": 0.4,
+        "solar": 0.35,
+        "comms": 0.25
+      },
+      "weighted_contributions_pts": {
+        "terrain": 40.0,
+        "solar": 24.23,
+        "comms": 19.23
+      },
+      "points_lost_by_component": {
+        "terrain": 0.0,
+        "solar": 10.77,
+        "comms": 5.77
+      },
+      "limiting_factor": "solar",
+      "feature_sensitivity_pts": {
+        "Slope_deg": 14.05,
+        "Earth_Avg_El": 3.9,
+        "Earth_Visible_Pct": 3.25,
+        "Earth_Max_El": 2.76,
+        "Sun_Max_El": 0.23,
+        "Elevation_m": 0.12,
+        "Sun_Visible_Pct": 0.07,
+        "Sun_Avg_El": 0.06
+      },
+      "sensitivity_method": "ML score minus ML score with that feature replaced by the dataset median (one-at-a-time occlusion; positive = feature raises this site's score)"
+    }
+  },
+  "south_pole_map_and_top_5_sites": {
+    "selected": {
+      "lat_deg": -85.3109,
+      "lon_deg_east": 332.293,
+      "polar_x_deg": 4.1514,
+      "polar_y_deg": -2.1802
+    },
+    "filters": {
+      "max_slope_deg": 5.0,
+      "min_sun_pct": 50.0,
+      "min_earth_pct": 40.0
+    },
+    "n_sites_passing_filters": 7,
+    "top5_filtered": [
+      {
+        "rank": 2,
+        "site_id": "Auto_SP_075",
+        "lat_deg": -85.4735,
+        "lon_deg_east": 29.2177,
+        "Suitability_Score": 82.21,
+        "Safety_Class": "Optimal",
+        "slope_deg": 4.809,
+        "Sun_Visible_Pct": 59.13,
+        "Earth_Visible_Pct": 67.24,
+        "distance_km": 133.139,
+        "bearing_deg": 120.3
+      },
+      {
+        "rank": 3,
+        "site_id": "Auto_SP_50",
+        "lat_deg": -85.0729,
+        "lon_deg_east": 309.8807,
+        "Suitability_Score": 80.7,
+        "Safety_Class": "Optimal",
+        "slope_deg": 2.693,
+        "Sun_Visible_Pct": 57.74,
+        "Earth_Visible_Pct": 60.93,
+        "distance_km": 57.046,
+        "bearing_deg": 266.0
+      },
+      {
+        "rank": 5,
+        "site_id": "Auto_SP_36",
+        "lat_deg": -87.7039,
+        "lon_deg_east": 339.4475,
+        "Suitability_Score": 77.77,
+        "Safety_Class": "Optimal",
+        "slope_deg": 3.018,
+        "Sun_Visible_Pct": 68.91,
+        "Earth_Visible_Pct": 55.17,
+        "distance_km": 73.617,
+        "bearing_deg": 173.2
+      },
+      {
+        "rank": 7,
+        "site_id": "Auto_SP_12",
+        "lat_deg": -87.0841,
+        "lon_deg_east": 55.9726,
+        "Suitability_Score": 76.7,
+        "Safety_Class": "Optimal",
+        "slope_deg": 4.866,
+        "Sun_Visible_Pct": 64.26,
+        "Earth_Visible_Pct": 52.19,
+        "distance_km": 158.904,
+        "bearing_deg": 146.4
+      },
+      {
+        "rank": 9,
+        "site_id": "Auto_SP_051",
+        "lat_deg": -86.8226,
+        "lon_deg_east": 72.0272,
+        "Suitability_Score": 75.73,
+        "Safety_Class": "Optimal",
+        "slope_deg": 2.194,
+        "Sun_Visible_Pct": 63.29,
+        "Earth_Visible_Pct": 48.44,
+        "distance_km": 184.698,
+        "bearing_deg": 149.0
+      }
+    ],
+    "note": "Ranked by the dataset Suitability_Score (default 5/15 deg rules); distances on a 1737.4 km sphere."
+  },
+  "side_by_side_comparison": null,
+  "csv_data_export": {
+    "endpoint": "/api/export-csv",
+    "filename": "mission_telemetry_export.csv",
+    "columns": [
+      "timestamp_utc",
+      "hour_index",
+      "illumination_state",
+      "sun_el_eff_deg",
+      "dte_status",
+      "earth_el_eff_deg",
+      "time_to_sunset_hrs",
+      "time_to_earthset_hrs",
+      "power_watts",
+      "cumulative_energy_kwh"
+    ],
+    "row_count": 1440
+  },
+  "data_sources": {
+    "ephemeris": "JPL Horizons (cached hourly series)",
+    "terrain": "dataset (LOLA DEM, precomputed)"
+  },
+  "top_3_landing_windows": {
+    "windows": [
+      {
+        "rank": 1,
+        "start_utc": "2026-11-13T01:00:00Z",
+        "end_utc": "2027-01-12T01:00:00Z",
+        "start_hour_index": 1,
+        "duration_hours": 1440,
+        "sunlight_hours": 861.0,
+        "dte_uptime_hours": 994.0,
+        "dte_uptime_pct": 69.03,
+        "simultaneous_sun_and_dte_hours": 666.0,
+        "energy_kwh": 6985.722,
+        "average_power_watts": 4851.2,
+        "objective": 0.7865
+      }
+    ],
+    "objective": "0.40*energy_norm + 0.30*sunlight_fraction + 0.30*dte_fraction",
+    "weights": {
+      "energy": 0.4,
+      "sunlight": 0.3,
+      "dte": 0.3
+    },
+    "candidate_starts_evaluated": 2,
+    "note": "Only 1 non-overlapping window(s) of 1440 h fit inside the 60-day baseline."
+  },
+  "timeline": {
+    "timestamp_utc": [
+      "2026-11-13T00:00:00Z",
+      "2026-11-13T01:00:00Z",
+      "2026-11-13T02:00:00Z",
+      "..."
+    ],
+    "hour_index": [
+      0,
+      1,
+      2,
+      "..."
+    ],
+    "illumination_state": [
+      "Total Darkness",
+      "Total Darkness",
+      "Total Darkness",
+      "..."
+    ],
+    "sun_disc_fraction": [
+      0.0,
+      0.0,
+      0.0,
+      "..."
+    ],
+    "sun_el_eff_deg": [
+      -2.8097,
+      -2.7998,
+      -2.7895,
+      "..."
+    ],
+    "dte_status": [
+      "Blocked (Signal Lost)",
+      "Blocked (Signal Lost)",
+      "Blocked (Signal Lost)",
+      "..."
+    ],
+    "earth_el_eff_deg": [
+      -1.2145,
+      -1.1788,
+      -1.1427,
+      "..."
+    ],
+    "power_watts": [
+      0.0,
+      0.0,
+      0.0,
+      "..."
+    ],
+    "cumulative_energy_kwh": [
+      0.0,
+      0.0,
+      0.0,
+      "..."
+    ]
+  },
+  "compute_ms": 28.3
+}

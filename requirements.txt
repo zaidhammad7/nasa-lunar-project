@@ -1,0 +1,15 @@
+﻿numpy
+pandas
+scipy
+streamlit
+plotly
+requests
+astropy
+scikit-learn
+matplotlib
+joblib
+rasterio
+pyproj
+fastapi
+uvicorn
+httpx

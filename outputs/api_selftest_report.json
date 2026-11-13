@@ -1,0 +1,392 @@
+{
+  "generated_utc": "2026-11-13T11:43:15.838883+00:00",
+  "passed": 77,
+  "total": 77,
+  "checks": [
+    {
+      "test": "GET /api/health 200",
+      "pass": true,
+      "detail": "{'status': 'ok', 'dem_ready': False, 'schema_version': '3.0', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
+    },
+    {
+      "test": "CORS header allows any origin",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "returns 100 sites",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "top-5 list has <= 5 entries and ranked order",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "tight filters: every returned top-5 site satisfies all 3 constraints",
+      "pass": true,
+      "detail": "2 sites pass; top=['Auto_SP_099', 'Auto_SP_075']"
+    },
+    {
+      "test": "passes_filters flags agree with n_sites_passing_filters",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "Haversine distance_km matches 3-D vector angle",
+      "pass": true,
+      "detail": "128.368 km vs 128.368 km"
+    },
+    {
+      "test": "1 deg of latitude = 30.32 km",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "bearing: due south along meridian = 180 deg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "bearing: due north along meridian = 0 deg",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "sites rejects out-of-range filter (422)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "200 OK",
+      "pass": true,
+      "detail": "58 ms round trip incl. 1440-row timeline JSON"
+    },
+    {
+      "test": "all dashboard output blocks present",
+      "pass": true,
+      "detail": "[]"
+    },
+    {
+      "test": "#1 decision fields",
+      "pass": true,
+      "detail": "81.98 GO / Optimal conf 71.7%"
+    },
+    {
+      "test": "#1 95% CI brackets the score",
+      "pass": true,
+      "detail": "[76.97, 86.99] +/-5.01"
+    },
+    {
+      "test": "#1 status label matches class",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "#2 terrain: slope, elevation, roughness",
+      "pass": true,
+      "detail": "{'Slope_deg': 2.966, 'Elevation_m': -611.5, 'Roughness_m': 2.85, 'source': 'dataset (LOLA DEM, precomputed)'}"
+    },
+    {
+      "test": "timeline has 1440 hourly rows",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "tower boost = acos(R/(R+h)) added to Sun elevation",
+      "pass": true,
+      "detail": "boost 0.27492 deg at 20 m"
+    },
+    {
+      "test": "tower boost also applied to Earth",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "#3 illumination_state follows the 0.265 deg disc rule",
+      "pass": true,
+      "detail": "el -0.212 -> Partial Shadow"
+    },
+    {
+      "test": "#3 mission-window Sun_Visible_Pct matches timeline",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "illumination state correct for all 1440 hours",
+      "pass": true,
+      "detail": "direct 842, partial 54, dark 544"
+    },
+    {
+      "test": "power per hour = S0*eta*A*f*max(0,sin(el+tilt))",
+      "pass": true,
+      "detail": "peak 5103.7 W, max |diff| 0.00050 W"
+    },
+    {
+      "test": "#5 total energy = sum(P)/1000 kWh",
+      "pass": true,
+      "detail": "4431.017 kWh"
+    },
+    {
+      "test": "#5 real-time/peak/average power",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "#4 DTE status matches Earth elevation",
+      "pass": true,
+      "detail": "Connected (Line-of-Sight Clear), Earth el 3.878"
+    },
+    {
+      "test": "#6 sun countdown matches independent horizon crossing",
+      "pass": true,
+      "detail": "0d 5h 38m (expected 5.633 h)"
+    },
+    {
+      "test": "#6 formatted string 'Xd Xh Xm'",
+      "pass": true,
+      "detail": "0d 5h 38m"
+    },
+    {
+      "test": "#6 earth countdown present",
+      "pass": true,
+      "detail": "{'currently_above_horizon': True, 'event': 'set', 'hours': 375.608, 'days': 15, 'hours_component': 15, 'minutes': 36, 'formatted': '15d 15h 36m', 'event_time_utc': '2026-12-02T19:36:28Z', 'note': None}"
+    },
+    {
+      "test": "#6 only one of sunset/sunrise populated",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "#7 justifications, warnings, component_scores",
+      "pass": true,
+      "detail": "{'terrain': 100.0, 'solar': 69.96, 'comms': 77.57}"
+    },
+    {
+      "test": "#8 top-5 alternatives satisfy user filters and exclude the selected site",
+      "pass": true,
+      "detail": "[('Auto_SP_075', 133.139, 120.3), ('Auto_SP_50', 57.046, 266.0), ('Auto_SP_36', 73.617, 173.2)]"
+    },
+    {
+      "test": "#9 returns up to 3 windows",
+      "pass": true,
+      "detail": "1 window(s) for a 1440 h mission in a 1441 h baseline"
+    },
+    {
+      "test": "#9 CSV metadata present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "#9 rank-1 window equals brute-force optimum",
+      "pass": true,
+      "detail": "start 2026-11-17T00:00:00Z, 1953.519 kWh"
+    },
+    {
+      "test": "#9 windows are non-overlapping",
+      "pass": true,
+      "detail": "[96, 804, 336]"
+    },
+    {
+      "test": "#9 windows sorted by objective",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "#9 window length equals duration_hours",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "custom (lat, lon) evaluates without hanging (<= 3.6 s Horizons budget)",
+      "pass": true,
+      "detail": "0.04 s; ephemeris source: JPL Horizons (cached hourly series)"
+    },
+    {
+      "test": "duration_days=10 -> 240 h and timestamp_utc -> hour 54",
+      "pass": true,
+      "detail": "2026-11-15T06:00:00Z"
+    },
+    {
+      "test": "custom point gets full output set",
+      "pass": true,
+      "detail": "terrain source: dataset IDW interpolation (fallback)"
+    },
+    {
+      "test": "slow Horizons -> analytic fallback returned within budget (never hangs)",
+      "pass": true,
+      "detail": "250 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
+    },
+    {
+      "test": "coordinate equal to a preset snaps to that preset",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "slope > 15 deg -> Hazardous, score <= 35, exact warning",
+      "pass": true,
+      "detail": "35.0 {'triggered': ['TIP_OVER'], 'score_cap': 35.0, 'class_overridden': False}"
+    },
+    {
+      "test": "test setup: found a 24 h window with Sun fully dark and Earth visible",
+      "pass": true,
+      "detail": "257 candidate starts"
+    },
+    {
+      "test": "Sun_Visible_Pct < 25 -> Hazardous, score <= 30, exact PSR warning",
+      "pass": true,
+      "detail": "30.0 (raw ML 78.75) window start 2026-12-14T12:00:00Z"
+    },
+    {
+      "test": "ood_warning raised when a feature leaves the training range",
+      "pass": true,
+      "detail": "['Sun_Visible_Pct', 'Sun_Avg_El', 'Sun_Max_El', 'Earth_Visible_Pct', 'Earth_Avg_El']"
+    },
+    {
+      "test": "test setup: found a 24 h window with Earth fully blocked and Sun fully lit",
+      "pass": true,
+      "detail": "134 candidate starts"
+    },
+    {
+      "test": "Earth_Visible_Pct < 10 -> Hazardous, score <= 35, exact DTE warning",
+      "pass": true,
+      "detail": "35.0 ['DTE_BLACKOUT'] window start 2026-12-30T18:00:00Z"
+    },
+    {
+      "test": "healthy site: no guardrail, uncapped",
+      "pass": true,
+      "detail": "82.1 GO / Optimal"
+    },
+    {
+      "test": "422 for lat outside -90..-85",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "422 for lon > 360",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "422 for tower > 20",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "422 for tilt > 90",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "422 for area < 1",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "422 for slope > 15",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "422 for unknown site",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "422 for no location",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "422 for window past baseline",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "422 for timeline index outside window",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "200 and both evaluations returned",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "all required delta keys",
+      "pass": true,
+      "detail": "{'delta_suitability_score': -1.39, 'delta_sunlight_hours': -155.0, 'delta_power_watts': 2148.4795, 'delta_peak_power_watts': 7023.0585, 'delta_energy_kwh': 1031.2702, 'delta_comms_uptime_pct': -33.5417, 'delta_slope_deg': 1.843}"
+    },
+    {
+      "test": "deltas equal (B - A) of the two standalone evaluations",
+      "pass": true,
+      "detail": "d_suitability_score=-1.390, d_sunlight_hours=-155.000, d_power_watts=+2148.479, d_energy_kwh=+1031.270, d_comms_uptime_pct=-33.542, d_slope_deg=+1.843"
+    },
+    {
+      "test": "identical scenarios -> all deltas exactly 0",
+      "pass": true,
+      "detail": "{'delta_suitability_score': 0.0, 'delta_sunlight_hours': 0.0, 'delta_power_watts': 0.0, 'delta_peak_power_watts': 0.0, 'delta_energy_kwh': 0.0, 'delta_comms_uptime_pct': 0.0, 'delta_slope_deg': 0.0}"
+    },
+    {
+      "test": "200, text/csv, attachment filename",
+      "pass": true,
+      "detail": "attachment; filename=\"mission_telemetry_export.csv\""
+    },
+    {
+      "test": "exact column list",
+      "pass": true,
+      "detail": "['timestamp_utc', 'hour_index', 'illumination_state', 'sun_el_eff_deg', 'dte_status', 'earth_el_eff_deg', 'time_to_sunset_hrs', 'time_to_earthset_hrs', 'power_watts', 'cumulative_energy_kwh']"
+    },
+    {
+      "test": "one row per mission hour (300)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "cumulative energy monotone and equals sum(P)/1000",
+      "pass": true,
+      "detail": "1775.183 kWh"
+    },
+    {
+      "test": "CSV total energy equals /api/evaluate total",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "time_to_sunset_hrs <= 1 h on the row before a sunset; decreases while lit",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "illumination_state values are valid",
+      "pass": true,
+      "detail": "{'Direct Sunlight'}"
+    },
+    {
+      "test": "dte_status values are valid",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "returns stress_test + cross_validation",
+      "pass": true,
+      "detail": "CV regressors: ['GradientBoosting', 'RandomForest', 'SVR', 'Ridge']"
+    },
+    {
+      "test": "stress-test summary exposes the four panel verdicts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "test": "preset /api/evaluate incl. 1440-row timeline: median < 250 ms",
+      "pass": true,
+      "detail": "median 41 ms, p95 49 ms"
+    },
+    {
+      "test": "hourly series generator < 50 ms",
+      "pass": true,
+      "detail": "0.71 ms"
+    }
+  ]
+}

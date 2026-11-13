@@ -1,0 +1,9 @@
+{
+  "dpi": 300,
+  "text_overlaps": {
+    "feature_importance.png": [],
+    "polar_suitability_map.png": [],
+    "model_evaluation.png": []
+  },
+  "total_overlaps": 0
+}

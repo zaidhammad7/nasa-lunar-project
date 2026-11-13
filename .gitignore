@@ -1,0 +1,32 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.streamlit/secrets.toml
+
+# Environment
+.env
+
+# Large data (keep folder, ignore raw downloads)
+data/*
+!data/.gitkeep
+
+# Windows / editors
+Thumbs.db
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+.vscode/
+.idea/
+*.lnk
+
+# Regenerable ephemeris cache (python src/analysis/warm_caches.py)
+ephemeris_cache/
