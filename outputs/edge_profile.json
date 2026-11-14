@@ -1,0 +1,422 @@
+{
+ "accuracy": {
+  "dataset": {
+   "sites": 100,
+   "features": [
+    "Sun_Visible_Pct",
+    "Sun_Avg_El",
+    "Sun_Max_El",
+    "Earth_Visible_Pct",
+    "Earth_Avg_El",
+    "Earth_Max_El",
+    "Elevation_m",
+    "Slope_deg"
+   ],
+   "n_features": 8,
+   "classes": {
+    "Hazardous": 49,
+    "Acceptable": 48,
+    "Optimal": 3
+   }
+  },
+  "regressor_GradientBoosting": {
+   "train_in_sample": {
+    "R2": 0.9998,
+    "RMSE_pts": 0.278
+   },
+   "test_5fold_cv": {
+    "R2": 0.9594,
+    "RMSE_pts": 3.734
+   },
+   "test_holdout_20pct": {
+    "R2": 0.9567,
+    "RMSE_pts": 3.499,
+    "train_R2_80pct": 0.9999
+   }
+  },
+  "classifier_RandomForest": {
+   "train_in_sample_accuracy": 1.0,
+   "test_5fold_cv_accuracy": 0.87,
+   "test_holdout_20pct_accuracy": 0.95,
+   "train_80pct_accuracy": 1.0
+  },
+  "uncertainty_RandomForest": {
+   "train_in_sample": {
+    "R2": 0.9912,
+    "RMSE_pts": 1.74
+   },
+   "test_5fold_cv": {
+    "R2": 0.927,
+    "RMSE_pts": 5.005
+   }
+  },
+  "note": "100 sites in total, so test sets are small (20 sites per fold / hold-out): treat test figures as +/- a few points."
+ },
+ "footprint": {
+  "regressor_GradientBoosting": {
+   "trees": 100,
+   "total_nodes": 1416,
+   "split_nodes": 658,
+   "leaves": 758,
+   "max_depth": 3,
+   "flash_float64": {
+    "feature_index_u8": 1416,
+    "threshold": 11328,
+    "children": 5664,
+    "leaf_values": 11328,
+    "tree_roots_u32": 400,
+    "total_bytes": 30136
+   },
+   "flash_float32": {
+    "feature_index_u8": 1416,
+    "threshold": 5664,
+    "children": 5664,
+    "leaf_values": 5664,
+    "tree_roots_u32": 400,
+    "total_bytes": 18808
+   },
+   "flash_int16_fixed_point": {
+    "feature_index_u8": 1416,
+    "threshold": 2832,
+    "children": 5664,
+    "leaf_values": 2832,
+    "tree_roots_u32": 400,
+    "total_bytes": 13144
+   },
+   "flash_int8_thresholds_int16_leaves": {
+    "feature_index_u8": 1416,
+    "threshold": 1416,
+    "children": 5664,
+    "leaf_values": 2832,
+    "tree_roots_u32": 400,
+    "total_bytes": 11728
+   },
+   "joblib_file_bytes": 137482
+  },
+  "classifier_RandomForest": {
+   "trees": 300,
+   "total_nodes": 7582,
+   "split_nodes": 3641,
+   "leaves": 3941,
+   "max_depth": 11,
+   "flash_float64": {
+    "feature_index_u8": 7582,
+    "threshold": 60656,
+    "children": 30328,
+    "leaf_values": 181968,
+    "tree_roots_u32": 1200,
+    "total_bytes": 281734
+   },
+   "flash_float32": {
+    "feature_index_u8": 7582,
+    "threshold": 30328,
+    "children": 30328,
+    "leaf_values": 90984,
+    "tree_roots_u32": 1200,
+    "total_bytes": 160422
+   },
+   "flash_int16_fixed_point": {
+    "feature_index_u8": 7582,
+    "threshold": 15164,
+    "children": 30328,
+    "leaf_values": 45492,
+    "tree_roots_u32": 1200,
+    "total_bytes": 99766
+   },
+   "flash_int8_thresholds_int16_leaves": {
+    "feature_index_u8": 7582,
+    "threshold": 7582,
+    "children": 30328,
+    "leaf_values": 45492,
+    "tree_roots_u32": 1200,
+    "total_bytes": 92184
+   },
+   "joblib_file_bytes": 792643
+  },
+  "uncertainty_RandomForest": {
+   "trees": 300,
+   "total_nodes": 37168,
+   "split_nodes": 18434,
+   "leaves": 18734,
+   "max_depth": 14,
+   "flash_float64": {
+    "feature_index_u8": 37168,
+    "threshold": 297344,
+    "children": 148672,
+    "leaf_values": 297344,
+    "tree_roots_u32": 1200,
+    "total_bytes": 781728
+   },
+   "flash_float32": {
+    "feature_index_u8": 37168,
+    "threshold": 148672,
+    "children": 148672,
+    "leaf_values": 148672,
+    "tree_roots_u32": 1200,
+    "total_bytes": 484384
+   },
+   "flash_int16_fixed_point": {
+    "feature_index_u8": 37168,
+    "threshold": 74336,
+    "children": 148672,
+    "leaf_values": 74336,
+    "tree_roots_u32": 1200,
+    "total_bytes": 335712
+   },
+   "flash_int8_thresholds_int16_leaves": {
+    "feature_index_u8": 37168,
+    "threshold": 37168,
+    "children": 148672,
+    "leaf_values": 74336,
+    "tree_roots_u32": 1200,
+    "total_bytes": 298544
+   },
+   "joblib_file_bytes": 2771529
+  },
+  "c_header_text_bytes": 1592580,
+  "c_header_path": "outputs/edge/lunar_models.h"
+ },
+ "compute": {
+  "regressor_GradientBoosting": {
+   "comparisons_worst_case_sum_of_tree_depths": 300,
+   "comparisons_bound_max_depth_x_trees": 300,
+   "comparisons_average_on_100_sites": 299.6,
+   "float_additions": 100,
+   "latency_this_laptop_sklearn_batch1_us_median": 629.4,
+   "latency_target_estimate_us_worst_case": {
+    "50MHz": [
+     36.0,
+     72.0
+    ],
+    "100MHz": [
+     18.0,
+     36.0
+    ],
+    "200MHz": [
+     9.0,
+     18.0
+    ],
+    "assumption": "6-12 cycles per tree node, no cache misses"
+   },
+   "energy_estimate_uJ_per_inference_at_100MHz": {
+    "0.1W": [
+     1.8,
+     3.6
+    ],
+    "1.0W": [
+     18.0,
+     36.0
+    ]
+   }
+  },
+  "classifier_RandomForest": {
+   "comparisons_worst_case_sum_of_tree_depths": 1830,
+   "comparisons_bound_max_depth_x_trees": 3300,
+   "comparisons_average_on_100_sites": 1168.0,
+   "float_additions": 900,
+   "latency_this_laptop_sklearn_batch1_us_median": 21424.0,
+   "latency_target_estimate_us_worst_case": {
+    "50MHz": [
+     219.6,
+     439.2
+    ],
+    "100MHz": [
+     109.8,
+     219.6
+    ],
+    "200MHz": [
+     54.9,
+     109.8
+    ],
+    "assumption": "6-12 cycles per tree node, no cache misses"
+   },
+   "energy_estimate_uJ_per_inference_at_100MHz": {
+    "0.1W": [
+     10.98,
+     21.96
+    ],
+    "1.0W": [
+     109.8,
+     219.6
+    ]
+   }
+  },
+  "uncertainty_RandomForest": {
+   "comparisons_worst_case_sum_of_tree_depths": 3184,
+   "comparisons_bound_max_depth_x_trees": 4200,
+   "comparisons_average_on_100_sites": 2061.2,
+   "float_additions": 300,
+   "latency_this_laptop_sklearn_batch1_us_median": 23442.6,
+   "latency_target_estimate_us_worst_case": {
+    "50MHz": [
+     382.1,
+     764.2
+    ],
+    "100MHz": [
+     191.0,
+     382.1
+    ],
+    "200MHz": [
+     95.5,
+     191.0
+    ],
+    "assumption": "6-12 cycles per tree node, no cache misses"
+   },
+   "energy_estimate_uJ_per_inference_at_100MHz": {
+    "0.1W": [
+     19.1,
+     38.21
+    ],
+    "1.0W": [
+     191.04,
+     382.08
+    ]
+   }
+  }
+ },
+ "working_ram": {
+  "inputs_float32_bytes": 32,
+  "lunar_score": {
+   "accumulator": 4,
+   "tree_and_node_index": 8,
+   "total_bytes": 44
+  },
+  "lunar_class_proba": {
+   "accumulators": 12,
+   "tree_and_node_index": 8,
+   "total_bytes": 52
+  },
+  "lunar_uncertainty": {
+   "accumulators": 12,
+   "tree_and_node_index": 8,
+   "total_bytes": 52
+  },
+  "all_three_sequentially_peak_bytes": 68,
+  "note": "excludes the call-frame overhead of the compiler / ABI (typically 16-64 bytes). Feature extraction can stream the hourly Sun / Earth elevations with running sums, so it also needs O(1) RAM (~64 bytes)."
+ },
+ "quantization": {
+  "regressor_GradientBoosting": {
+   "float64": {
+    "R2_on_100_sites_vs_labels": 0.99977,
+    "max_abs_score_change_10k_stress_pts": 0.0,
+    "mean_abs_score_change_10k_stress_pts": 0.0
+   },
+   "float32": {
+    "R2_on_100_sites_vs_labels": 0.99977,
+    "max_abs_score_change_10k_stress_pts": 0.0,
+    "mean_abs_score_change_10k_stress_pts": 0.0
+   },
+   "float16": {
+    "R2_on_100_sites_vs_labels": 0.99977,
+    "max_abs_score_change_10k_stress_pts": 11.0112,
+    "mean_abs_score_change_10k_stress_pts": 0.00823
+   },
+   "int16": {
+    "R2_on_100_sites_vs_labels": 0.99977,
+    "max_abs_score_change_10k_stress_pts": 1.4134,
+    "mean_abs_score_change_10k_stress_pts": 0.00097
+   },
+   "int8": {
+    "R2_on_100_sites_vs_labels": 0.99406,
+    "max_abs_score_change_10k_stress_pts": 17.7924,
+    "mean_abs_score_change_10k_stress_pts": 0.34827
+   }
+  },
+  "classifier_RandomForest": {
+   "float64": {
+    "train_accuracy_100_sites": 1.0,
+    "agreement_with_float64_10k_stress_pct": 100.0,
+    "max_abs_probability_change": 0.0
+   },
+   "float32": {
+    "train_accuracy_100_sites": 1.0,
+    "agreement_with_float64_10k_stress_pct": 100.0,
+    "max_abs_probability_change": 0.0
+   },
+   "float16": {
+    "train_accuracy_100_sites": 1.0,
+    "agreement_with_float64_10k_stress_pct": 99.99,
+    "max_abs_probability_change": 0.0533
+   },
+   "int16": {
+    "train_accuracy_100_sites": 1.0,
+    "agreement_with_float64_10k_stress_pct": 100.0,
+    "max_abs_probability_change": 0.04
+   },
+   "int8": {
+    "train_accuracy_100_sites": 1.0,
+    "agreement_with_float64_10k_stress_pct": 99.53,
+    "max_abs_probability_change": 0.1367
+   }
+  },
+  "uncertainty_RandomForest": {
+   "float64": {
+    "R2_on_100_sites_vs_labels": 0.99117,
+    "max_abs_score_change_10k_stress_pts": 0.0,
+    "mean_abs_score_change_10k_stress_pts": 0.0
+   },
+   "float32": {
+    "R2_on_100_sites_vs_labels": 0.99117,
+    "max_abs_score_change_10k_stress_pts": 0.0,
+    "mean_abs_score_change_10k_stress_pts": 0.0
+   },
+   "float16": {
+    "R2_on_100_sites_vs_labels": 0.99115,
+    "max_abs_score_change_10k_stress_pts": 4.3475,
+    "mean_abs_score_change_10k_stress_pts": 0.00724
+   },
+   "int16": {
+    "R2_on_100_sites_vs_labels": 0.99117,
+    "max_abs_score_change_10k_stress_pts": 1.8645,
+    "mean_abs_score_change_10k_stress_pts": 0.0012
+   },
+   "int8": {
+    "R2_on_100_sites_vs_labels": 0.98574,
+    "max_abs_score_change_10k_stress_pts": 7.6953,
+    "mean_abs_score_change_10k_stress_pts": 0.27824
+   }
+  },
+  "method": "float32 / float16: thresholds, inputs and leaf values cast to that type. int16 / int8: per-feature affine fixed point over the training range (thresholds rounded up so the <= test is preserved), leaf values int16. Compared with the float64 scikit-learn model on the 100 real sites and on 10,000 random synthetic sites."
+ },
+ "offline_storage": {
+  "full_LOLA_polar_DEM_LDEM_75S_120M_MB": 116.3,
+  "DEM_crop_for_horizon_250km_radius": {
+   "120m_px": {
+    "pixels": "4167 x 4167",
+    "bytes_int16": 34727778,
+    "MB": 34.7
+   },
+   "240m_px": {
+    "pixels": "2084 x 2084",
+    "bytes_int16": 8686112,
+    "MB": 8.7
+   }
+  },
+  "local_terrain_patch": {
+   "area": "2 km x 2 km around the landing point at 5 m/px (slope / hazard)",
+   "bytes_int16": 320000,
+   "KB": 312.5
+  },
+  "precomputed_horizon_profile_per_site": {
+   "directions": 720,
+   "bytes_float32": 2880,
+   "bytes_int16_0p01deg": 1440,
+   "note": "if the horizon is computed on the ground before landing, the DEM is not needed on board for illumination at all"
+  },
+  "onboard_ephemeris_analytic_model": {
+   "parameters": 10,
+   "bytes_float64": 80,
+   "accuracy_vs_JPL_Horizons_deg_RMSE": {
+    "sun": 0.067,
+    "earth": 0.48
+   },
+   "validity": "fitted to the 60-day mission window; a longer mission needs re-fitted coefficients (uplinked) or seasonal / libration terms",
+   "source": "outputs/nasa_benchmark.json (308 real Horizons series)"
+  },
+  "onboard_ephemeris_table_alternative_estimate": {
+   "layout": "Chebyshev polynomials of the sub-solar and sub-Earth latitude / longitude: 4 series x 10 coefficients x float64 per 4-day segment (estimate; degree to be tuned against Horizons)",
+   "bytes_per_year": 29200
+  },
+  "illumination_maps_on_board": "not required: the stored horizon profile reproduces NASA's averages (benchmark error 1.5 pts)"
+ }
+}
