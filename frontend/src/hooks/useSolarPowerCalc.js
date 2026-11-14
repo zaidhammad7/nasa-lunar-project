@@ -1,5 +1,7 @@
-// Instant (60 FPS) hardware maths: tower height, panel tilt and panel area re-derive the whole power curve,
-// illumination states and window statistics from the raw elevation series without waiting for the backend.
+// Instant (60 FPS) hardware maths: panel tilt and panel area re-derive the whole power curve, illumination states and
+// window statistics from the backend's hourly elevations without waiting. Tower height is NOT re-estimated here: the backend
+// re-ray-traces the terrain horizon from the mast top (a mast clears nearby crater walls by atan(h / d), which no local shift can
+// reproduce), so the shown values change once, when that result arrives, instead of jumping to a guess and back.
 import { useMemo } from 'react'
 import {
   towerBoostDeg, powerWatts, sunDiscFraction, stateCode, STATE_NAMES, DTE_CONNECTED, DTE_BLOCKED, nextEvent,
@@ -15,14 +17,13 @@ export function useSolarPowerCalc(result, hw) {
     const tl = result?.timeline
     if (!tl) return null
     const n = tl.sun_el_eff_deg.length
-    const reqBoost = towerBoostDeg(result.scenario.hardware.tower_height_m)
-    const boost = towerBoostDeg(hw.tower)
+    const boost = towerBoostDeg(result.scenario.hardware.tower_height_m) // geometric dip of the evaluated mast (informational)
     const sunEff = new Float64Array(n), earthEff = new Float64Array(n), power = new Float64Array(n), cum = new Float64Array(n)
     const state = new Uint8Array(n), disc = new Float32Array(n)
     let lit = 0, dte = 0, acc = 0, peak = 0, maxSun = -Infinity, maxEarth = -Infinity, sumSun = 0, sumEarth = 0
     for (let i = 0; i < n; i++) {
-      const s = tl.sun_el_eff_deg[i] - reqBoost + boost // raw elevation + the tower height shown now
-      const e = tl.earth_el_eff_deg[i] - reqBoost + boost
+      const s = tl.sun_el_eff_deg[i] // elevation above the terrain horizon seen from the evaluated mast
+      const e = tl.earth_el_eff_deg[i]
       sunEff[i] = s; earthEff[i] = e; state[i] = stateCode(s); disc[i] = sunDiscFraction(s)
       power[i] = powerWatts(s, hw.area, hw.tilt); acc += power[i] / 1000; cum[i] = acc
       if (s > 0) lit++
@@ -53,5 +54,5 @@ export function useSolarPowerCalc(result, hw) {
         return { sun: nextEvent(sunEff, k, startMs), earth: nextEvent(earthEff, k, startMs) }
       },
     }
-  }, [result, hw.tower, hw.tilt, hw.area])
+  }, [result, hw.tilt, hw.area])
 }

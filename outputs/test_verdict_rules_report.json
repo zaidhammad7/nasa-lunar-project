@@ -210,14 +210,14 @@
    "group": "3",
    "case": "map vs backend (5 m): at least 90 of 100 sites get the same verdict",
    "pass": true,
-   "detail": "97/100 agree"
+   "detail": "95/100 agree"
   },
   {
    "n": 31,
    "group": "3",
    "case": "map vs backend (150 m): at least 80 of 100 agree; map never calls a backend NO-GO site green",
    "pass": true,
-   "detail": "88/100 agree; false green []"
+   "detail": "89/100 agree; false green []"
   },
   {
    "n": 32,

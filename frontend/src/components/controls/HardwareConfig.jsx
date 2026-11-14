@@ -6,25 +6,35 @@ import { GLOSSARY } from '../../lib/glossary.js'
 import InfoTip from '../ui/InfoTip.jsx'
 
 /** Tower height (numeric input, 1-150 m), panel tilt slider (0-90 deg) and panel area slider (1-50 m2). */
-export default function HardwareConfig({ scenario, onPatch, calc, terrain }) {
+export default function HardwareConfig({ scenario, onPatch, calc, result }) {
   const [tower, setTower] = useState(String(scenario.tower))
   useEffect(() => { setTower(String(scenario.tower)) }, [scenario.tower])
   const t = parseFloat(tower), issue = tower === '' ? null : checkRange('tower', tower), bad = !!issue
+  // apply a valid height automatically 0.5 s after typing stops (Enter / leaving the field still apply it at once)
+  useEffect(() => {
+    if (bad || tower === '' || !Number.isFinite(t)) return undefined
+    const v = Math.round(t * 2) / 2
+    if (v === scenario.tower) return undefined
+    const id = setTimeout(() => onPatch({ tower: v }), 500)
+    return () => clearTimeout(id)
+  }, [tower, bad, t, scenario.tower, onPatch])
   const commit = () => {
     if (!(t >= 1)) return setTower(String(scenario.tower))
     const v = Math.min(MAX_TOWER_M, Math.max(1, Math.round(t * 2) / 2))
     setTower(String(v)); onPatch({ tower: v })
   }
 
-  // What the current tower height does, re-derived instantly from the hourly Sun / Earth elevations (no mast = elevations minus the dip)
-  const effect = useMemo(() => {
-    if (!calc) return null
-    const dip = calc.boost
-    let sun0 = 0, earth0 = 0
-    for (let i = 0; i < calc.n; i++) { if (calc.sunEff[i] - dip > 0) sun0++; if (calc.earthEff[i] - dip > 0) earth0++ }
-    return { sun: calc.stats.sunVisPct, dSun: calc.stats.sunVisPct - (sun0 / calc.n) * 100, earth: calc.stats.earthVisPct, dEarth: calc.stats.earthVisPct - (earth0 / calc.n) * 100 }
-  }, [calc])
-  const slope = terrain?.Slope_deg, limit = effectiveMaxSlope(scenario.maxSlope ?? 15)
+  // What the mast does, from the backend's evaluation: sunlight / Earth contact seen from the mast top vs from the lander deck
+  // (horizon re-ray-traced at both heights over NASA LOLA terrain). Shown as "updating" until the result matches the typed height.
+  const solar = result?.solar_illumination_visibility, comms = result?.earth_communication_status
+  const evaluatedTower = result?.scenario?.hardware?.tower_height_m
+  const updating = result != null && (evaluatedTower !== scenario.tower || result._updating || result._pending)
+  const effect = solar && comms && solar.Sun_Visible_Pct_no_mast != null ? {
+    sun: solar.Sun_Visible_Pct, dSun: solar.Sun_Visible_Pct - solar.Sun_Visible_Pct_no_mast,
+    earth: comms.Earth_Visible_Pct, dEarth: comms.Earth_Visible_Pct - comms.Earth_Visible_Pct_no_mast,
+    method: solar.terrain_horizon?.mast_method,
+  } : null
+  const slope = result?.terrain_topography_physics?.Slope_deg, limit = effectiveMaxSlope(scenario.maxSlope ?? 15)
   const sg = (v) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}`
 
   // tilt maximising the flux-weighted sin(el + tilt):  90 deg - atan(sum f sin(el) / sum f cos(el))
@@ -46,10 +56,12 @@ export default function HardwareConfig({ scenario, onPatch, calc, terrain }) {
       </label>
       <div className="num space-y-0.5 rounded-lg border border-line/70 bg-bg/40 px-2.5 py-2 text-[10.5px] leading-snug text-mute" aria-live="polite">
         <div className="flex items-center justify-between"><span>Line of sight to horizon <InfoTip text={GLOSSARY.horizon} /></span><span className="text-ink">{horizonDistanceKm(scenario.tower).toFixed(1)} km</span></div>
-        {effect && <>
+        {effect && <div className={updating ? 'opacity-50 transition-opacity' : 'transition-opacity'}>
           <div className="flex justify-between"><span>Sunlight</span><span className="text-solar">{effect.sun.toFixed(1)}% <span className="text-mute">({sg(effect.dSun)} vs no mast)</span></span></div>
           <div className="flex justify-between"><span>Earth comms</span><span className="text-earth">{effect.earth.toFixed(1)}% <span className="text-mute">({sg(effect.dEarth)} vs no mast)</span></span></div>
-        </>}
+        </div>}
+        {updating && <div className="animate-pulse text-earth" role="status">updating for {scenario.tower} m…</div>}
+        {!updating && effect?.method && <div className="text-[9.5px] text-mute/80">{/re-ray-traced/.test(effect.method) ? 'horizon re-traced from the mast top over NASA LOLA terrain' : 'approximate: uniform horizon dip (no terrain model here)'}</div>}
         {slope != null && <div className="flex justify-between"><span>Slope vs {limit.toFixed(1)}° limit</span><span className="text-ink">{slope.toFixed(2)}° · unchanged by tower</span></div>}
       </div>
       <div>

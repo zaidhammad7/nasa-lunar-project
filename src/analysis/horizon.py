@@ -204,6 +204,26 @@ def profile_for(lat: float, lon: float) -> np.ndarray | None:
     return compute_profile(lat, lon)
 
 
+def mast_observer_m(tower_m: float) -> float:
+    """Height (m) the panels / antenna see from: the top of the mast, never below the lander deck."""
+    return max(float(tower_m), OBSERVER_HEIGHT_M)
+
+
+@lru_cache(maxsize=4096)
+def profile_at_height(lat: float, lon: float, observer_m: float) -> np.ndarray | None:
+    """Horizon profile seen from observer_m above the ground (deg, N_AZ directions); None without terrain data.
+
+    Raising the observer lowers the elevation angle of every terrain point, so the horizon - and therefore any loss of
+    Sun / Earth - can only shrink as the mast grows. Nearby crater walls are cleared by angle atan(h / distance), which a
+    uniform curvature dip would miss (it under-states a tall mast next to a wall by tens of percentage points of sunlight).
+    """
+    if abs(observer_m - OBSERVER_HEIGHT_M) < 1e-9:
+        return profile_for(lat, lon)
+    if not dem_available():
+        return None
+    return compute_profile(lat, lon, observer_m)
+
+
 def cached_offsets(lat: float, lon: float) -> tuple[float, float] | None:
     hit = _cached_profiles().get((round(lat, 4), round(lon % 360.0, 4)))
     return None if hit is None else (hit[1], hit[2])

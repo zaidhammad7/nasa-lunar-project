@@ -103,7 +103,7 @@
   },
   {
    "group": "ephemeris",
-   "name": "Sun elevation: RMSE of the analytic model vs real JPL Horizons (311 sites x 1441 h)",
+   "name": "Sun elevation: RMSE of the analytic model vs real JPL Horizons (325 sites x 1441 h)",
    "status": "PASS",
    "value": 0.0666,
    "reference": "JPL Horizons (body 10 from 301)",
@@ -112,9 +112,9 @@
   },
   {
    "group": "ephemeris",
-   "name": "Earth elevation: RMSE of the analytic model vs real JPL Horizons (311 sites x 1441 h)",
+   "name": "Earth elevation: RMSE of the analytic model vs real JPL Horizons (325 sites x 1441 h)",
    "status": "PASS",
-   "value": 0.4802,
+   "value": 0.4799,
    "reference": "JPL Horizons (body 399 from 301)",
    "threshold": "< 0.8 deg",
    "detail": "worst site 0.579 deg"

@@ -70,5 +70,5 @@ NASA LRO LOLA elevation models (USGS LDEM 118 m; PDS LDEM_75S_120M polar) · NAS
 NASA SVS CGI Moon Kit (LROC colour, LOLA elevation) · IAU Gazetteer of Planetary Nomenclature (crater positions).
 
 ## Limits
-Horizons use 120 m/px terrain (smaller features unresolved) and the mast effect is approximated; the heatmap is
+Horizons use 120 m/px terrain (smaller features unresolved); the all-sites hardware map uses a uniform-dip approximation for the mast (single-site results re-ray-trace it); the heatmap is
 interpolated from 100 scored sites. This is a screening tool, not a certified landing-site analysis.

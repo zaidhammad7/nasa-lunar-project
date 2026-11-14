@@ -235,6 +235,8 @@ class Context:
     start_idx: int
     length: int                  # mission duration in samples/hours
     terrain_horizon: dict = field(default_factory=dict)  # NASA LOLA effective-horizon correction (see terrain_illumination)
+    sun_deck: np.ndarray | None = None   # same series without the mast (deck-level horizon): the model's training conditions
+    earth_deck: np.ndarray | None = None
 
     @property
     def win(self) -> slice:
@@ -262,8 +264,9 @@ def build_context(s: Scenario, series_mode: str = "auto") -> Context:
                          f"{N_SAMPLES - start_idx} h")
     series = get_hourly_series(lat, lon, site_row=row, mode=series_mode)
     boost = tower_boost_deg(s.tower_height_m)
-    sun_t, earth_t, horizon = ti.correct(series.sun_el, series.earth_el, lat, lon)  # real crater/mountain shadowing
-    return Context(lat, lon, row, series, boost, sun_t + boost, earth_t + boost, start_idx, length, horizon)
+    # real crater / mountain shadowing; the mast's view is re-ray-traced from its own height when terrain data is available
+    sun_m, earth_m, sun_d, earth_d, horizon = ti.correct_with_mast(series.sun_el, series.earth_el, lat, lon, s.tower_height_m)
+    return Context(lat, lon, row, series, boost, sun_m, earth_m, start_idx, length, horizon, sun_d, earth_d)
 
 
 def timeline_index(s: Scenario, ctx: Context) -> int:
@@ -281,7 +284,10 @@ def window_features(ctx: Context, mast_free: bool = False) -> dict:
     """Dataset-style Sun/Earth features of the mission window (effective elevations, incl. tower boost unless mast_free)."""
     sun, earth = ctx.sun_eff[ctx.win], ctx.earth_eff[ctx.win]
     if mast_free:
-        sun, earth = sun - ctx.boost_deg, earth - ctx.boost_deg
+        if ctx.sun_deck is not None:
+            sun, earth = ctx.sun_deck[ctx.win], ctx.earth_deck[ctx.win]
+        else:
+            sun, earth = sun - ctx.boost_deg, earth - ctx.boost_deg
     out = {"Sun_Visible_Pct": float((sun > 0).mean() * 100), "Sun_Avg_El": float(sun.mean()),
            "Sun_Max_El": float(sun.max()), "Earth_Visible_Pct": float((earth > 0).mean() * 100),
            "Earth_Avg_El": float(earth.mean()), "Earth_Max_El": float(earth.max())}
@@ -469,11 +475,12 @@ def evaluate_scenario(s: Scenario, include_timeline: bool = True, series_mode: s
     w, abs_idx = ctx.win, ctx.start_idx + idx
 
     feats = window_features(ctx)
+    feats_deck = window_features(ctx, mast_free=True)  # same window without the mast (what the model was trained on)
     terrain, terrain_src, tw = terrain_for(ctx)
     raw = {**{f: feats[f] for f in FEATURES if f in feats}, "Elevation_m": terrain["Elevation_m"],
            "Slope_deg": terrain["Slope_deg"], "Roughness_m": terrain.get("Roughness_m"), "_dx_m": terrain.get("_dx_m"),
            **{k: feats[k] for k in ("Sun_Longest_Dark_h", "Sun_Longest_Lit_h", "Earth_Longest_Blackout_h")},
-           "_ood_ref": {f: v for f, v in window_features(ctx, mast_free=True).items() if f in FEATURES}}
+           "_ood_ref": {f: v for f, v in feats_deck.items() if f in FEATURES}}
     eph_src = {"horizons_cache": "JPL Horizons (cached hourly series)", "horizons_live": "JPL Horizons API (hourly series)",
                "analytic_calibrated": "analytic curve calibrated to dataset statistics",
                "analytic_model": "analytic physics model (uncalibrated fallback)"}[ctx.series.source]
@@ -535,6 +542,7 @@ def evaluate_scenario(s: Scenario, include_timeline: bool = True, series_mode: s
         "solar_illumination_visibility": {
             "illumination_state": str(state[abs_idx]), "sun_disc_fraction": round(float(f_sun[abs_idx]), 4),
             "Sun_Visible_Pct": round(feats["Sun_Visible_Pct"], 3), "live_sun_elevation_deg": round(sun_now, 4),
+            "Sun_Visible_Pct_no_mast": round(feats_deck["Sun_Visible_Pct"], 3),
             "Sun_Max_El": round(feats["Sun_Max_El"], 3), "Sun_Avg_El": round(feats["Sun_Avg_El"], 3),
             "sunlight_hours": sun_hours, "longest_dark_hours": feats["Sun_Longest_Dark_h"],
             "tower_horizon_boost_deg": round(ctx.boost_deg, 5), "ephemeris_source": ctx.series.source,
@@ -542,6 +550,7 @@ def evaluate_scenario(s: Scenario, include_timeline: bool = True, series_mode: s
         "earth_communication_status": {
             "dte_status": DTE_CONNECTED if earth_now > 0 else DTE_BLOCKED,
             "Earth_Visible_Pct": round(feats["Earth_Visible_Pct"], 3), "live_earth_elevation_deg": round(earth_now, 4),
+            "Earth_Visible_Pct_no_mast": round(feats_deck["Earth_Visible_Pct"], 3),
             "Earth_Max_El": round(feats["Earth_Max_El"], 3), "Earth_Avg_El": round(feats["Earth_Avg_El"], 3),
             "longest_blackout_hours": feats["Earth_Longest_Blackout_h"]},
         "power_generation": {

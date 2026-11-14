@@ -50,6 +50,20 @@ def shadowed(series, lat, lon):
     return sun, earth
 
 
+def from_mast(series, lat, lon, tower_m):
+    """Independent reference: Sun / Earth elevation above the terrain horizon seen from the TOP of a tower_m mast.
+    The horizon is ray-traced here directly from the LOLA DEM (not taken from the backend's cache)."""
+    import horizon as hz
+    sun_d, earth_d, info = ti.correct(series.sun_el, series.earth_el, lat, lon)  # lander-deck level (no mast)
+    prof = hz.compute_profile(lat, lon, hz.mast_observer_m(tower_m))
+    t = np.arange(len(series.sun_el), dtype=float)
+    s_lat, s_lon, e_lat, e_lon = hz.baseline_subpoints(t)
+    off = info["calibration_offset_deg"]
+    sun = series.sun_el - hz.horizon_at(prof, hz.azimuth_to(lat, lon, s_lat, s_lon)) - off["sun"]
+    earth = series.earth_el - hz.horizon_at(prof, hz.azimuth_to(lat, lon, e_lat, e_lon)) - off["earth"]
+    return np.maximum(sun, sun_d), np.maximum(earth, earth_d)
+
+
 def unit_vec(lat, lon):
     la, lo = np.radians(lat), np.radians(lon)
     return np.array([np.cos(la) * np.cos(lo), np.cos(la) * np.sin(lo), np.sin(la)])
@@ -125,10 +139,13 @@ def run() -> int:
         check("timeline has 1440 hourly rows", len(sun) == 1440 and tl["hour_index"][-1] == 1439 and len(tl["timestamp_utc"]) == 1440)
         boost = math.degrees(math.acos(1737400.0 / (1737400.0 + 20.0)))
         base = es.get_hourly_series(-85.3109, 332.293, ms._dataset().iloc[98].to_dict(), mode="auto")
-        base_sun, base_earth = shadowed(base, -85.3109, 332.293)
-        check("tower boost = acos(R/(R+h)) added to Sun elevation", np.allclose(sun, base_sun[:1440] + boost, atol=1e-3)
-              and abs(e["scenario"]["hardware"]["tower_horizon_boost_deg"] - boost) < 1e-4, f"boost {boost:.5f} deg at 20 m")
-        check("tower boost also applied to Earth", np.allclose(earth, base_earth[:1440] + boost, atol=1e-3))
+        base_sun, base_earth = from_mast(base, -85.3109, 332.293, 20.0)
+        deck_sun, _ = shadowed(base, -85.3109, 332.293)
+        check("Sun elevation is measured above the horizon re-ray-traced from the 20 m mast top; dip reported = acos(R/(R+h))",
+              np.allclose(sun, base_sun[:1440], atol=1e-3) and abs(e["scenario"]["hardware"]["tower_horizon_boost_deg"] - boost) < 1e-4,
+              f"dip {boost:.5f} deg; mast gain vs deck {np.mean(base_sun - deck_sun):.3f} deg on average")
+        check("Earth elevation likewise re-ray-traced from the mast top, never below the deck view", np.allclose(earth, base_earth[:1440], atol=1e-3)
+              and bool((base_sun >= deck_sun - 1e-9).all()))
         so = e["solar_illumination_visibility"]
         el_now = sun[100]
         exp_state = "Direct Sunlight" if el_now >= 0.265 else "Total Darkness" if el_now <= -0.265 else "Partial Shadow"
@@ -139,7 +156,7 @@ def run() -> int:
         exp_states = np.where(sun >= 0.265, "Direct Sunlight", np.where(sun <= -0.265, "Total Darkness", "Partial Shadow"))
         check("illumination state correct for all 1440 hours", bool((states == exp_states).all()),
               f"direct {int((states == 'Direct Sunlight').sum())}, partial {int((states == 'Partial Shadow').sum())}, dark {int((states == 'Total Darkness').sum())}")
-        sun_x = base_sun[:1440] + boost  # unrounded elevations (the timeline carries 4 decimals, ~0.005 W of rounding)
+        sun_x = base_sun[:1440]  # unrounded elevations (the timeline carries 4 decimals, ~0.005 W of rounding)
         f = np.clip((sun_x + 0.265) / 0.53, 0, 1)
         P_ref = 1361.0 * 0.30 * 12.5 * f * np.maximum(0, np.sin(np.radians(sun_x + 88.0)))
         check("power per hour = S0*eta*A*f*max(0,sin(el+tilt))", np.allclose(np.array(tl["power_watts"]), P_ref, atol=2e-3),
@@ -186,9 +203,7 @@ def run() -> int:
         row = ms._dataset().set_index("Site_ID").loc["Auto_SP_075"].to_dict()
         row["Site_ID"] = "Auto_SP_075"
         ser = es.get_hourly_series(row["Lat"], row["Lon"], row, mode="auto")
-        bo = ms.tower_boost_deg(10)
-        s_sh, e_sh = shadowed(ser, row["Lat"], row["Lon"])
-        se, ee = s_sh + bo, e_sh + bo
+        se, ee = from_mast(ser, row["Lat"], row["Lon"], 10.0)  # 10 m mast, horizon re-ray-traced from its top
         Pw = ms.power_watts(se, 20, 80)
         L = 240
         best = []
@@ -241,9 +256,8 @@ def run() -> int:
         check("slope > 15 deg -> Hazardous, score <= 35, exact warning", pd_["Safety_Class"] == "Hazardous"
               and pd_["Suitability_Score"] <= 35.0 and msg in r["xai_and_hazard_alerts"]["warnings"], f"{pd_['Suitability_Score']} {pd_['guardrails']}")
         ser99 = es.get_hourly_series(-85.3109, 332.293, ms._dataset().iloc[98].to_dict(), mode="auto")
-        s99, e99 = shadowed(ser99, -85.3109, 332.293)
-        b1 = ms.tower_boost_deg(1)
-        dark_ok = [i for i in range(0, 1417) if (s99[i:i + 24] + b1 <= 0).all() and (e99[i:i + 24] + b1 > 0).all()]
+        s99, e99 = from_mast(ser99, -85.3109, 332.293, 1.0)  # a 1 m mast sees from the lander deck
+        dark_ok = [i for i in range(0, 1417) if (s99[i:i + 24] <= 0).all() and (e99[i:i + 24] > 0).all()]
         check("test setup: found a 24 h window with Sun fully dark and Earth visible", len(dark_ok) > 0, f"{len(dark_ok)} candidate starts")
         dark_start = dark_ok[len(dark_ok) // 2] if dark_ok else 0
         r = client.post("/api/evaluate", json={"site_id": "Auto_SP_099", "tower_height_m": 1, "start_datetime_utc": iso(dark_start),
@@ -255,7 +269,7 @@ def run() -> int:
               and r["solar_illumination_visibility"]["Sun_Visible_Pct"] == 0.0, f"{pd_['Suitability_Score']} (raw ML {pd_['Suitability_Score_raw_ml']}) window start {iso(dark_start)}")
         check("ood_warning raised when a feature leaves the training range", r["xai_and_hazard_alerts"]["ood_warning"] is True,
               str(r["xai_and_hazard_alerts"]["ood_features"]))
-        blk_ok = [i for i in range(0, 1417) if (ser99.earth_el[i:i + 24] + b1 <= 0).all() and (ser99.sun_el[i:i + 24] + b1 > 0.265).all()]
+        blk_ok = [i for i in range(0, 1417) if (e99[i:i + 24] <= 0).all() and (s99[i:i + 24] > 0.265).all()]  # same terrain-shadowed view the API uses
         check("test setup: found a 24 h window with Earth fully blocked and Sun fully lit", len(blk_ok) > 0, f"{len(blk_ok)} candidate starts")
         e_start = blk_ok[len(blk_ok) // 2] if blk_ok else 0
         r = client.post("/api/evaluate", json={"site_id": "Auto_SP_099", "tower_height_m": 1, "start_datetime_utc": iso(e_start),

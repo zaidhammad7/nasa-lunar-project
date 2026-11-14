@@ -60,26 +60,39 @@ export function useLunarSimulation() {
     const bodyA = buildBody(scn, mode)
     // A custom point can take a few seconds on the backend (Horizons budget / DEM read): show an instant offline estimate
     // right away and replace it with the authoritative backend result when it arrives.
-    if (!scn.siteId) {
-      try { setResults((r) => ({ ...r, A: { ...offlineEvaluate(bodyA), _source: 'offline', _pending: true } })) } catch { /* invalid input is reported by the real call */ }
-    }
+    // A brand-new custom point has no backend data yet: show a quick offline estimate (clearly marked). For any other change
+    // (tower, panels, dates, mode) keep the last authoritative result on screen, marked "updating", and swap it once - never
+    // replace good data with a rougher guess that the backend would then overwrite again.
+    setResults((r) => {
+      const prev = r.A
+      const sameLocation = prev && prev._source === 'live' && Math.abs(prev.scenario.lat_deg - scn.lat) < 1e-6
+        && Math.abs((((prev.scenario.lon_deg_east - scn.lon) % 360) + 540) % 360 - 180) < 1e-6
+      if (sameLocation) return { ...r, A: { ...prev, _updating: true } }
+      if (!scn.siteId) {
+        try { return { ...r, A: { ...offlineEvaluate(bodyA), _source: 'offline', _pending: true } } } catch { return r }
+      }
+      return prev ? { ...r, A: { ...prev, _updating: true } } : r
+    })
     const timer = setTimeout(async () => {
       setStatus((s) => ({ ...s, loading: true }))
       try {
         if (compareOpen) {
           const r = await compare(bodyA, buildBody(scnB, mode), ctl.signal)
+          if (ctl.signal.aborted) return // a newer request replaced this one: never let an old answer overwrite newer inputs
           const c = r.side_by_side_comparison
           const a = { ...c.scenario_a, _source: r._source }, b = { ...c.scenario_b, _source: r._source }
           assertComplete(a, 'Site A'); assertComplete(b, 'Site B')
           setResults({ A: a, B: b, deltas: c.deltas })
         } else {
           const r = await evaluate(bodyA, ctl.signal)
+          if (ctl.signal.aborted) return // stale reply (inputs changed while it was in flight)
           assertComplete(r, 'This site') // incomplete data is never stored: the last valid result stays on screen and the problem is explained
           setResults({ A: r, B: null, deltas: null })
         }
         setStatus({ loading: false, error: null })
       } catch (e) {
         if (ctl.signal.aborted) return
+        setResults((r) => (r.A?._updating ? { ...r, A: { ...r.A, _updating: false } } : r)) // keep the last valid result, un-marked
         setStatus({ loading: false, error: e.message, kind: e.kind, missing: e.missing })
       }
     }, 200)

@@ -385,15 +385,26 @@ def _():
     return expect(not bad, str(bad))
 
 
-@case("F", "the hourly Sun and Earth elevations shift by exactly the change in horizon dip")
+@case("F", "hourly Sun and Earth elevations never drop as the mast grows (horizon re-ray-traced from the mast top)")
 def _():
-    base = np.array(tw(1)["timeline"]["sun_el_eff_deg"])
     bad = []
-    for h in TOWERS[1:]:
-        shift = np.array(tw(h)["timeline"]["sun_el_eff_deg"]) - base
-        if not np.allclose(shift, ms.tower_boost_deg(h) - ms.tower_boost_deg(1), atol=1e-3):
-            bad.append(h)
+    for key in ("sun_el_eff_deg", "earth_el_eff_deg"):
+        prev = np.array(tw(TOWERS[0])["timeline"][key])
+        for h in TOWERS[1:]:
+            cur = np.array(tw(h)["timeline"][key])
+            if (cur < prev - 1e-3).any():
+                bad.append((key, h))
+            prev = cur
     return expect(not bad, str(bad))
+
+
+@case("F", "mast benefit is re-ray-traced from the mast top, and reported with the no-mast reference values")
+def _():
+    j = tw(150)
+    s, c = j["solar_illumination_visibility"], j["earth_communication_status"]
+    method = s["terrain_horizon"].get("mast_method", "")
+    return expect("re-ray-traced" in method and s["Sun_Visible_Pct"] >= s["Sun_Visible_Pct_no_mast"] and c["Earth_Visible_Pct"] >= c["Earth_Visible_Pct_no_mast"],
+                  f"{method}; sun {s['Sun_Visible_Pct_no_mast']} -> {s['Sun_Visible_Pct']}")
 
 
 @case("F", "sunlight and Earth contact never decrease as the tower gets taller (3 sites)")

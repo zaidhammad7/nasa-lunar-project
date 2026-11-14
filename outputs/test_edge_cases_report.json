@@ -1,6 +1,6 @@
 {
- "passed": 102,
- "total": 102,
+ "passed": 103,
+ "total": 103,
  "cases": [
   {
    "n": 1,
@@ -551,166 +551,173 @@
   {
    "n": 79,
    "group": "F",
-   "case": "the hourly Sun and Earth elevations shift by exactly the change in horizon dip",
+   "case": "hourly Sun and Earth elevations never drop as the mast grows (horizon re-ray-traced from the mast top)",
    "pass": true,
    "detail": "[]"
   },
   {
    "n": 80,
    "group": "F",
+   "case": "mast benefit is re-ray-traced from the mast top, and reported with the no-mast reference values",
+   "pass": true,
+   "detail": "horizon re-ray-traced from the top of the mast; sun 47.778 -> 52.153"
+  },
+  {
+   "n": 81,
+   "group": "F",
    "case": "sunlight and Earth contact never decrease as the tower gets taller (3 sites)",
    "pass": true,
    "detail": "[]"
   },
   {
-   "n": 81,
+   "n": 82,
    "group": "F",
    "case": "terrain slope and elevation are identical at every tower height (a mast cannot change the ground)",
    "pass": true,
    "detail": "{1: (2.966, -611.5), 5: (2.966, -611.5), 20: (2.966, -611.5), 50: (2.966, -611.5), 100: (2.966, -611.5), 150: (2.966, -611.5)}"
   },
   {
-   "n": 82,
+   "n": 83,
    "group": "F",
    "case": "solar power and mission energy never decrease with tower height",
    "pass": true,
-   "detail": "[2084353, 2110706, 2152128, 2188887, 2233707, 2268835]"
-  },
-  {
-   "n": 83,
-   "group": "F",
-   "case": "changing the tower re-runs the verdict pipeline (score and horizon change; same site, same terrain)",
-   "pass": true,
-   "detail": "72.84 vs 74.84"
+   "detail": "[2061554, 2105321, 2141875, 2170047, 2220358, 2254067]"
   },
   {
    "n": 84,
+   "group": "F",
+   "case": "changing the tower re-runs the verdict pipeline (score and horizon change; same site, same terrain)",
+   "pass": true,
+   "detail": "69.15 vs 75.31"
+  },
+  {
+   "n": 85,
    "group": "F",
    "case": "tower height propagates to the CSV export (hourly Sun elevation) and is echoed in the response",
    "pass": true,
    "detail": "tower not applied in CSV"
   },
   {
-   "n": 85,
+   "n": 86,
    "group": "G",
    "case": "NASA benchmark: no strict check fails and at least 20 pass",
    "pass": true,
    "detail": "22 pass, 0 fail []"
   },
   {
-   "n": 86,
+   "n": 87,
    "group": "G",
    "case": "NASA benchmark covers terrain, illumination, ephemeris, constants, geometry, scoring and solar physics",
    "pass": true,
    "detail": "missing set()"
   },
   {
-   "n": 87,
+   "n": 88,
    "group": "G",
    "case": "NASA benchmark does not hide uncertainty: the slope comparison is reported as INFO with its reason",
    "pass": true,
    "detail": "[{'group': 'terrain', 'name': 'Site slope: dataset vs slope from the 120 m polar DEM (Horn, 3x3)', 'status': 'INFO', 'value': {'mean_dataset_deg': 12.65, 'mean_polar_dem_deg': 8.62, 'pearson_r': 0.511}, 'reference': 'LOLA LDEM_75S_120M', 'threshold': '', 'detail': 'Slope is scale-dependent: the dataset slopes come from the finer global grid (about 10 m east-west near the pole) and are steeper than a 120 m grid shows. Correlation is moderate, so slope is the least certain input; lander-scale hazards need metre-scale maps.'}]"
   },
   {
-   "n": 88,
+   "n": 89,
    "group": "G",
    "case": "GET /api/benchmark serves the report",
    "pass": true,
    "detail": "200"
   },
   {
-   "n": 89,
+   "n": 90,
    "group": "G",
    "case": "benchmark thresholds are not vacuous: a corrupted reference makes a check fail",
    "pass": true,
    "detail": "1 failing checks"
   },
   {
-   "n": 90,
+   "n": 91,
    "group": "H",
    "case": "browser validation: tower accepts the edge values and rejects blank / NaN / Infinity / out-of-range",
    "pass": true,
    "detail": "wrong: []"
   },
   {
-   "n": 91,
+   "n": 92,
    "group": "H",
    "case": "browser validation: lat accepts the edge values and rejects blank / NaN / Infinity / out-of-range",
    "pass": true,
    "detail": "wrong: []"
   },
   {
-   "n": 92,
+   "n": 93,
    "group": "H",
    "case": "browser validation: lon accepts the edge values and rejects blank / NaN / Infinity / out-of-range",
    "pass": true,
    "detail": "wrong: []"
   },
   {
-   "n": 93,
+   "n": 94,
    "group": "H",
    "case": "browser validation: tilt accepts the edge values and rejects blank / NaN / Infinity / out-of-range",
    "pass": true,
    "detail": "wrong: []"
   },
   {
-   "n": 94,
+   "n": 95,
    "group": "H",
    "case": "browser validation: area accepts the edge values and rejects blank / NaN / Infinity / out-of-range",
    "pass": true,
    "detail": "wrong: []"
   },
   {
-   "n": 95,
+   "n": 96,
    "group": "H",
    "case": "browser limits equal the backend limits (tower 150, lat -90..-85, lon 0..360, tilt 0..90, area 1..50)",
    "pass": true,
    "detail": "{'tower': True, 'lat': True, 'lon': True, 'tilt': True, 'area': True}"
   },
   {
-   "n": 96,
+   "n": 97,
    "group": "H",
    "case": "validation messages name the field and its allowed range",
    "pass": true,
    "detail": ""
   },
   {
-   "n": 97,
+   "n": 98,
    "group": "H",
    "case": "validateScenario passes a good scenario and reports every bad field at once",
    "pass": true,
    "detail": "area,lat,lon,tilt,tower"
   },
   {
-   "n": 98,
+   "n": 99,
    "group": "H",
    "case": "a complete backend result passes the telemetry check; every required field exists in a real result",
    "pass": true,
    "detail": ""
   },
   {
-   "n": 99,
+   "n": 100,
    "group": "H",
    "case": "removing ANY required telemetry field is detected and named (no crash)",
    "pass": true,
    "detail": ""
   },
   {
-   "n": 100,
+   "n": 101,
    "group": "H",
    "case": "NaN score, empty timeline and garbage objects are all handled without throwing",
    "pass": true,
    "detail": ""
   },
   {
-   "n": 101,
+   "n": 102,
    "group": "H",
    "case": "errors are classified (input / offline / unexpected) and always carry advice for the user",
    "pass": true,
    "detail": "{'input': 'input', 'offline': 'offline', 'offline5xx': 'offline', 'unexpected': 'unexpected', 'incomplete': 'incomplete', 'nullErr': 'unexpected', 'undefinedErr': 'unexpected', 'stringErr': 'unexpected'}"
   },
   {
-   "n": 102,
+   "n": 103,
    "group": "H",
    "case": "browser horizon distance equals sqrt(2Rh + h^2) and the dip equals the independent geometry (1-150 m)",
    "pass": true,

@@ -133,7 +133,7 @@
    "group": "B",
    "case": "safety classes are Optimal / Acceptable / Hazardous only",
    "pass": true,
-   "detail": "classes {'Hazardous', 'Optimal', 'Acceptable'}"
+   "detail": "classes {'Optimal', 'Acceptable', 'Hazardous'}"
   },
   {
    "n": 20,
@@ -434,21 +434,21 @@
    "group": "E",
    "case": "timeline_hour_index selects that hour's live values",
    "pass": true,
-   "detail": "-7.9973 vs -7.9973"
+   "detail": "-8.0938 vs -8.0938"
   },
   {
    "n": 63,
    "group": "E",
    "case": "longer mast never lowers sunlight (API, 1 vs 150 m)",
    "pass": true,
-   "detail": "50.0 % -> 52.917 %"
+   "detail": "49.306 % -> 53.611 %"
   },
   {
    "n": 64,
    "group": "E",
    "case": "larger panel area raises mission energy proportionally",
    "pass": true,
-   "detail": "ratio 1.9999992943275224"
+   "detail": "ratio 2.0000001384831623"
   },
   {
    "n": 65,
@@ -469,7 +469,7 @@
    "group": "E",
    "case": "95% confidence interval contains the score",
    "pass": true,
-   "detail": "4.96 <= 30.0 <= 30.0"
+   "detail": "5.12 <= 30.0 <= 30.0"
   },
   {
    "n": 68,
@@ -483,7 +483,7 @@
    "group": "E",
    "case": "single evaluation completes in under 1 s (preset)",
    "pass": true,
-   "detail": "41 ms"
+   "detail": "95 ms"
   },
   {
    "n": 70,

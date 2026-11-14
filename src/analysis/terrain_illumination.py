@@ -141,6 +141,35 @@ def correct(sun_el: np.ndarray, earth_el: np.ndarray, lat: float, lon: float) ->
         "nasa_sun_visible_pct": round(v["sun_pct"], 2), "nasa_earth_visible_pct": round(v["earth_pct"], 2), "source": SOURCE}
 
 
+def correct_with_mast(sun_el: np.ndarray, earth_el: np.ndarray, lat: float, lon: float, tower_m: float):
+    """Sun / Earth elevations above the terrain horizon seen from the TOP OF THE MAST, plus the deck-level (no-mast) values.
+
+    Returns (sun_mast, earth_mast, sun_deck, earth_deck, info), all in deg. With terrain data the horizon is re-ray-traced
+    from the mast height (exact: nearby walls are cleared by atan(h / d)); the same NASA calibration offset as at deck level is
+    applied. Without terrain data the mast adds the geometric horizon dip acos(R / (R + h)) uniformly (approximation).
+    """
+    import horizon as hz
+    sun_d, earth_d, info = correct(sun_el, earth_el, lat, lon)
+    dip = math.degrees(math.acos(R_MOON_M / (R_MOON_M + float(tower_m))))
+    info = {**info, "geometric_dip_deg": round(dip, 5)}
+    lat, lon = round(float(lat), 4), round(float(lon) % 360.0, 4)
+    h_obs = hz.mast_observer_m(tower_m)
+    if str(info.get("method", "")).startswith("horizon profile"):
+        prof = hz.profile_at_height(lat, lon, round(h_obs * 2) / 2)
+        if prof is not None:
+            t = np.arange(len(sun_el), dtype=float)
+            s_lat, s_lon, e_lat, e_lon = hz.baseline_subpoints(t)
+            off = info.get("calibration_offset_deg", {"sun": 0.0, "earth": 0.0})
+            h_sun = hz.horizon_at(prof, hz.azimuth_to(lat, lon, s_lat, s_lon)) + off["sun"]
+            h_earth = hz.horizon_at(prof, hz.azimuth_to(lat, lon, e_lat, e_lon)) + off["earth"]
+            info.update(mast_method="horizon re-ray-traced from the top of the mast", mast_observer_height_m=h_obs,
+                        sun_horizon_deg_at_mast=round(float(np.mean(h_sun)), 4), earth_horizon_deg_at_mast=round(float(np.mean(h_earth)), 4))
+            # never worse than the deck (guards against interpolation noise at tiny height differences)
+            return np.maximum(np.asarray(sun_el) - h_sun, sun_d), np.maximum(np.asarray(earth_el) - h_earth, earth_d), sun_d, earth_d, info
+    info.update(mast_method="uniform horizon dip acos(R/(R+h)) (no terrain model for this point)")
+    return sun_d + dip, earth_d + dip, sun_d, earth_d, info
+
+
 @lru_cache(maxsize=2048)
 def _fit_offsets_cached(lat: float, lon: float, nasa_sun: float, nasa_earth: float) -> tuple[float, float]:
     import horizon as hz

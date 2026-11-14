@@ -86,7 +86,7 @@ equator), so sites average 29% sunlight in the window versus NASA's 21% four-yea
 ## Honest limits
 - The hardware map uses the same rules as the offline engine (rule-based stand-in): it agrees with the full model on 97 of 100 sites at a 5 m mast and 88 of 100 at 150 m, never calls a NO-GO site green, and every full-model green site is green on the map.
 - Horizons come from a **120 m/px** terrain model: features smaller than ~120 m (boulders, small ridges) are not resolved.
-- The mast's benefit is approximated as a uniform horizon dip (acos(R/(R+h))), not re-ray-traced at mast height.
+- The mast's benefit is computed by re-ray-tracing the horizon from the mast top (a tall mast clears nearby crater walls by atan(h / d), which the old uniform-dip model under-stated by up to ~40 points of sunlight). The optional "Map for my hardware" view still uses the faster uniform-dip approximation for all 100 sites at once.
 - Earth visibility is ~3.5 points low on average versus NASA (simplified libration model); the calibration offset corrects the average.
 - The heatmap is **interpolated** from 100 scored sites. Only clicked points get a full evaluation.
 - Terrain for custom points comes from a **118 m/px** elevation model; a 20 m/px polar model would resolve smaller hazards.

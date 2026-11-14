@@ -34,7 +34,9 @@ for site in sites:
     if not res: continue
     sun = {h: np.array(r["timeline"]["sun_el_eff_deg"]) for h, r in res.items()}
     d = sun[150] - sun[1]
-    check(f"{site}: Sun elevation shift 1->150 m equals boost diff", np.allclose(d, ms.tower_boost_deg(150) - ms.tower_boost_deg(1), atol=1e-3), f"{d.mean():.4f} deg")
+    # The horizon is re-ray-traced from the mast top: every hour the 150 m mast sees the Sun at least as high as the 1 m one
+    # (nearby walls can make the gain much larger than the curvature dip, which is why the old uniform-dip model was replaced).
+    check(f"{site}: Sun never lower from a 150 m mast than from 1 m (hourly)", bool((d >= -1e-6).all()), f"mean gain {d.mean():.4f} deg, min {d.min():.4f}")
     vis = [r["solar_illumination_visibility"]["Sun_Visible_Pct"] for r in res.values()]
     check(f"{site}: sunlight % non-decreasing with height", all(b >= a - 1e-9 for a, b in zip(vis, vis[1:])), str([round(v, 2) for v in vis]))
     sc = {h: r["primary_landing_decision"]["Suitability_Score"] for h, r in res.items()}

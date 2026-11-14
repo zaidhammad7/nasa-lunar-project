@@ -11,8 +11,12 @@ export default function DecisionBanner({ result, liveScore, scn }) {
   const name = scn.siteId || 'Custom Selected Point'
   return (
     <Card className={cx('border-2', st.border)} accent="text-mute"
-      right={result._pending && <span className="num animate-pulse text-[10px] text-solar">refining with backend…</span>}
-      title="Site Suitability Score" right={<InfoTip text={GLOSSARY.score} />}>
+      title="Site Suitability Score"
+      right={<span className="flex items-center gap-2">
+        {result._pending && <span className="num animate-pulse text-[10px] text-solar" role="status">quick estimate · refining…</span>}
+        {!result._pending && result._updating && <span className="num animate-pulse text-[10px] text-earth" role="status">updating…</span>}
+        <InfoTip text={GLOSSARY.score} />
+      </span>}>
       <div className="num mb-2 text-[12px] text-mute"><span className="text-ink">{name}</span> · {scn.lat.toFixed(4)}°, {scn.lon.toFixed(4)}°E</div>
       <div className="flex items-end justify-between gap-3">
         <div>

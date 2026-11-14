@@ -97,7 +97,7 @@ export default function App() {
           <MissionTimeForm scenario={scn} onPatch={sim.patch} />
         </div>
       </Card>
-      <Card title="Solar hardware" icon="🔆" accent="text-solar"><HardwareConfig scenario={scn} onPatch={sim.patch} calc={calc} terrain={active?.terrain_topography_physics} /></Card>
+      <Card title="Solar hardware" icon="🔆" accent="text-solar"><HardwareConfig scenario={scn} onPatch={sim.patch} calc={calc} result={active} /></Card>
       <ActionButtons onCompare={() => sim.setCompareOpen(true)} onExport={csv.exportCsv} disabled={!calc} />
     </>
   )
