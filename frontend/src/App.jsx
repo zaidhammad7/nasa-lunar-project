@@ -16,6 +16,7 @@ import { useLunarSimulation } from './hooks/useLunarSimulation.js'
 import { useSolarPowerCalc } from './hooks/useSolarPowerCalc.js'
 import { useCsvExporter } from './hooks/useCsvExporter.js'
 import { HEAT_RANGE, rampColor } from './lib/heatmap.js'
+import { evaluateAllSites, countClasses } from './lib/hardwareMap.js'
 import { useTimeMeta, timeStore } from './lib/timeStore.js'
 import { warmup } from './api/lunarModelApi.js'
 import { sky } from './components/scene3d/sky.js'
@@ -36,7 +37,15 @@ export default function App() {
   const [heatmap, setHeatmap] = useState(false)
   const [craters, setCraters] = useState(true)
   // Heatmap input: every scored site with its score in the current priority mode (re-interpolated when the mode changes)
-  const heatSites = useMemo(() => (heatmap ? sim.ranking.all.map((s) => ({ lat: s.lat, lon: s.lon, score: s.modeScore })) : null), [heatmap, sim.ranking])
+  // Optional: colour the map for the user's own hardware (tower, panels, battery): safe zones change when these change
+  const [hwMap, setHwMap] = useState(false)
+  const hwEval = useMemo(() => (hwMap ? evaluateAllSites(sim.ranking.all, { tower: scn.tower, tilt: scn.tilt, area: scn.area, batteryKwh: scn.batteryKwh, loadW: scn.loadW,
+    startISO: scn.startISO, durationHours: scn.durationHours, mode, maxSlope: scn.maxSlope }) : null),
+  [hwMap, sim.ranking.all, scn.tower, scn.tilt, scn.area, scn.batteryKwh, scn.loadW, scn.startISO, scn.durationHours, scn.maxSlope, mode])
+  const mapSites = useMemo(() => (hwEval ? sim.ranking.all.map((s) => ({ ...s, displayClass: hwEval[s.id].displayClass, modeScore: hwEval[s.id].modeScore })) : sim.ranking.all), [hwEval, sim.ranking])
+  const hwCounts = useMemo(() => (hwEval ? countClasses(hwEval) : null), [hwEval])
+  const powerLimited = hwEval ? Object.values(hwEval).filter((e) => e.reason === 'battery depleted').length : 0
+  const heatSites = useMemo(() => (heatmap ? mapSites.map((s) => ({ lat: s.lat, lon: s.lon, score: s.modeScore })) : null), [heatmap, mapSites])
 
   // ---- 3-D scene inputs: Site A (and Site B while comparing)
   const pins = useMemo(() => {
@@ -72,6 +81,13 @@ export default function App() {
         <div className="mt-2 space-y-2 text-[12.5px]">
           <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" checked={heatmap} onChange={(e) => setHeatmap(e.target.checked)} />Suitability heatmap</label>
           <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" checked={craters} onChange={(e) => setCraters(e.target.checked)} />Named craters (IAU)</label>
+          <label className="flex cursor-pointer items-center gap-2" title="Re-evaluates all 100 sites with your tower height, panels and battery"><input type="checkbox" checked={hwMap} onChange={(e) => setHwMap(e.target.checked)} />Map for my hardware (tower + battery)</label>
+          {hwCounts && (
+            <div className="num rounded-md border border-line bg-bg/40 px-2.5 py-1.5 text-[11px] leading-relaxed text-mute" role="status">
+              <span className="text-go">{hwCounts.Optimal} green</span> · <span className="text-solar">{hwCounts.Acceptable} conditional</span> · <span className="text-nogo">{hwCounts.Hazardous} NO-GO</span>
+              <div>tower {scn.tower} m · battery {scn.batteryKwh} kWh · {powerLimited} site{powerLimited === 1 ? '' : 's'} lose power in the longest night</div>
+            </div>
+          )}
         </div>
       </Card>
       <Card title="Priority & mission time" icon="🎚" accent="text-go">
@@ -87,7 +103,7 @@ export default function App() {
 
   const viewport = (
     <div className="relative h-full w-full">
-      <LunarViewport sites={sim.ranking.all} showPresets={sim.showPresets} pins={pins} rays={rays} fly={sim.fly} activePreset={sim.activePreset}
+      <LunarViewport sites={mapSites} showPresets={sim.showPresets} pins={pins} rays={rays} fly={sim.fly} activePreset={sim.activePreset}
         onPick={(la, lo) => sim.setLatLon(la, lo, { fromPick: true })} onPreset={onPreset} heatSites={heatSites} showCraters={craters} />
       <PanelToggles panels={sim.panels} onToggle={sim.togglePanel} />
       {heatmap && (

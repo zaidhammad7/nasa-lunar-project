@@ -18,6 +18,7 @@ lander, and in view of Earth often enough to talk to it. Our tool scores all thr
 | **Mission timeline** | Sun and Earth move hour by hour over 60 days, with live countdowns to sunrise and Earthrise | Landing timing matters as much as location |
 | **Power survival** | Battery charge simulated through the longest lunar night, plus the minimum battery needed | Answers "will the lander survive the night?" |
 | **Hardware what-if** | Tower height (1–150 m), panel tilt and area update power instantly | A taller mast sees over the horizon: 150 m gains 0.75° of Sun elevation |
+| **Map for my hardware** | Tick "Map for my hardware": all 100 sites are re-evaluated with your tower height, panels and battery; pins and heatmap recolour, with a live count of green / conditional / NO-GO sites | Shows how hardware choices change where you can safely land: a bigger battery or taller mast turns sites green |
 | **Compare + export** | Side-by-side comparison of two sites; CSV mission summary | Ready for a planning review |
 
 ## How it works
@@ -40,6 +41,7 @@ lander, and in view of Earth often enough to talk to it. Our tool scores all thr
 ## Why you can trust the numbers
 - **100-case data and system suite** passes: dataset integrity, derived-file consistency, physics, safety rules, API, input validation, and browser-vs-backend parity.
 - **107 automated API checks** pass; each recomputes the expected value independently (including terrain shadowing).
+- **32 verdict-rule checks** pass: a taller mast never downgrades a verdict or triggers an out-of-range warning, GO / Optimal needs slope ≤ 5.0° at every tower height, and battery / tower effects on the map behave monotonically. (Switching the fixes off makes 6 of them fail.)
 - **23 tower-range checks** pass: the horizon gain matches the exact geometry (acos(R/(R+h))), sunlight never decreases with height, and the verdict is never degraded by a taller mast.
 - The **offline engine** in the browser mirrors the backend, so the app works without internet.
 - Out-of-range inputs are flagged ("outside model training range") instead of silently extrapolated.
@@ -69,6 +71,7 @@ Shackleton's floor reads 0% sunlight and NO-GO, even with a 150 m mast. NASA's b
 equator), so sites average 29% sunlight in the window versus NASA's 21% four-year average. A single fixed horizon could not show this.
 
 ## Honest limits
+- The hardware map uses the same rules as the offline engine (rule-based stand-in): it agrees with the full model on 97 of 100 sites at a 5 m mast and 88 of 100 at 150 m, never calls a NO-GO site green, and every full-model green site is green on the map.
 - Horizons come from a **120 m/px** terrain model: features smaller than ~120 m (boulders, small ridges) are not resolved.
 - The mast's benefit is approximated as a uniform horizon dip (acos(R/(R+h))), not re-ray-traced at mast height.
 - Earth visibility is ~3.5 points low on average versus NASA (simplified libration model); the calibration offset corrects the average.

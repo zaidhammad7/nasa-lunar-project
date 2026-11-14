@@ -1,9 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Card, Badge } from '../ui/primitives.jsx'
 import { simulateBattery, requiredCapacityKwh, longestDarkHours } from '../../lib/survival.js'
 import { fmt, cx } from '../../lib/format.js'
 
-const DEFAULTS = { capacity: 50, load: 150 } // kWh usable, W constant (avionics + survival heaters)
 
 const Num = ({ label, unit, value, onChange, min, max, step }) => (
   <label className="block min-w-0">
@@ -14,9 +13,9 @@ const Num = ({ label, unit, value, onChange, min, max, step }) => (
 )
 
 /** Does the lander's battery carry it through the longest night of this mission window? */
-export default function SurvivalCard({ calc }) {
-  const [capacity, setCapacity] = useState(DEFAULTS.capacity)
-  const [load, setLoad] = useState(DEFAULTS.load)
+export default function SurvivalCard({ calc, scn, onPatch }) {
+  const capacity = scn.batteryKwh, load = scn.loadW // kWh usable, W constant (avionics + survival heaters); shared with the map
+  const setCapacity = (v) => onPatch({ batteryKwh: v }), setLoad = (v) => onPatch({ loadW: v })
   const r = useMemo(() => {
     const sim = simulateBattery(calc.power, capacity, load)
     return { ...sim, need: requiredCapacityKwh(calc.power, load), dark: longestDarkHours(calc.power) }

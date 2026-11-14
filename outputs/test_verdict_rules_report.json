@@ -1,0 +1,230 @@
+{
+ "passed": 32,
+ "total": 32,
+ "cases": [
+  {
+   "n": 1,
+   "group": "1",
+   "case": "visibility above the training maximum is not out of range (Sun 83.2 %, Earth 100 %)",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 2,
+   "group": "1",
+   "case": "visibility far above the maximum (100 %) adds no out-of-range flags in the batch check either",
+   "pass": true,
+   "detail": "flagged 0 vs baseline 0"
+  },
+  {
+   "n": 3,
+   "group": "1",
+   "case": "visibility BELOW the training minimum is still flagged (unfamiliar site)",
+   "pass": true,
+   "detail": "['Sun_Visible_Pct']"
+  },
+  {
+   "n": 4,
+   "group": "1",
+   "case": "slope above the training maximum is still flagged (only visibility is one-sided)",
+   "pass": true,
+   "detail": "['Slope_deg']"
+  },
+  {
+   "n": 5,
+   "group": "1",
+   "case": "mast-boosted features (+10 pts visibility, +0.75 deg): no downgrade and no OOD on any of 100 sites",
+   "pass": true,
+   "detail": "downgrades []; out-of-range warnings 0/100"
+  },
+  {
+   "n": 6,
+   "group": "1",
+   "case": "mast-boosted features (+25 pts visibility, +0.75 deg): no downgrade and no OOD on any of 100 sites",
+   "pass": true,
+   "detail": "downgrades []; out-of-range warnings 0/100"
+  },
+  {
+   "n": 7,
+   "group": "1",
+   "case": "mast-boosted features (+40 pts visibility, +0.75 deg): no downgrade and no OOD on any of 100 sites",
+   "pass": true,
+   "detail": "downgrades []; out-of-range warnings 0/100"
+  },
+  {
+   "n": 8,
+   "group": "1",
+   "case": "mast floor engages where the raw model would downgrade boosted features",
+   "pass": true,
+   "detail": "floor applied on 4 sites"
+  },
+  {
+   "n": 9,
+   "group": "1",
+   "case": "all 100 sites x towers 1/5/20/50/150 m: verdict never gets worse as the mast grows",
+   "pass": true,
+   "detail": "non-monotone: []"
+  },
+  {
+   "n": 10,
+   "group": "1",
+   "case": "score never drops as the mast grows (all 100 sites, 1 -> 150 m, tolerance 1 pt)",
+   "pass": true,
+   "detail": "largest drop +0.00 pts"
+  },
+  {
+   "n": 11,
+   "group": "1",
+   "case": "no out-of-range warning at 150 m on any of the 100 sites",
+   "pass": true,
+   "detail": "flagged []"
+  },
+  {
+   "n": 12,
+   "group": "1",
+   "case": "API: GO site Auto_SP_099 stays GO / Optimal at 150 m, with no OOD warning",
+   "pass": true,
+   "detail": "{5: ('GO / Optimal', False), 150: ('GO / Optimal', False)}"
+  },
+  {
+   "n": 13,
+   "group": "1",
+   "case": "API: best site Auto_SP_075 stays GO at every tower height",
+   "pass": true,
+   "detail": "{1: 'GO / Optimal', 5: 'GO / Optimal', 20: 'GO / Optimal', 50: 'GO / Optimal', 150: 'GO / Optimal'}"
+  },
+  {
+   "n": 14,
+   "group": "1",
+   "case": "clicked custom points: verdict at 150 m is never worse than at 5 m (60 random cap points)",
+   "pass": true,
+   "detail": "downgrades []"
+  },
+  {
+   "n": 15,
+   "group": "2",
+   "case": "Optimal slope limit is exactly 5.0 deg (backend constant)",
+   "pass": true,
+   "detail": "5.0"
+  },
+  {
+   "n": 16,
+   "group": "2",
+   "case": "Optimal slope limit is 5.0 deg in the browser engine too",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 17,
+   "group": "2",
+   "case": "no site is Optimal with slope above 5.0 deg at any tower height (backend, 100 sites x 5 towers)",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 18,
+   "group": "2",
+   "case": "synthetic: slope 5.0 deg is still eligible for Optimal; 5.3 deg never is",
+   "pass": true,
+   "detail": "5.0 deg -> Optimal; 5.3 deg -> Acceptable"
+  },
+  {
+   "n": 19,
+   "group": "2",
+   "case": "synthetic: a 150 m mast on a slope-5.3 deg site cannot make it Optimal",
+   "pass": true,
+   "detail": "Acceptable"
+  },
+  {
+   "n": 20,
+   "group": "2",
+   "case": "safe (green) sites at 5 m stay green at 150 m (backend, all 100 sites)",
+   "pass": true,
+   "detail": "lost green: []"
+  },
+  {
+   "n": 21,
+   "group": "2",
+   "case": "green count never decreases with tower height (backend: 1 -> 150 m)",
+   "pass": true,
+   "detail": "green counts {1: 3, 5: 3, 20: 3, 50: 3, 150: 3}"
+  },
+  {
+   "n": 22,
+   "group": "2",
+   "case": "hard guardrails unchanged: slope 16 deg is NO-GO even with a 150 m mast",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 23,
+   "group": "3",
+   "case": "map: green count never decreases as tower height grows (1 -> 150 m) and rises overall",
+   "pass": true,
+   "detail": "green counts [4, 4, 5, 5, 6, 7]"
+  },
+  {
+   "n": 24,
+   "group": "3",
+   "case": "map: non-NO-GO count never decreases as tower height grows",
+   "pass": true,
+   "detail": "safe-or-conditional counts [26, 28, 31, 34, 38, 39]"
+  },
+  {
+   "n": 25,
+   "group": "3",
+   "case": "map: a bigger battery never reduces the green zones (1 -> 1000 kWh)",
+   "pass": true,
+   "detail": "green counts [0, 0, 0, 2, 4, 4, 4, 4]"
+  },
+  {
+   "n": 26,
+   "group": "3",
+   "case": "map: increasing the battery does increase green zones (1 kWh -> 1000 kWh)",
+   "pass": true,
+   "detail": "0 -> 4 green"
+  },
+  {
+   "n": 27,
+   "group": "3",
+   "case": "map: a depleted battery is reported as the reason a site is NO-GO",
+   "pass": true,
+   "detail": "['terrain / sunlight / comms', 'battery depleted']"
+  },
+  {
+   "n": 28,
+   "group": "3",
+   "case": "map: a small battery can only downgrade sites, never upgrade any",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 29,
+   "group": "3",
+   "case": "map: no site is green with slope above 5.0 deg, at any tower height",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 30,
+   "group": "3",
+   "case": "map vs backend (5 m): at least 90 of 100 sites get the same verdict",
+   "pass": true,
+   "detail": "97/100 agree"
+  },
+  {
+   "n": 31,
+   "group": "3",
+   "case": "map vs backend (150 m): at least 80 of 100 agree; map never calls a backend NO-GO site green",
+   "pass": true,
+   "detail": "88/100 agree; false green []"
+  },
+  {
+   "n": 32,
+   "group": "3",
+   "case": "map vs backend: every backend-green site is green on the map (5 m and 150 m)",
+   "pass": true,
+   "detail": "[]"
+  }
+ ]
+}

@@ -12,7 +12,7 @@ true-scale 3-D mission-control dashboard.
 - **Real terrain horizons:** each point's horizon is ray-traced in 720 directions over NASA's LOLA polar terrain; validated independently against NASA's illumination maps (sunlight error 1.5 points, r = 0.99).
 - **60-day mission timeline** with live sunrise / Earthrise countdowns, solar power, and a **battery survival** check through the longest night.
 - **Suitability heatmap**, named craters (IAU), top-3 landing windows, top-5 backup sites, side-by-side comparison, CSV export.
-- **Hardware what-if:** tower height (1–150 m), panel tilt and area update power instantly.
+- **Hardware what-if:** tower height (1–150 m), panel tilt and area update power instantly; "Map for my hardware" recolours all 100 sites for your tower and battery.
 
 See [docs/JUDGES_BRIEF.md](docs/JUDGES_BRIEF.md) for the method, validation results and limits.
 
@@ -47,6 +47,7 @@ The frontend falls back to a built-in offline engine if the backend is unreachab
 python tests/test_all.py                    # 100 cases: data integrity, physics, safety rules, API, input validation, app/backend parity
 python src/app/api_selftest.py              # 107 API checks with independently recomputed expectations
 python src/analysis/test_tower_limit.py     # tower-height physics (1-150 m)
+python tests/test_verdict_rules.py          # 32 checks: mast never downgrades a verdict, 5.0 deg Optimal rule, tower/battery safe-zone map
 python src/analysis/validate_illumination.py  # comparison with NASA LOLA illumination maps
 ```
 

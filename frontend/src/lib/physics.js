@@ -32,6 +32,8 @@ export const ROUGHNESS_WEIGHT = 0.5
 export const SCORE_BUFFER = 3.0
 export const ACCEPTABLE_MIN = 45.0
 export const SAFETY_CAP = 44.0
+export const CI_HALF = 4.0 // score uncertainty (points) of the rule-based stand-in used offline; the backend uses its model ensemble
+export const OPTIMAL_MAX_SLOPE_DEG = 5.0 // GO / Optimal slope limit: fixed, independent of tower height (= predict_site.OPTIMAL_MAX_SLOPE_DEG)
 export const DEFAULT_MIN_SUN = 25 // % of time; keep equal to predict_site.DEFAULT_MIN_SUN_PCT (real, terrain-shadowed sunlight)
 export const DEFAULT_MIN_EARTH = 20 // keep equal to predict_site.DEFAULT_MIN_EARTH_PCT
 

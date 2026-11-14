@@ -483,7 +483,7 @@ def confidence(m: dict, pred: dict, sources: dict, rule_class: str, safety: str,
     score = pred["score"]
     ds = _dataset()
     om = ood_m or m  # out-of-distribution is judged on mast-free features (see assess_features)
-    ood = [f for f in FEATURES if not ds[f].min() - OOD_TOLERANCE.get(f, 0.0) <= om[f] <= ds[f].max() + OOD_TOLERANCE.get(f, 0.0)]
+    ood = out_of_range_features(om, ds)
     class_conf = float(pred["proba"].max())
     live = all(("offline" not in v) and ("fallback" not in v) for v in sources.values())
     agree = pred["ml_class"] == rule_class
@@ -714,6 +714,24 @@ SCORE_SAFETY_BUFFER = 3.0          # Acceptable needs score >= 45 + 3 = 48 ...
 HAZARD_PROB_THRESHOLD = 0.28       # classifier override: P(Hazardous) >= 0.28 -> Hazardous (argmax would need ~0.5)
 SAFETY_CAP_SCORE = ACCEPTABLE_MIN_SCORE - 1.0  # a Hazardous verdict never displays an Acceptable-looking score
 SAFETY_LAYERS = ("SLOPE_DERATING", "SCORE_BUFFER", "HAZARD_PROB")
+# GO / Optimal needs slope <= 5.0 deg. This is a fixed rule: it does not move with tower height, panel tilt or any hardware.
+OPTIMAL_MAX_SLOPE_DEG = SLOPE_IDEAL_DEG
+# Visibility above the training maximum (e.g. a tall mast sees over more crater walls) is strictly beneficial, so it is never
+# "out of range"; only values BELOW the training minimum count as unfamiliar.
+VISIBILITY_HIGHER_IS_BETTER = ("Sun_Visible_Pct", "Earth_Visible_Pct")
+CLASS_RANK = {"Hazardous": 0, "Acceptable": 1, "Optimal": 2}
+
+
+def out_of_range_features(values: dict, ds: pd.DataFrame | None = None) -> list[str]:
+    """Features outside the training range. Visibility features are one-sided (high values are never flagged)."""
+    ds = _dataset() if ds is None else ds
+    bad = []
+    for f in FEATURES:
+        tol = OOD_TOLERANCE.get(f, 0.0)
+        lo, hi = ds[f].min() - tol, ds[f].max() + tol
+        if values[f] < lo or (values[f] > hi and f not in VISIBILITY_HIGHER_IS_BETTER):
+            bad.append(f)
+    return bad
 
 # ---- Optimisation priority modes: (terrain, solar, comms) weights of the composite score ----
 PRIORITY_MODES = {"most_safety": (0.60, 0.25, 0.15), "balanced": (W_TERRAIN, W_SOLAR, W_COMMS), "most_power": (0.20, 0.60, 0.20)}
@@ -762,7 +780,9 @@ def ood_mask(df: pd.DataFrame) -> np.ndarray:
     bad = np.zeros(len(df), dtype=bool)
     for f in FEATURES:
         v, tol = df[f].to_numpy(dtype=float), OOD_TOLERANCE.get(f, 0.0)
-        bad |= (v < ds[f].min() - tol) | (v > ds[f].max() + tol)
+        bad |= v < ds[f].min() - tol
+        if f not in VISIBILITY_HIGHER_IS_BETTER:
+            bad |= v > ds[f].max() + tol
     return bad
 
 
@@ -809,6 +829,21 @@ def score_interval(pred_score: float, std_pts: float, cap: float | None) -> dict
             "plus_minus": round(half, 2), "method": method}
 
 
+def _verdict(m: dict, rough: float, max_slope: float) -> tuple[str, float]:
+    """(class, score) of the full decision pipeline (model -> guardrails -> 3-layer safety factor -> Optimal slope rule)."""
+    pred = _predict(m)
+    row = pred["X"]
+    score_g, cls_g, _ = apply_guardrails(row, [pred["score"]], [pred["ml_class"]])
+    std = float(ensemble_std(row)[0])
+    half = CI_Z * std if math.isfinite(std) else CI_Z * _cv_rmse()[0]
+    p_haz = float(pred["proba"][pred["classes"].index("Hazardous")])
+    sc, cls, _ = apply_safety_factor(row, score_g, cls_g, [p_haz], [half], max_slope, [rough])
+    cls = str(cls[0])
+    if cls == "Optimal" and m["Slope_deg"] > OPTIMAL_MAX_SLOPE_DEG:
+        cls = "Acceptable"
+    return cls, float(sc[0])
+
+
 def assess_features(lat: float, lon: float, raw: dict, sources: dict, warnings: list[str], prof: dict,
                     explain_result: bool = True, priority_mode: str = DEFAULT_PRIORITY_MODE) -> dict:
     """Score one site from already-collected physical features (no network).
@@ -830,17 +865,28 @@ def assess_features(lat: float, lon: float, raw: dict, sources: dict, warnings: 
             "slope_baseline_ew_m": None if raw.get("_dx_m") is None else round(2 * raw["_dx_m"], 1)}
     warnings = list(warnings)
 
-    pred = _predict(metrics)
+    rough = float(raw.get("Roughness_m") or 0.0)
+    # A taller mast only ever adds visibility, so it must never make the verdict worse. The model has not seen mast-boosted
+    # features, so the decision is taken on whichever of {with mast, mast-free} gives the better verdict.
+    decision_m, mast_floor = metrics, False
+    if ood_ref is not metrics and any(abs(ood_ref[f] - metrics[f]) > 1e-9 for f in FEATURES):
+        c_act, s_act = _verdict(metrics, rough, prof["max_slope_deg"])
+        c_ref, s_ref = _verdict(ood_ref, rough, prof["max_slope_deg"])
+        if (CLASS_RANK[c_ref], s_ref) > (CLASS_RANK[c_act], s_act):
+            decision_m, mast_floor = ood_ref, True
+
+    pred = _predict(decision_m)
     row = pred["X"]
     score_g, cls_g, masks = apply_guardrails(row, [pred["score"]], [pred["ml_class"]])
     triggered = [(code, msg, cap) for (code, _, _, cap, msg) in GUARDRAILS if bool(masks[code][0])]
     std = float(ensemble_std(row)[0])
     half = CI_Z * std if math.isfinite(std) else CI_Z * _cv_rmse()[0]
-    rough = float(raw.get("Roughness_m") or 0.0)
     p_haz = float(pred["proba"][pred["classes"].index("Hazardous")])
     max_slope = prof["max_slope_deg"]
     sc_s, cls_s, sfm = apply_safety_factor(row, score_g, cls_g, [p_haz], [half], max_slope, [rough])
     score_final, safety = float(sc_s[0]), str(cls_s[0])
+    if safety == "Optimal" and metrics["Slope_deg"] > OPTIMAL_MAX_SLOPE_DEG:  # fixed 5.0 deg rule, independent of any hardware
+        safety = "Acceptable"
     sf_layers = [layer for layer in SAFETY_LAYERS if bool(sfm[layer][0])]
     cap = min([c for _, _, c in triggered] + ([SAFETY_CAP_SCORE] if sf_layers else []), default=None)
     eff = effective_max_slope(max_slope)
@@ -858,7 +904,7 @@ def assess_features(lat: float, lon: float, raw: dict, sources: dict, warnings: 
         "HAZARD_PROB": (f"WARNING: P(Hazardous) = {p_haz:.2f} >= {HAZARD_PROB_THRESHOLD:g} risk-averse threshold; "
                         "class overridden to Hazardous."),
     }
-    ood_feats = [f for f in FEATURES if not _dataset()[f].min() - OOD_TOLERANCE.get(f, 0.0) <= ood_ref[f] <= _dataset()[f].max() + OOD_TOLERANCE.get(f, 0.0)]
+    ood_feats = out_of_range_features(ood_ref)
     for _, msg, _ in triggered:
         warnings.append(msg)
     for layer in sf_layers:
@@ -885,9 +931,11 @@ def assess_features(lat: float, lon: float, raw: dict, sources: dict, warnings: 
         just.append(f"Safety factor {layer}: {sf_msgs[layer]} Score capped at {SAFETY_CAP_SCORE:.0f}.")
     state = readiness(flags)
     w_t, w_s, w_c = mode_weights(priority_mode)
-    rule_mode = w_t * default_comp["terrain"] + w_s * default_comp["solar"] + w_c * default_comp["comms"]
+    dec_comp, _, _ = _components(decision_m)  # same features the model scored (differs from default_comp only if mast_floor)
+    rule_score_dec = sum(w * dec_comp[k] for k, w in (("terrain", W_TERRAIN), ("solar", W_SOLAR), ("comms", W_COMMS)))
+    rule_mode = w_t * dec_comp["terrain"] + w_s * dec_comp["solar"] + w_c * dec_comp["comms"]
     score_balanced = score_final
-    pred_mode = float(np.clip(pred["score"] + (rule_mode - rule_score), 0, 100))
+    pred_mode = float(np.clip(pred["score"] + (rule_mode - rule_score_dec), 0, 100))
     caps_all = [c for _, _, c in triggered] + ([SAFETY_CAP_SCORE] if safety == "Hazardous" else [])
     cap = min(caps_all) if caps_all else None
     score_final = min(pred_mode, cap) if cap is not None else pred_mode
@@ -944,7 +992,8 @@ def assess_features(lat: float, lon: float, raw: dict, sources: dict, warnings: 
             "score_buffer_pts": SCORE_SAFETY_BUFFER, "effective_acceptable_threshold": ACCEPTABLE_MIN_SCORE + SCORE_SAFETY_BUFFER,
             "conservative_score": round(float(score_g[0]) - half, 2),
             "hazard_probability_threshold": HAZARD_PROB_THRESHOLD, "p_hazardous": round(p_haz, 3),
-            "class_before_safety_factor": str(cls_g[0]), "score_before_safety_factor": round(float(score_g[0]), 2)},
+            "class_before_safety_factor": str(cls_g[0]), "score_before_safety_factor": round(float(score_g[0]), 2),
+            "optimal_max_slope_deg": OPTIMAL_MAX_SLOPE_DEG, "mast_floor_applied": mast_floor},
     }
     if explain_result:
         result["explanation"] = explain(metrics, pred, default_comp, (w_t, w_s, w_c))

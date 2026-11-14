@@ -12,7 +12,7 @@ const START_ISO = iso(BASELINE_START_MS)
 
 const makeScenario = (id) => {
   const s = siteById(id)
-  return { siteId: id, lat: s.lat, lon: s.lon, startISO: START_ISO, durationHours: 1440, maxSlope: 15, minSun: DEFAULT_MIN_SUN, minEarth: DEFAULT_MIN_EARTH, tower: 5, tilt: 80, area: 10 }
+  return { siteId: id, lat: s.lat, lon: s.lon, startISO: START_ISO, durationHours: 1440, maxSlope: 15, minSun: DEFAULT_MIN_SUN, minEarth: DEFAULT_MIN_EARTH, tower: 5, tilt: 80, area: 10, batteryKwh: 50, loadW: 150 }
 }
 
 function useStored(key, initial) {

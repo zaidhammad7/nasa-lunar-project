@@ -5,12 +5,11 @@
 import {
   N_SAMPLES, BASELINE_START_MS, HOUR_MS, analyticSeries, calibrate, horizonFor, towerBoostDeg, sunDiscFraction, stateCode, STATE_NAMES,
   powerWatts, nextEvent, components, compositeScore, MODES, terrainScore, effectiveMaxSlope, ROUGHNESS_WEIGHT, SCORE_BUFFER,
-  ACCEPTABLE_MIN, SAFETY_CAP, DEFAULT_MIN_SUN, DEFAULT_MIN_EARTH, SLOPE_MARGIN_DEG, DTE_CONNECTED, DTE_BLOCKED, iso, clamp, MODE_KEYS,
+  ACCEPTABLE_MIN, SAFETY_CAP, OPTIMAL_MAX_SLOPE_DEG, CI_HALF, DEFAULT_MIN_SUN, DEFAULT_MIN_EARTH, SLOPE_MARGIN_DEG, DTE_CONNECTED, DTE_BLOCKED, iso, clamp, MODE_KEYS,
 } from '../lib/physics.js'
 import { SITES, siteById, nearestPreset, rankSites, idw } from '../lib/sites.js'
 
 export { SITES }
-const CI_HALF = 4.0 // 1.96 x cross-validated RMSE (2.05 pts)
 const err422 = (msg) => Object.assign(new Error(msg), { status: 422 })
 const cache = new Map()
 
@@ -95,7 +94,7 @@ export function offlineEvaluate(body) {
   const comp = components(slope, f.sunPct, f.sunMax, f.earthPct, f.earthAvg)
   const ruleBal = compositeScore(comp, 'balanced')
   const ruleMode = compositeScore(comp, mode)
-  const mlClass = slope <= 5 && ruleBal >= 65 ? 'Optimal' : slope <= 15 && ruleBal >= ACCEPTABLE_MIN ? 'Acceptable' : 'Hazardous'
+  const mlClass = slope <= OPTIMAL_MAX_SLOPE_DEG && ruleBal >= 65 ? 'Optimal' : slope <= 15 && ruleBal >= ACCEPTABLE_MIN ? 'Acceptable' : 'Hazardous'
   const guards = []
   if (slope > 15) guards.push(['TIP_OVER', 35, 'CRITICAL: Terrain slope exceeds 15Â° lander tip-over limit.'])
   if (f.sunPct < 25) guards.push(['PSR', 30, 'CRITICAL: Sun visible less than 25% of the time (terrain shadowing) — long dark periods and extreme cold; permanently shadowed region risk.'])

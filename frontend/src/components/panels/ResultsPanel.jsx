@@ -26,7 +26,7 @@ export default function ResultsPanel({ result, calc, scn, mode, liveScore, ranki
         {!result || !calc
           ? <div className="space-y-3">{[130, 190, 110].map((h, i) => <div key={i} className="animate-pulse rounded-xl border border-line bg-panel/60" style={{ height: h }} />)}</div>
           : tab === 'telemetry'
-            ? <><DecisionBanner result={result} liveScore={liveScore} scn={scn} /><CoreMetrics result={result} calc={calc} /><CountdownCards calc={calc} /><AssessmentSummary result={result} mode={mode} /><EvidenceChecks result={result} /><SurvivalCard calc={calc} /></>
+            ? <><DecisionBanner result={result} liveScore={liveScore} scn={scn} /><CoreMetrics result={result} calc={calc} /><CountdownCards calc={calc} /><AssessmentSummary result={result} mode={mode} /><EvidenceChecks result={result} /><SurvivalCard calc={calc} scn={scn} onPatch={onPatch} /></>
             : <><SmartWindowList result={result} onJump={onJump} /><BackupSites ranking={ranking} mode={mode} scn={scn} onSelect={onSelectSite} onPatch={onPatch} /></>}
       </div>
     </div>
