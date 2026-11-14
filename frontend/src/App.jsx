@@ -17,6 +17,7 @@ import { useSolarPowerCalc } from './hooks/useSolarPowerCalc.js'
 import { useCsvExporter } from './hooks/useCsvExporter.js'
 import { HEAT_RANGE, rampColor } from './lib/heatmap.js'
 import { evaluateAllSites, countClasses } from './lib/hardwareMap.js'
+import { validateScenario } from './lib/validation.js'
 import { useTimeMeta, timeStore } from './lib/timeStore.js'
 import { warmup } from './api/lunarModelApi.js'
 import { sky } from './components/scene3d/sky.js'
@@ -84,7 +85,7 @@ export default function App() {
           <label className="flex cursor-pointer items-center gap-2" title="Re-evaluates all 100 sites with your tower height, panels and battery"><input type="checkbox" checked={hwMap} onChange={(e) => setHwMap(e.target.checked)} />Map for my hardware (tower + battery)</label>
           {hwCounts && (
             <div className="num rounded-md border border-line bg-bg/40 px-2.5 py-1.5 text-[11px] leading-relaxed text-mute" role="status">
-              <span className="text-go">{hwCounts.Optimal} green</span> · <span className="text-solar">{hwCounts.Acceptable} conditional</span> · <span className="text-nogo">{hwCounts.Hazardous} NO-GO</span>
+              <span className="text-go">{hwCounts.Optimal} green</span> · <span className="text-solar">{hwCounts.Acceptable} conditional</span> · <span className="text-nogo">{hwCounts.Hazardous} unsafe</span>
               <div>tower {scn.tower} m · battery {scn.batteryKwh} kWh · {powerLimited} site{powerLimited === 1 ? '' : 's'} lose power in the longest night</div>
             </div>
           )}
@@ -96,7 +97,7 @@ export default function App() {
           <MissionTimeForm scenario={scn} onPatch={sim.patch} />
         </div>
       </Card>
-      <Card title="Solar hardware" icon="🔆" accent="text-solar"><HardwareConfig scenario={scn} onPatch={sim.patch} calc={calc} /></Card>
+      <Card title="Solar hardware" icon="🔆" accent="text-solar"><HardwareConfig scenario={scn} onPatch={sim.patch} calc={calc} terrain={active?.terrain_topography_physics} /></Card>
       <ActionButtons onCompare={() => sim.setCompareOpen(true)} onExport={csv.exportCsv} disabled={!calc} />
     </>
   )
@@ -128,7 +129,7 @@ export default function App() {
         timeline={<TimelineBar calc={calc} playing={sim.playing} speed={sim.speed} startMs={calc?.startMs ?? 0} length={meta.length}
           onPlay={() => sim.setPlaying(!sim.playing)} onSpeed={sim.setSpeed} />}
         right={<ResultsPanel result={active} calc={calc} scn={scn} mode={mode} liveScore={sim.liveScore} ranking={sim.ranking}
-          onJump={sim.jumpToWindow} onSelectSite={sim.selectSite} onPatch={sim.patch} />}
+          onJump={sim.jumpToWindow} onSelectSite={sim.selectSite} onPatch={sim.patch} error={sim.status.error} issues={validateScenario(scn)} />}
       />
       {compareOpen && <ComparisonModal results={results} scnB={scnB} onSelectB={sim.selectSiteB} onLatLonB={sim.setLatLonB} onClose={() => sim.setCompareOpen(false)} />}
     </>

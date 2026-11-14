@@ -133,7 +133,7 @@
    "group": "B",
    "case": "safety classes are Optimal / Acceptable / Hazardous only",
    "pass": true,
-   "detail": "classes {'Acceptable', 'Hazardous', 'Optimal'}"
+   "detail": "classes {'Hazardous', 'Optimal', 'Acceptable'}"
   },
   {
    "n": 20,
@@ -483,7 +483,7 @@
    "group": "E",
    "case": "single evaluation completes in under 1 s (preset)",
    "pass": true,
-   "detail": "106 ms"
+   "detail": "41 ms"
   },
   {
    "n": 70,

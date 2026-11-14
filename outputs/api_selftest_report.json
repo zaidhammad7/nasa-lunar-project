@@ -1,17 +1,17 @@
 {
-  "generated_utc": "2026-11-14T08:28:35.135410+00:00",
+  "generated_utc": "2026-11-14T09:03:17.244067+00:00",
   "passed": 107,
   "total": 107,
   "checks": [
     {
       "test": "GET /api/health 200",
       "pass": true,
-      "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor_active': True, 'warmup_latency_ms': 6758.3, 'terrain_shadowing_ready': True, 'horizon_dem_ready': True, 'dem_error': None, 'response_cache_entries': 5, 'schema_version': '3.1', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
+      "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor_active': True, 'warmup_latency_ms': 3925.7, 'terrain_shadowing_ready': True, 'horizon_dem_ready': True, 'dem_error': None, 'response_cache_entries': 5, 'schema_version': '3.1', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
     },
     {
       "test": "health has models_ready, dem_ready, cached_demo_sites, safety_factor_active, warmup_latency_ms",
       "pass": true,
-      "detail": "warm-up 6758.3 ms, 5/5 demo sites cached"
+      "detail": "warm-up 3925.7 ms, 5/5 demo sites cached"
     },
     {
       "test": "CORS header allows any origin",
@@ -66,7 +66,7 @@
     {
       "test": "200 OK",
       "pass": true,
-      "detail": "101 ms round trip incl. 1440-row timeline JSON"
+      "detail": "70 ms round trip incl. 1440-row timeline JSON"
     },
     {
       "test": "all dashboard output blocks present",
@@ -206,7 +206,7 @@
     {
       "test": "custom (lat, lon) evaluates without hanging (<= 3.6 s Horizons budget)",
       "pass": true,
-      "detail": "0.30 s; ephemeris source: JPL Horizons (cached hourly series)"
+      "detail": "0.28 s; ephemeris source: JPL Horizons (cached hourly series)"
     },
     {
       "test": "duration_days=10 -> 240 h and timestamp_utc -> hour 54",
@@ -221,7 +221,7 @@
     {
       "test": "slow Horizons -> analytic fallback returned within budget (never hangs)",
       "pass": true,
-      "detail": "214 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
+      "detail": "209 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
     },
     {
       "test": "coordinate equal to a preset snaps to that preset",
@@ -366,7 +366,7 @@
     {
       "test": "illumination_state values are valid",
       "pass": true,
-      "detail": "{'Direct Sunlight', 'Partial Shadow', 'Total Darkness'}"
+      "detail": "{'Partial Shadow', 'Total Darkness', 'Direct Sunlight'}"
     },
     {
       "test": "dte_status values are valid",
@@ -446,12 +446,12 @@
     {
       "test": "POST /api/warmup 200 with 5 demo sites",
       "pass": true,
-      "detail": "5.9 s total (DEM open included)"
+      "detail": "15.5 s total (DEM open included)"
     },
     {
       "test": "warm-up reports cache status + eval latency per site",
       "pass": true,
-      "detail": "A:70.7ms, B:69.8ms, C:73.8ms, D:65.6ms, E:63.9ms"
+      "detail": "A:29.2ms, B:33.5ms, C:24.7ms, D:24.8ms, E:27.6ms"
     },
     {
       "test": "warm-up: all 5 demo sites served from cache",
@@ -461,7 +461,7 @@
     {
       "test": "warm-up opened the LOLA DEM (dem_ready) or reported why not",
       "pass": true,
-      "detail": "{'ready': True, 'open_ms': 4913.1, 'read_ms': 155.8, 'warm_point': {'lat_deg': -88.3448, 'lon_deg_east': 225.8806}, 'elevation_m': -2553.5, "
+      "detail": "{'ready': True, 'open_ms': 14995.4, 'read_ms': 123.6, 'warm_point': {'lat_deg': -88.3448, 'lon_deg_east': 225.8806}, 'elevation_m': -2553.5,"
     },
     {
       "test": "health after warm-up: dem_ready mirrors warm-up, 5/5 cached",
@@ -471,7 +471,7 @@
     {
       "test": "demo A first request served from the pre-computed response cache (X-Cache: HIT)",
       "pass": true,
-      "detail": "7 ms"
+      "detail": "3 ms"
     },
     {
       "test": "custom demo site E (cached terrain + series) is a cache HIT",
@@ -531,12 +531,12 @@
     {
       "test": "preset /api/evaluate incl. 1440-row timeline: median < 250 ms",
       "pass": true,
-      "detail": "median 97 ms, p95 101 ms"
+      "detail": "median 43 ms, p95 49 ms"
     },
     {
       "test": "hourly series generator < 50 ms",
       "pass": true,
-      "detail": "0.78 ms"
+      "detail": "0.48 ms"
     }
   ]
 }

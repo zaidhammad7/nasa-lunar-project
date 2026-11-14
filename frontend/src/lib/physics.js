@@ -44,7 +44,10 @@ export const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
 // ---------------------------------------------------------------- hardware / illumination / power
 export const mastDrawHeight = (h) => 0.035 + Math.min(h, 20) * 0.0045 + Math.max(0, h - 20) * 0.0006 // scene units; exaggerated, compressed above 20 m
 export const MAX_TOWER_M = 150 // keep equal to predict_site.MAX_TOWER_HEIGHT_M
+/** Horizon dip (deg) for an observer h metres above a sphere of radius R: cos(dip) = R / (R + h). Exact, no small-angle shortcut. */
 export const towerBoostDeg = (h) => Math.acos(R_MOON_M / (R_MOON_M + h)) * DEG
+/** Distance (km) from a mast of height h to the geometric horizon: tangent length sqrt((R + h)^2 - R^2) = sqrt(2 R h + h^2). */
+export const horizonDistanceKm = (h) => Math.sqrt(2 * R_MOON_M * h + h * h) / 1000
 export const sunDiscFraction = (el) => clamp((el + SUN_ANG_RADIUS) / (2 * SUN_ANG_RADIUS), 0, 1)
 export const illuminationState = (el) => (el >= SUN_ANG_RADIUS ? 'Direct Sunlight' : el <= -SUN_ANG_RADIUS ? 'Total Darkness' : 'Partial Shadow')
 export const stateCode = (el) => (el >= SUN_ANG_RADIUS ? 2 : el <= -SUN_ANG_RADIUS ? 0 : 1)

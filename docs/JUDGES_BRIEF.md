@@ -11,7 +11,7 @@ lander, and in view of Earth often enough to talk to it. Our tool scores all thr
 |---|---|---|
 | **Real NASA Moon** | 3-D Moon at true scale (Moon, Earth and Sun at real sizes and distances), textured with NASA's CGI Moon Kit (LRO LROC colour + LOLA elevation) | Planners see the real South Pole, not an artist's sphere |
 | **Click anywhere** | Any point in the cap is evaluated live at its exact coordinates | Not limited to a preset list |
-| **Landing decision** | Score 0–100, GO / CONDITIONAL / NO-GO, 95% confidence interval | One clear answer, with its uncertainty |
+| **Site Suitability Score** | Score 0–100, GO / CONDITIONAL / Unsafe for Landing (High Risk), 95% confidence interval; every metric has a plain-language explanation (hover the ⓘ) | One clear answer, with its uncertainty |
 | **Evidence card** | Every safety check, with the measured value next to its limit | Judges and planners can audit *why* — no black box |
 | **Suitability heatmap** | Whole cap coloured by score (green = better), updates with the priority mode | The best regions are visible at a glance |
 | **Named craters** | Shackleton, de Gerlache, Haworth, Faustini, Nobile, Malapert… (IAU coordinates) | Several Artemis III candidate regions are named after these features |
@@ -41,6 +41,7 @@ lander, and in view of Earth often enough to talk to it. Our tool scores all thr
 ## Why you can trust the numbers
 - **100-case data and system suite** passes: dataset integrity, derived-file consistency, physics, safety rules, API, input validation, and browser-vs-backend parity.
 - **107 automated API checks** pass; each recomputes the expected value independently (including terrain shadowing).
+- **102 edge-case checks** pass: boundary limits (tower 1–150 m, coordinates, tilt, area), malformed and hostile requests (always a clean 422, never a crash), identical telemetry in all three priority modes, exact horizon geometry, and front-end error handling.
 - **32 verdict-rule checks** pass: a taller mast never downgrades a verdict or triggers an out-of-range warning, GO / Optimal needs slope ≤ 5.0° at every tower height, and battery / tower effects on the map behave monotonically. (Switching the fixes off makes 6 of them fail.)
 - **23 tower-range checks** pass: the horizon gain matches the exact geometry (acos(R/(R+h))), sunlight never decreases with height, and the verdict is never degraded by a taller mast.
 - The **offline engine** in the browser mirrors the backend, so the app works without internet.
@@ -69,6 +70,18 @@ Shackleton's floor reads 0% sunlight and NO-GO, even with a 150 m mast. NASA's b
 
 **Seasons are now captured:** our window (Nov 2026 – Jan 2027) is South-Pole summer (the Sun ~1.3° south of the lunar
 equator), so sites average 29% sunlight in the window versus NASA's 21% four-year average. A single fixed horizon could not show this.
+
+## NASA / JPL benchmark (`python src/analysis/nasa_benchmark.py`, also served at `/api/benchmark`)
+23 checks against NASA and JPL reference data, each with a stated threshold: **22 pass, 0 fail, 1 informational**.
+
+| Reference | What is checked | Result |
+|---|---|---|
+| NASA LOLA polar elevation model | Site elevation (100 sites) | mean error **3.6 m**, r = 0.99999 |
+| NASA LOLA illumination maps | Sunlight / Earth visibility from terrain only | error **1.5 / 4.3 points**, r = 0.99 / 0.98 |
+| JPL Horizons (308 real series) | Sun / Earth elevation of the analytic model | RMSE **0.07° / 0.48°** |
+| NASA lunar fact sheet, SORCE | Radius, distance, month lengths, solar constant, Sun size | all equal |
+| Geometry and physics | Mast horizon vs independent tangent geometry; power ≤ irradiance × efficiency × area; mode weights sum to 1 | all hold |
+| NASA LOLA polar elevation model | Terrain **slope** (reported, not forced to pass) | moderate agreement (r = 0.51): slope depends on the measuring scale, so it is the least certain input |
 
 ## Honest limits
 - The hardware map uses the same rules as the offline engine (rule-based stand-in): it agrees with the full model on 97 of 100 sites at a 5 m mast and 88 of 100 at 150 m, never calls a NO-GO site green, and every full-model green site is green on the map.

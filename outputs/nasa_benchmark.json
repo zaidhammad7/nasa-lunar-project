@@ -1,0 +1,250 @@
+{
+ "summary": {
+  "PASS": 22,
+  "FAIL": 0,
+  "INFO": 1,
+  "SKIP": 0,
+  "total": 23,
+  "strict_checks_passed": true
+ },
+ "thresholds": {
+  "elevation_mae_m": 15.0,
+  "elevation_r": 0.9999,
+  "sun_mae_pts": 3.0,
+  "sun_r": 0.95,
+  "earth_mae_pts": 7.0,
+  "earth_r": 0.95,
+  "horizons_sun_rmse_deg": 0.15,
+  "horizons_earth_rmse_deg": 0.8,
+  "dip_formula_deg": 1e-09,
+  "weights_sum": 1e-12,
+  "mode_score_diff": 1e-09
+ },
+ "checks": [
+  {
+   "group": "terrain",
+   "name": "Site elevation: mean absolute error vs NASA LOLA DEM (100 sites)",
+   "status": "PASS",
+   "value": 3.56,
+   "reference": "LOLA LDEM_75S_120M",
+   "threshold": "< 15.0 m",
+   "detail": "max error 18.0 m"
+  },
+  {
+   "group": "terrain",
+   "name": "Site elevation: correlation vs NASA LOLA DEM",
+   "status": "PASS",
+   "value": 0.999996,
+   "reference": "LOLA LDEM_75S_120M",
+   "threshold": "> 0.9999",
+   "detail": ""
+  },
+  {
+   "group": "terrain",
+   "name": "Site slope: dataset vs slope from the 120 m polar DEM (Horn, 3x3)",
+   "status": "INFO",
+   "value": {
+    "mean_dataset_deg": 12.65,
+    "mean_polar_dem_deg": 8.62,
+    "pearson_r": 0.511
+   },
+   "reference": "LOLA LDEM_75S_120M",
+   "threshold": "",
+   "detail": "Slope is scale-dependent: the dataset slopes come from the finer global grid (about 10 m east-west near the pole) and are steeper than a 120 m grid shows. Correlation is moderate, so slope is the least certain input; lander-scale hazards need metre-scale maps."
+  },
+  {
+   "group": "illumination",
+   "name": "Sunlight: mean absolute error vs NASA LOLA map (100 sites)",
+   "status": "PASS",
+   "value": 1.51,
+   "reference": "AVGVISIB_85S_060M",
+   "threshold": "< 3.0 points",
+   "detail": "horizons ray-traced from terrain only; NASA illumination map not used as input"
+  },
+  {
+   "group": "illumination",
+   "name": "Sunlight: correlation vs NASA LOLA map",
+   "status": "PASS",
+   "value": 0.9891,
+   "reference": "AVGVISIB_85S_060M",
+   "threshold": "> 0.95",
+   "detail": ""
+  },
+  {
+   "group": "illumination",
+   "name": "Earth visibility: mean absolute error vs NASA LOLA map (100 sites)",
+   "status": "PASS",
+   "value": 4.31,
+   "reference": "AVGVISIB_85S_060M",
+   "threshold": "< 7.0 points",
+   "detail": "horizons ray-traced from terrain only; NASA illumination map not used as input"
+  },
+  {
+   "group": "illumination",
+   "name": "Earth visibility: correlation vs NASA LOLA map",
+   "status": "PASS",
+   "value": 0.9845,
+   "reference": "AVGVISIB_85S_060M",
+   "threshold": "> 0.95",
+   "detail": ""
+  },
+  {
+   "group": "illumination",
+   "name": "Known permanently shadowed craters read ~0% sunlight in the NASA map",
+   "status": "PASS",
+   "value": {
+    "Shackleton": 0.0,
+    "Haworth": 0.0,
+    "Faustini": 0.0
+   },
+   "reference": "AVGVISIB_85S_060M",
+   "threshold": "< 1 %",
+   "detail": "confirms the map is being read with the right orientation"
+  },
+  {
+   "group": "ephemeris",
+   "name": "Sun elevation: RMSE of the analytic model vs real JPL Horizons (311 sites x 1441 h)",
+   "status": "PASS",
+   "value": 0.0666,
+   "reference": "JPL Horizons (body 10 from 301)",
+   "threshold": "< 0.15 deg",
+   "detail": "worst site 0.088 deg"
+  },
+  {
+   "group": "ephemeris",
+   "name": "Earth elevation: RMSE of the analytic model vs real JPL Horizons (311 sites x 1441 h)",
+   "status": "PASS",
+   "value": 0.4802,
+   "reference": "JPL Horizons (body 399 from 301)",
+   "threshold": "< 0.8 deg",
+   "detail": "worst site 0.579 deg"
+  },
+  {
+   "group": "constants",
+   "name": "Moon mean radius (m)",
+   "status": "PASS",
+   "value": 1737400.0,
+   "reference": "NASA fact sheet / SORCE: 1737400.0",
+   "threshold": "within 0.0",
+   "detail": ""
+  },
+  {
+   "group": "constants",
+   "name": "Total solar irradiance (W/m2)",
+   "status": "PASS",
+   "value": 1361.0,
+   "reference": "NASA fact sheet / SORCE: 1361.0",
+   "threshold": "within 0.5",
+   "detail": ""
+  },
+  {
+   "group": "constants",
+   "name": "Earth-Moon mean distance (km)",
+   "status": "PASS",
+   "value": 384400.0,
+   "reference": "NASA fact sheet / SORCE: 384400.0",
+   "threshold": "within 0.0",
+   "detail": ""
+  },
+  {
+   "group": "constants",
+   "name": "Synodic month (days)",
+   "status": "PASS",
+   "value": 29.530589000000003,
+   "reference": "NASA fact sheet / SORCE: 29.530589",
+   "threshold": "within 1e-06",
+   "detail": ""
+  },
+  {
+   "group": "constants",
+   "name": "Draconic month (days)",
+   "status": "PASS",
+   "value": 27.212221,
+   "reference": "NASA fact sheet / SORCE: 27.212221",
+   "threshold": "within 1e-06",
+   "detail": ""
+  },
+  {
+   "group": "constants",
+   "name": "Anomalistic month (days)",
+   "status": "PASS",
+   "value": 27.554549999999995,
+   "reference": "NASA fact sheet / SORCE: 27.55455",
+   "threshold": "within 1e-06",
+   "detail": ""
+  },
+  {
+   "group": "constants",
+   "name": "Sun angular radius from the Moon (deg)",
+   "status": "PASS",
+   "value": 0.265,
+   "reference": "NASA fact sheet / SORCE: 0.265",
+   "threshold": "within 0.01",
+   "detail": ""
+  },
+  {
+   "group": "geometry",
+   "name": "Mast horizon dip equals the independent tangent-line geometry (1-150 m)",
+   "status": "PASS",
+   "value": "1.00e-12 deg",
+   "reference": "sqrt(2Rh + h^2) / R",
+   "threshold": "< 1e-09 deg",
+   "detail": ""
+  },
+  {
+   "group": "geometry",
+   "name": "Dip at 150 m agrees with the small-angle approximation sqrt(2h/R) within 1%",
+   "status": "PASS",
+   "value": 0.75287,
+   "reference": "sqrt(2h/R) = 0.75289 deg",
+   "threshold": "< 1 %",
+   "detail": ""
+  },
+  {
+   "group": "scoring",
+   "name": "Priority-mode weights (terrain, solar, comms) sum to 1 in every mode",
+   "status": "PASS",
+   "value": {
+    "most_safety": 1.0,
+    "balanced": 1.0,
+    "most_power": 1.0
+   },
+   "reference": "definition",
+   "threshold": "= 1",
+   "detail": ""
+  },
+  {
+   "group": "scoring",
+   "name": "Mode scores equal weighted terrain / solar / comms components (100 sites x 3 modes)",
+   "status": "PASS",
+   "value": "0.0e+00",
+   "reference": "definition",
+   "threshold": "< 1e-09",
+   "detail": ""
+  },
+  {
+   "group": "scoring",
+   "name": "All 100 suitability scores lie within 0-100",
+   "status": "PASS",
+   "value": [
+    0.0,
+    86.86
+   ],
+   "reference": "definition",
+   "threshold": "0-100",
+   "detail": ""
+  },
+  {
+   "group": "solar",
+   "name": "Power never exceeds S x efficiency x area, and energy = sum of hourly power (100 sites, 150 m mast)",
+   "status": "PASS",
+   "value": {
+    "sites_violating": 0,
+    "peak_fraction_of_bound": 1.0
+   },
+   "reference": "energy conservation",
+   "threshold": "0 violations",
+   "detail": ""
+  }
+ ]
+}

@@ -1,6 +1,8 @@
 import { Card, Badge } from '../ui/primitives.jsx'
 import { useTimeHours } from '../../lib/timeStore.js'
 import { fmt, fmtW, cx } from '../../lib/format.js'
+import InfoTip from '../ui/InfoTip.jsx'
+import { GLOSSARY } from '../../lib/glossary.js'
 
 const STATE_STYLE = {
   'Direct Sunlight': 'border-solar/60 bg-solar/15 text-solar',
@@ -28,16 +30,16 @@ export default function CoreMetrics({ result, calc }) {
     <Card title="Core metrics">
       <div className="grid grid-cols-2 gap-2">
         <Tile label="Terrain">
-          <div className={cx('num text-xl font-bold', t.Slope_deg > 13.5 ? 'text-nogo' : 'text-ink')}>{fmt(t.Slope_deg, 2)}<span className="text-xs font-normal text-mute">° slope</span></div>
+          <div className={cx('num text-xl font-bold', t.Slope_deg > 13.5 ? 'text-nogo' : 'text-ink')}>{fmt(t.Slope_deg, 2)}<span className="text-xs font-normal text-mute">° slope</span> <InfoTip text={GLOSSARY.slope} /></div>
           <Row k="Elevation" v={`${fmt(t.Elevation_m, 0)} m`} />
         </Tile>
         <Tile label="Sunlight" badge={<Badge className={STATE_STYLE[now.state]}>{now.state.replace('Direct ', '').replace('Total ', '')}</Badge>}>
           <div className="num text-xl font-bold text-solar">{fmt(calc.stats.sunVisPct, 1)}<span className="text-xs font-normal text-mute">% visible</span></div>
-          <Row k="Sun angle" v={`${now.sunEl >= 0 ? '+' : ''}${fmt(now.sunEl, 2)}°`} />
+          <Row k={<>Sun angle <InfoTip text={GLOSSARY.sunElevation} /></>} v={`${now.sunEl >= 0 ? '+' : ''}${fmt(now.sunEl, 2)}°`} />
         </Tile>
         <Tile label="Earth comms" badge={<Badge className={now.connected ? 'border-earth/60 bg-earth/15 text-earth' : 'border-nogo/60 bg-nogo/15 text-nogo'}>{now.connected ? 'Connected' : 'Blocked'}</Badge>}>
           <div className="num text-xl font-bold text-earth">{fmt(calc.stats.earthVisPct, 1)}<span className="text-xs font-normal text-mute">% visible</span></div>
-          <Row k="Earth angle" v={`${now.earthEl >= 0 ? '+' : ''}${fmt(now.earthEl, 2)}°`} />
+          <Row k={<>Earth angle <InfoTip text={GLOSSARY.earthElevation} /></>} v={`${now.earthEl >= 0 ? '+' : ''}${fmt(now.earthEl, 2)}°`} />
         </Tile>
         <Tile label="Solar power">
           <div className="num text-xl font-bold text-solar">{fmtW(now.power)}</div>

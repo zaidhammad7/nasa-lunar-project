@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { SITES, siteById } from '../../lib/sites.js'
 import { Label } from '../ui/primitives.jsx'
 import { cx } from '../../lib/format.js'
+import { checkRange } from '../../lib/validation.js'
 
 const fmtCoord = (v) => (Number.isFinite(v) ? String(Number(v.toFixed(4))) : '')
 
@@ -14,7 +15,8 @@ export default function SiteSelector({ scenario, onSelect, onLatLon, showPresets
   const [lon, setLon] = useState(fmtCoord(scenario.lon))
   useEffect(() => { setLat(fmtCoord(scenario.lat)); setLon(fmtCoord(scenario.lon)) }, [scenario.lat, scenario.lon])
   const la = parseFloat(lat), lo = parseFloat(lon)
-  const badLat = lat !== '' && !(la >= -90 && la <= -85), badLon = lon !== '' && !(lo >= 0 && lo <= 360)
+  const latIssue = lat === '' ? null : checkRange('lat', lat), lonIssue = lon === '' ? null : checkRange('lon', lon)
+  const badLat = !!latIssue, badLon = !!lonIssue
   const dirty = Number.isFinite(la) && Number.isFinite(lo) && (la !== Number(scenario.lat.toFixed(4)) || lo !== Number(scenario.lon.toFixed(4)))
   const apply = () => { if (!badLat && !badLon && Number.isFinite(la) && Number.isFinite(lo)) onLatLon(la, lo) }
   const preset = scenario.siteId ? siteById(scenario.siteId) : null
@@ -40,6 +42,7 @@ export default function SiteSelector({ scenario, onSelect, onLatLon, showPresets
           <input type="number" step="0.0001" value={lon} onChange={(e) => setLon(e.target.value)} onKeyDown={key} aria-invalid={badLon} className={cx('num w-full', badLon && '!border-nogo')} />
         </label>
       </div>
+      {(latIssue || lonIssue) && <p role="alert" className="text-[10.5px] leading-snug text-nogo">{[latIssue, lonIssue].filter(Boolean).map((i) => i.message).join(' ')}</p>}
       <div className="flex items-center justify-between gap-2">
         <p className="min-w-0 truncate text-[10.5px] text-mute">{preset ? <>Preset <span className="num text-ink">{preset.id}</span></> : <span className="text-earth">Custom Selected Point</span>} · or click the Moon</p>
         <button onClick={apply} disabled={!dirty || badLat || badLon}

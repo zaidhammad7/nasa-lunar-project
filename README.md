@@ -8,11 +8,11 @@ true-scale 3-D mission-control dashboard.
 
 ## What it does
 - **Click anywhere on the 3-D Moon** (NASA LRO imagery, true-scale Earth and Sun) to evaluate that exact point.
-- **GO / CONDITIONAL / NO-GO decision** with a 0–100 score, 95% confidence interval and an **Evidence** card listing every safety check against its limit.
+- **Site Suitability Score** (0–100) with a GO / CONDITIONAL / Unsafe for Landing (High Risk) verdict, 95% confidence interval and an **Evidence** card listing every safety check against its limit.
 - **Real terrain horizons:** each point's horizon is ray-traced in 720 directions over NASA's LOLA polar terrain; validated independently against NASA's illumination maps (sunlight error 1.5 points, r = 0.99).
 - **60-day mission timeline** with live sunrise / Earthrise countdowns, solar power, and a **battery survival** check through the longest night.
 - **Suitability heatmap**, named craters (IAU), top-3 landing windows, top-5 backup sites, side-by-side comparison, CSV export.
-- **Hardware what-if:** tower height (1–150 m), panel tilt and area update power instantly; "Map for my hardware" recolours all 100 sites for your tower and battery.
+- **Hardware what-if:** tower height (1–150 m) instantly re-computes the exact horizon (dip and line-of-sight distance) and shows its effect on sunlight, Earth contact and slope; panel tilt and area update power; "Map for my hardware" recolours all 100 sites for your tower and battery.
 
 See [docs/JUDGES_BRIEF.md](docs/JUDGES_BRIEF.md) for the method, validation results and limits.
 
@@ -48,6 +48,8 @@ python tests/test_all.py                    # 100 cases: data integrity, physics
 python src/app/api_selftest.py              # 107 API checks with independently recomputed expectations
 python src/analysis/test_tower_limit.py     # tower-height physics (1-150 m)
 python tests/test_verdict_rules.py          # 32 checks: mast never downgrades a verdict, 5.0 deg Optimal rule, tower/battery safe-zone map
+python tests/test_edge_cases.py             # 102 checks: boundary limits, malformed input, mode consistency, tower propagation, front-end error handling
+python src/analysis/nasa_benchmark.py       # 23 checks against NASA / JPL reference data (terrain, illumination, ephemeris, constants, physics)
 python src/analysis/validate_illumination.py  # comparison with NASA LOLA illumination maps
 ```
 

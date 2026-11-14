@@ -25,6 +25,7 @@ Start-up warm-up (lifespan)
 from __future__ import annotations
 
 import json
+import math
 import os
 import sys
 import threading
@@ -35,7 +36,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field, model_validator
@@ -165,7 +167,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 class ScenarioIn(BaseModel):
     """One scenario: location, mission window, vehicle filters, hardware and timeline position."""
     # 1. Location: a preset site_id, or custom lat/lon
-    site_id: str | None = Field(None, examples=["Auto_SP_099"])
+    site_id: str | None = Field(None, min_length=1, max_length=40, pattern=r"^[A-Za-z0-9_\-]+$", examples=["Auto_SP_099"])
     lat: float | None = Field(None, ge=-90.0, le=-85.0, description="deg, -90..-85")
     lon: float | None = Field(None, ge=0.0, le=360.0, description="deg east, 0..360")
     # 2. Mission window
@@ -208,6 +210,37 @@ class CompareIn(BaseModel):
     scenario_a: ScenarioIn
     scenario_b: ScenarioIn
     include_timeline: bool = False
+
+
+FIELD_HINTS = {  # plain-language limits shown next to a rejected field
+    "site_id": "site id must be 1-40 letters, digits, _ or - (for example Auto_SP_099)",
+    "lat": "latitude must be between -90 and -85 deg", "lon": "longitude must be between 0 and 360 deg east",
+    "tower_height_m": f"tower height must be between 1 and {ps.MAX_TOWER_HEIGHT_M:g} m", "panel_tilt_deg": "panel tilt must be between 0 and 90 deg",
+    "panel_area_m2": "panel area must be between 1 and 50 m2", "duration_hours": "duration must be between 1 and 1441 hours",
+    "duration_days": "duration must be above 0 and at most 60 days", "max_slope_deg": "maximum slope must be between 0 and 15 deg",
+    "min_sun_pct": "minimum sunlight must be between 0 and 100 %", "min_earth_pct": "minimum Earth visibility must be between 0 and 100 %",
+}
+
+
+def _safe_detail(e: dict) -> dict:
+    """One pydantic error as plain JSON. The offending input is echoed as text: NaN / Infinity are not valid JSON and would
+    otherwise make the error response itself fail (a 500 instead of a clean 422)."""
+    inp = e.get("input")
+    ok = inp is None or isinstance(inp, (str, bool, int)) or (isinstance(inp, float) and math.isfinite(inp))
+    return {"type": e.get("type"), "loc": [str(x) for x in e.get("loc", ())], "msg": e.get("msg"),
+            "input": inp if ok else repr(inp)[:80]}
+
+
+@app.exception_handler(RequestValidationError)
+async def _validation_error(_: Request, exc: RequestValidationError) -> JSONResponse:
+    """Invalid or out-of-range input -> HTTP 422 with a clear per-field list (field, plain message) instead of a crash."""
+    errors = []
+    for e in exc.errors():
+        field = ".".join(str(x) for x in e.get("loc", ())[1:]) or str(e.get("loc", ("request",))[-1])
+        leaf = field.split(".")[-1]
+        errors.append({"field": field, "message": FIELD_HINTS.get(leaf, e.get("msg", "invalid value")), "reason": e.get("msg"), "type": e.get("type")})
+    return JSONResponse(status_code=422, content={"detail": [_safe_detail(e) for e in exc.errors()], "errors": errors,
+                                                  "summary": "; ".join(f"{x['field']}: {x['message']}" for x in errors) or "invalid request"})
 
 
 def _ok(payload) -> JSONResponse:
@@ -294,6 +327,15 @@ def export_csv(body: ScenarioIn):
         raise _bad(exc)
     return StreamingResponse(iter([text]), media_type="text/csv",
                              headers={"Content-Disposition": 'attachment; filename="mission_telemetry_export.csv"'})
+
+
+@app.get("/api/benchmark")
+def benchmark():
+    """Latest NASA / JPL benchmark report (outputs/nasa_benchmark.json): every check with reference, value, threshold, status."""
+    path = OUTPUTS_DIR / "nasa_benchmark.json"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="nasa_benchmark.json not found; run src/analysis/nasa_benchmark.py")
+    return JSONResponse(json.loads(path.read_text(encoding="utf-8")))
 
 
 @app.get("/api/stress-test")

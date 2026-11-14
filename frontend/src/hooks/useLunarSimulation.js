@@ -6,6 +6,7 @@ import { evaluate, compare, buildBody, checkHealth, onBackendStatus, backendStat
 import { offlineEvaluate } from '../api/mockSimulationData.js'
 import { siteById, rankSites } from '../lib/sites.js'
 import { timeStore } from '../lib/timeStore.js'
+import { checkTelemetry } from '../lib/validation.js'
 import { BASELINE_START_MS, HOUR_MS, iso, modeAdjusted, DEFAULT_MIN_SUN, DEFAULT_MIN_EARTH } from '../lib/physics.js'
 
 const START_ISO = iso(BASELINE_START_MS)
@@ -13,6 +14,12 @@ const START_ISO = iso(BASELINE_START_MS)
 const makeScenario = (id) => {
   const s = siteById(id)
   return { siteId: id, lat: s.lat, lon: s.lon, startISO: START_ISO, durationHours: 1440, maxSlope: 15, minSun: DEFAULT_MIN_SUN, minEarth: DEFAULT_MIN_EARTH, tower: 5, tilt: 80, area: 10, batteryKwh: 50, loadW: 150 }
+}
+
+/** Throw a readable error if a backend result is missing fields the dashboard needs (so it can never reach the panels). */
+function assertComplete(result, who) {
+  const t = checkTelemetry(result)
+  if (!t.ok) throw Object.assign(new Error(`Incomplete telemetry for ${who}: missing ${t.missing.join(', ')}`), { kind: 'incomplete', missing: t.missing })
 }
 
 function useStored(key, initial) {
@@ -62,15 +69,18 @@ export function useLunarSimulation() {
         if (compareOpen) {
           const r = await compare(bodyA, buildBody(scnB, mode), ctl.signal)
           const c = r.side_by_side_comparison
-          setResults({ A: { ...c.scenario_a, _source: r._source }, B: { ...c.scenario_b, _source: r._source }, deltas: c.deltas })
+          const a = { ...c.scenario_a, _source: r._source }, b = { ...c.scenario_b, _source: r._source }
+          assertComplete(a, 'Site A'); assertComplete(b, 'Site B')
+          setResults({ A: a, B: b, deltas: c.deltas })
         } else {
           const r = await evaluate(bodyA, ctl.signal)
+          assertComplete(r, 'This site') // incomplete data is never stored: the last valid result stays on screen and the problem is explained
           setResults({ A: r, B: null, deltas: null })
         }
         setStatus({ loading: false, error: null })
       } catch (e) {
         if (ctl.signal.aborted) return
-        setStatus({ loading: false, error: e.message })
+        setStatus({ loading: false, error: e.message, kind: e.kind, missing: e.missing })
       }
     }, 200)
     return () => { clearTimeout(timer); ctl.abort() }

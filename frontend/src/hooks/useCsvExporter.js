@@ -2,6 +2,7 @@
 // matches what is on screen, including the current tower / tilt / area. Field,Value rows only (site, coordinates, mode,
 // score, status, terrain, hardware, totals) - no hourly table.
 import { useCallback, useState } from 'react'
+import { displayStatus } from '../lib/format.js'
 
 const esc = (v) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s }
 const row = (cells) => cells.map(esc).join(',')
@@ -14,7 +15,7 @@ export function buildMissionCsv({ result, calc, scn, mode, liveScore }) {
   const summary = [
     ['MISSION SUMMARY', ''],
     ['Site_ID', site], ['Latitude_deg', scn.lat.toFixed(4)], ['Longitude_deg_E', scn.lon.toFixed(4)], ['Priority_Mode', mode],
-    ['Suitability_Score', Number(score).toFixed(2)], ['Safety_Status', d.mission_status_label],
+    ['Suitability_Score', Number(score).toFixed(2)], ['Safety_Status', displayStatus(d.mission_status_label)],
     ['Model_Confidence_Pct', d.model_confidence_pct == null ? 'n/a (offline estimate)' : d.model_confidence_pct],
     ['Slope_deg', t.Slope_deg], ['Elevation_m', t.Elevation_m], ['Roughness_m', t.Roughness_m ?? ''],
     ['Tower_Height_m', scn.tower], ['Panel_Tilt_deg', scn.tilt], ['Panel_Area_m2', scn.area],

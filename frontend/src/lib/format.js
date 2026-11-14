@@ -14,8 +14,10 @@ export function fmtDHM(hours) {
 export const STATUS = {
   Optimal: { label: 'GO / Optimal', color: 'text-go', bg: 'bg-go/15', border: 'border-go/50', hex: '#10B981' },
   Acceptable: { label: 'CONDITIONAL / Acceptable', color: 'text-solar', bg: 'bg-solar/15', border: 'border-solar/50', hex: '#F59E0B' },
-  Hazardous: { label: 'NO-GO / Hazardous', color: 'text-nogo', bg: 'bg-nogo/15', border: 'border-nogo/50', hex: '#F43F5E' },
+  Hazardous: { label: 'Unsafe for Landing (High Risk)', color: 'text-nogo', bg: 'bg-nogo/15', border: 'border-nogo/50', hex: '#F43F5E' },
 }
+/** Backend status text -> the wording shown to users ('NO-GO / Hazardous' is the stable API value; the interface says it plainly). */
+export const displayStatus = (label) => (label && /NO-GO/i.test(label) ? STATUS.Hazardous.label : label)
 export const classHex = (c) => (STATUS[c] || STATUS.Hazardous).hex
 
 export const cx = (...a) => a.filter(Boolean).join(' ')

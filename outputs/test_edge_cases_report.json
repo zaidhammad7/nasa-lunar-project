@@ -1,0 +1,720 @@
+{
+ "passed": 102,
+ "total": 102,
+ "cases": [
+  {
+   "n": 1,
+   "group": "A",
+   "case": "accepts tower_height_m = 1",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 2,
+   "group": "A",
+   "case": "accepts tower_height_m = 150",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 3,
+   "group": "A",
+   "case": "accepts tower_height_m = 75.5",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 4,
+   "group": "A",
+   "case": "accepts panel_tilt_deg = 0",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 5,
+   "group": "A",
+   "case": "accepts panel_tilt_deg = 90",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 6,
+   "group": "A",
+   "case": "accepts panel_area_m2 = 1",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 7,
+   "group": "A",
+   "case": "accepts panel_area_m2 = 50",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 8,
+   "group": "A",
+   "case": "accepts duration_hours = 1",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 9,
+   "group": "A",
+   "case": "accepts duration_hours = 1440",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 10,
+   "group": "A",
+   "case": "accepts max_slope_deg = 0",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 11,
+   "group": "A",
+   "case": "accepts max_slope_deg = 15",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 12,
+   "group": "A",
+   "case": "accepts min_sun_pct = 0",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 13,
+   "group": "A",
+   "case": "accepts min_sun_pct = 100",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 14,
+   "group": "A",
+   "case": "accepts min_earth_pct = 0",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 15,
+   "group": "A",
+   "case": "accepts min_earth_pct = 100",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 16,
+   "group": "A",
+   "case": "accepts duration_days = 60",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 17,
+   "group": "A",
+   "case": "rejects tower_height_m = 0.99 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"greater_than_equal\",\"loc\":[\"body\",\"tower_height_m\"],\"msg\":\"Input should be great"
+  },
+  {
+   "n": 18,
+   "group": "A",
+   "case": "rejects tower_height_m = 150.01 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"less_than_equal\",\"loc\":[\"body\",\"tower_height_m\"],\"msg\":\"Input should be less tha"
+  },
+  {
+   "n": 19,
+   "group": "A",
+   "case": "rejects tower_height_m = 0 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"greater_than_equal\",\"loc\":[\"body\",\"tower_height_m\"],\"msg\":\"Input should be great"
+  },
+  {
+   "n": 20,
+   "group": "A",
+   "case": "rejects tower_height_m = -10 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"greater_than_equal\",\"loc\":[\"body\",\"tower_height_m\"],\"msg\":\"Input should be great"
+  },
+  {
+   "n": 21,
+   "group": "A",
+   "case": "rejects tower_height_m = 1000000000.0 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"less_than_equal\",\"loc\":[\"body\",\"tower_height_m\"],\"msg\":\"Input should be less tha"
+  },
+  {
+   "n": 22,
+   "group": "A",
+   "case": "rejects panel_tilt_deg = -0.01 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"greater_than_equal\",\"loc\":[\"body\",\"panel_tilt_deg\"],\"msg\":\"Input should be great"
+  },
+  {
+   "n": 23,
+   "group": "A",
+   "case": "rejects panel_tilt_deg = 90.01 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"less_than_equal\",\"loc\":[\"body\",\"panel_tilt_deg\"],\"msg\":\"Input should be less tha"
+  },
+  {
+   "n": 24,
+   "group": "A",
+   "case": "rejects panel_area_m2 = 0.99 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"greater_than_equal\",\"loc\":[\"body\",\"panel_area_m2\"],\"msg\":\"Input should be greate"
+  },
+  {
+   "n": 25,
+   "group": "A",
+   "case": "rejects panel_area_m2 = 50.01 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"less_than_equal\",\"loc\":[\"body\",\"panel_area_m2\"],\"msg\":\"Input should be less than"
+  },
+  {
+   "n": 26,
+   "group": "A",
+   "case": "rejects duration_hours = 0 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"greater_than_equal\",\"loc\":[\"body\",\"duration_hours\"],\"msg\":\"Input should be great"
+  },
+  {
+   "n": 27,
+   "group": "A",
+   "case": "rejects duration_hours = 1442 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"less_than_equal\",\"loc\":[\"body\",\"duration_hours\"],\"msg\":\"Input should be less tha"
+  },
+  {
+   "n": 28,
+   "group": "A",
+   "case": "rejects duration_days = 0 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"greater_than\",\"loc\":[\"body\",\"duration_days\"],\"msg\":\"Input should be greater than"
+  },
+  {
+   "n": 29,
+   "group": "A",
+   "case": "rejects duration_days = 60.2 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"less_than_equal\",\"loc\":[\"body\",\"duration_days\"],\"msg\":\"Input should be less than"
+  },
+  {
+   "n": 30,
+   "group": "A",
+   "case": "rejects max_slope_deg = 15.01 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"less_than_equal\",\"loc\":[\"body\",\"max_slope_deg\"],\"msg\":\"Input should be less than"
+  },
+  {
+   "n": 31,
+   "group": "A",
+   "case": "rejects max_slope_deg = -1 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"greater_than_equal\",\"loc\":[\"body\",\"max_slope_deg\"],\"msg\":\"Input should be greate"
+  },
+  {
+   "n": 32,
+   "group": "A",
+   "case": "rejects min_sun_pct = 100.1 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"less_than_equal\",\"loc\":[\"body\",\"min_sun_pct\"],\"msg\":\"Input should be less than o"
+  },
+  {
+   "n": 33,
+   "group": "A",
+   "case": "rejects min_earth_pct = -0.1 with HTTP 422 naming the field",
+   "pass": true,
+   "detail": "HTTP 422: {\"detail\":[{\"type\":\"greater_than_equal\",\"loc\":[\"body\",\"min_earth_pct\"],\"msg\":\"Input should be greate"
+  },
+  {
+   "n": 34,
+   "group": "A",
+   "case": "coordinates (-90, 0) accepted",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 35,
+   "group": "A",
+   "case": "coordinates (-85, 360) accepted",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 36,
+   "group": "A",
+   "case": "coordinates (-87.5, 0) accepted",
+   "pass": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "n": 37,
+   "group": "A",
+   "case": "coordinates (-84.999, 10) rejected",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 38,
+   "group": "A",
+   "case": "coordinates (-90.001, 10) rejected",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 39,
+   "group": "A",
+   "case": "coordinates (-87, -0.001) rejected",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 40,
+   "group": "A",
+   "case": "coordinates (-87, 360.001) rejected",
+   "pass": true,
+   "detail": "HTTP 422"
+  },
+  {
+   "n": 41,
+   "group": "A",
+   "case": "window beyond the end of the 60-day baseline is rejected with a clear message",
+   "pass": true,
+   "detail": "{\"detail\":\"mission window exceeds the ephemeris baseline; max duration from this start is 25 h\"}"
+  },
+  {
+   "n": 42,
+   "group": "A",
+   "case": "start date before the baseline is rejected",
+   "pass": true,
+   "detail": "422"
+  },
+  {
+   "n": 43,
+   "group": "A",
+   "case": "longitude 0 and 360 describe the same point (same verdict and score)",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 44,
+   "group": "B",
+   "case": "malformed request 'NaN tower': clean HTTP 422 JSON on evaluate, compare and export-csv",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 45,
+   "group": "B",
+   "case": "malformed request '-Infinity area': clean HTTP 422 JSON on evaluate, compare and export-csv",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 46,
+   "group": "B",
+   "case": "malformed request 'Infinity longitude': clean HTTP 422 JSON on evaluate, compare and export-csv",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 47,
+   "group": "B",
+   "case": "malformed request 'empty body': clean HTTP 422 JSON on evaluate, compare and export-csv",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 48,
+   "group": "B",
+   "case": "malformed request 'plain text': clean HTTP 422 JSON on evaluate, compare and export-csv",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 49,
+   "group": "B",
+   "case": "malformed request 'JSON array': clean HTTP 422 JSON on evaluate, compare and export-csv",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 50,
+   "group": "B",
+   "case": "malformed request 'JSON string': clean HTTP 422 JSON on evaluate, compare and export-csv",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 51,
+   "group": "B",
+   "case": "malformed request 'truncated JSON': clean HTTP 422 JSON on evaluate, compare and export-csv",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 52,
+   "group": "B",
+   "case": "malformed request 'null': clean HTTP 422 JSON on evaluate, compare and export-csv",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 53,
+   "group": "B",
+   "case": "malformed request 'wrong types': clean HTTP 422 JSON on evaluate, compare and export-csv",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 54,
+   "group": "B",
+   "case": "error body lists each bad field with a plain-language message and a summary",
+   "pass": true,
+   "detail": "tower_height_m: tower height must be between 1 and 150 m; panel_tilt_deg: panel tilt must be between 0 and 90 deg; panel_area_m2: panel area must be between 1 and 50 m2"
+  },
+  {
+   "n": 55,
+   "group": "B",
+   "case": "wrong HTTP method / unknown path give clean 4xx, never 500",
+   "pass": true,
+   "detail": "[405, 404, 405]"
+  },
+  {
+   "n": 56,
+   "group": "B",
+   "case": "hostile site_id strings are rejected cleanly (SQL / path / huge / unicode)",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 57,
+   "group": "C",
+   "case": "unknown site id gives HTTP 422 with the id in the message",
+   "pass": true,
+   "detail": "{\"detail\":\"unknown site_id 'Auto_SP_999'\"}"
+  },
+  {
+   "n": 58,
+   "group": "C",
+   "case": "request with no location gives HTTP 422 asking for site_id or lat+lon",
+   "pass": true,
+   "detail": "{\"detail\":[{\"type\":\"value_error\",\"loc\":[\"body\"],\"msg\":\"Value error, provide site_id, or both lat and lon\",\"input\":\"{'dur"
+  },
+  {
+   "n": 59,
+   "group": "C",
+   "case": "latitude without longitude is rejected",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 60,
+   "group": "C",
+   "case": "compare with a missing scenario is rejected cleanly",
+   "pass": true,
+   "detail": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"scenario_b\"],\"msg\":\"Field required\",\"input\":\"{'scenario_"
+  },
+  {
+   "n": 61,
+   "group": "C",
+   "case": "timeline hour index past the end of the window is rejected",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 62,
+   "group": "C",
+   "case": "every successful evaluation contains all telemetry blocks the dashboard reads",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 63,
+   "group": "C",
+   "case": "timeline arrays all have the mission length and no NaN / None values",
+   "pass": true,
+   "detail": "{'timestamp_utc': 240, 'hour_index': 240, 'illumination_state': 240, 'sun_disc_fraction': 240, 'sun_el_eff_deg': 240, 'dte_status': 240, 'earth_el_eff_deg': 240, 'power_watts': 240, 'cumulative_energy_kwh': 240}"
+  },
+  {
+   "n": 64,
+   "group": "C",
+   "case": "GET /api/sites and /api/health stay available and complete",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 65,
+   "group": "D",
+   "case": "unfamiliar slope is flagged out of range; visibility above the maximum is not",
+   "pass": true,
+   "detail": "steep ['Slope_deg']; bright []"
+  },
+  {
+   "n": 66,
+   "group": "D",
+   "case": "out-of-range result carries a readable OOD warning in the alerts list",
+   "pass": true,
+   "detail": "['CRITICAL: Terrain slope exceeds 15\u00b0 lander tip-over limit.', 'CRITICAL: Sun visible less than 25% of the time (terrain shadowing) \u2014 long dark periods and extreme cold; permanently shadowed region risk.']"
+  },
+  {
+   "n": 67,
+   "group": "D",
+   "case": "ood_warning is a boolean in every API evaluation (presets and clicked points)",
+   "pass": true,
+   "detail": "[False, True]"
+  },
+  {
+   "n": 68,
+   "group": "D",
+   "case": "hard guardrails fire on extreme inputs: 70 deg slope is Unsafe even with the best hardware",
+   "pass": true,
+   "detail": "Hazardous 35.0"
+  },
+  {
+   "n": 69,
+   "group": "E",
+   "case": "hourly telemetry is identical in all three modes (Sun, Earth, power) for 8 sites",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 70,
+   "group": "E",
+   "case": "the safety verdict is identical in all three modes for 8 sites",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 71,
+   "group": "E",
+   "case": "terrain, sunlight and Earth metrics are identical in all modes",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 72,
+   "group": "E",
+   "case": "each mode reports its own weights (60/25/15, 40/35/25, 20/60/20) and they sum to 1",
+   "pass": true,
+   "detail": "{'most_safety': (0.6, 0.25, 0.15), 'balanced': (0.4, 0.35, 0.25), 'most_power': (0.2, 0.6, 0.2)}"
+  },
+  {
+   "n": 73,
+   "group": "E",
+   "case": "score shift between modes equals the change in weights x component scores (non-capped sites)",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 74,
+   "group": "E",
+   "case": "Unsafe verdicts stay capped at 44 and every score stays in 0-100 in all modes (all 100 sites)",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 75,
+   "group": "E",
+   "case": "/api/sites ranking is a valid 1..100 permutation in every mode and changes between modes",
+   "pass": true,
+   "detail": "mode changes nothing in the ranking"
+  },
+  {
+   "n": 76,
+   "group": "E",
+   "case": "CSV export telemetry rows are identical across modes",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 77,
+   "group": "E",
+   "case": "invalid mode name is rejected with HTTP 422",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 78,
+   "group": "F",
+   "case": "reported horizon dip equals the exact formula acos(R/(R+h)) for every tower height",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 79,
+   "group": "F",
+   "case": "the hourly Sun and Earth elevations shift by exactly the change in horizon dip",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 80,
+   "group": "F",
+   "case": "sunlight and Earth contact never decrease as the tower gets taller (3 sites)",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 81,
+   "group": "F",
+   "case": "terrain slope and elevation are identical at every tower height (a mast cannot change the ground)",
+   "pass": true,
+   "detail": "{1: (2.966, -611.5), 5: (2.966, -611.5), 20: (2.966, -611.5), 50: (2.966, -611.5), 100: (2.966, -611.5), 150: (2.966, -611.5)}"
+  },
+  {
+   "n": 82,
+   "group": "F",
+   "case": "solar power and mission energy never decrease with tower height",
+   "pass": true,
+   "detail": "[2084353, 2110706, 2152128, 2188887, 2233707, 2268835]"
+  },
+  {
+   "n": 83,
+   "group": "F",
+   "case": "changing the tower re-runs the verdict pipeline (score and horizon change; same site, same terrain)",
+   "pass": true,
+   "detail": "72.84 vs 74.84"
+  },
+  {
+   "n": 84,
+   "group": "F",
+   "case": "tower height propagates to the CSV export (hourly Sun elevation) and is echoed in the response",
+   "pass": true,
+   "detail": "tower not applied in CSV"
+  },
+  {
+   "n": 85,
+   "group": "G",
+   "case": "NASA benchmark: no strict check fails and at least 20 pass",
+   "pass": true,
+   "detail": "22 pass, 0 fail []"
+  },
+  {
+   "n": 86,
+   "group": "G",
+   "case": "NASA benchmark covers terrain, illumination, ephemeris, constants, geometry, scoring and solar physics",
+   "pass": true,
+   "detail": "missing set()"
+  },
+  {
+   "n": 87,
+   "group": "G",
+   "case": "NASA benchmark does not hide uncertainty: the slope comparison is reported as INFO with its reason",
+   "pass": true,
+   "detail": "[{'group': 'terrain', 'name': 'Site slope: dataset vs slope from the 120 m polar DEM (Horn, 3x3)', 'status': 'INFO', 'value': {'mean_dataset_deg': 12.65, 'mean_polar_dem_deg': 8.62, 'pearson_r': 0.511}, 'reference': 'LOLA LDEM_75S_120M', 'threshold': '', 'detail': 'Slope is scale-dependent: the dataset slopes come from the finer global grid (about 10 m east-west near the pole) and are steeper than a 120 m grid shows. Correlation is moderate, so slope is the least certain input; lander-scale hazards need metre-scale maps.'}]"
+  },
+  {
+   "n": 88,
+   "group": "G",
+   "case": "GET /api/benchmark serves the report",
+   "pass": true,
+   "detail": "200"
+  },
+  {
+   "n": 89,
+   "group": "G",
+   "case": "benchmark thresholds are not vacuous: a corrupted reference makes a check fail",
+   "pass": true,
+   "detail": "1 failing checks"
+  },
+  {
+   "n": 90,
+   "group": "H",
+   "case": "browser validation: tower accepts the edge values and rejects blank / NaN / Infinity / out-of-range",
+   "pass": true,
+   "detail": "wrong: []"
+  },
+  {
+   "n": 91,
+   "group": "H",
+   "case": "browser validation: lat accepts the edge values and rejects blank / NaN / Infinity / out-of-range",
+   "pass": true,
+   "detail": "wrong: []"
+  },
+  {
+   "n": 92,
+   "group": "H",
+   "case": "browser validation: lon accepts the edge values and rejects blank / NaN / Infinity / out-of-range",
+   "pass": true,
+   "detail": "wrong: []"
+  },
+  {
+   "n": 93,
+   "group": "H",
+   "case": "browser validation: tilt accepts the edge values and rejects blank / NaN / Infinity / out-of-range",
+   "pass": true,
+   "detail": "wrong: []"
+  },
+  {
+   "n": 94,
+   "group": "H",
+   "case": "browser validation: area accepts the edge values and rejects blank / NaN / Infinity / out-of-range",
+   "pass": true,
+   "detail": "wrong: []"
+  },
+  {
+   "n": 95,
+   "group": "H",
+   "case": "browser limits equal the backend limits (tower 150, lat -90..-85, lon 0..360, tilt 0..90, area 1..50)",
+   "pass": true,
+   "detail": "{'tower': True, 'lat': True, 'lon': True, 'tilt': True, 'area': True}"
+  },
+  {
+   "n": 96,
+   "group": "H",
+   "case": "validation messages name the field and its allowed range",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 97,
+   "group": "H",
+   "case": "validateScenario passes a good scenario and reports every bad field at once",
+   "pass": true,
+   "detail": "area,lat,lon,tilt,tower"
+  },
+  {
+   "n": 98,
+   "group": "H",
+   "case": "a complete backend result passes the telemetry check; every required field exists in a real result",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 99,
+   "group": "H",
+   "case": "removing ANY required telemetry field is detected and named (no crash)",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 100,
+   "group": "H",
+   "case": "NaN score, empty timeline and garbage objects are all handled without throwing",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 101,
+   "group": "H",
+   "case": "errors are classified (input / offline / unexpected) and always carry advice for the user",
+   "pass": true,
+   "detail": "{'input': 'input', 'offline': 'offline', 'offline5xx': 'offline', 'unexpected': 'unexpected', 'incomplete': 'incomplete', 'nullErr': 'unexpected', 'undefinedErr': 'unexpected', 'stringErr': 'unexpected'}"
+  },
+  {
+   "n": 102,
+   "group": "H",
+   "case": "browser horizon distance equals sqrt(2Rh + h^2) and the dip equals the independent geometry (1-150 m)",
+   "pass": true,
+   "detail": "{'1': 1.8640818115093554, '5': 4.168216045264448, '20': 8.336450083818653, '150': 22.830735861990956}"
+  }
+ ]
+}

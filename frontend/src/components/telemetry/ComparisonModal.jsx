@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import SiteSelector from '../controls/SiteSelector.jsx'
-import { fmt, sign, cx } from '../../lib/format.js'
+import { fmt, sign, cx, displayStatus } from '../../lib/format.js'
 
 const ROWS = [
   { k: 'delta_suitability_score', label: 'Suitability score', unit: '', better: 1, get: (e) => e.primary_landing_decision.Suitability_Score, d: 1 },
@@ -48,7 +48,7 @@ export default function ComparisonModal({ results, scnB, onSelectB, onLatLonB, o
                         </tr>
                       )
                     })}
-                    <tr className="border-t border-line/60 text-center"><td className="py-2 text-left text-mute">Verdict</td><td className="text-[10.5px]">{A.primary_landing_decision.mission_status_label}</td><td className="text-[10.5px]">{B.primary_landing_decision.mission_status_label}</td><td /></tr>
+                    <tr className="border-t border-line/60 text-center"><td className="py-2 text-left text-mute">Verdict</td><td className="text-[10.5px]">{displayStatus(A.primary_landing_decision.mission_status_label)}</td><td className="text-[10.5px]">{displayStatus(B.primary_landing_decision.mission_status_label)}</td><td /></tr>
                   </tbody>
                 </table>
                 <p className="mt-3 text-[11px] text-mute">Site B is better on <span className="num text-ink">{wins}/{ROWS.length}</span> metrics. Green = favourable to B (a lower slope is favourable).</p>
