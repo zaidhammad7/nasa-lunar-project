@@ -2,8 +2,7 @@ import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { sky } from './sky.js'
-import { surfacePoint } from './MoonSphere.jsx'
-import { mastDrawHeight } from '../../lib/physics.js'
+import { surfacePoint, pinScale, beaconLift } from './MoonSphere.jsx'
 
 const RAY_LENGTH = 2.3
 const Y = new THREE.Vector3(0, 1, 0)
@@ -16,11 +15,13 @@ const Y = new THREE.Vector3(0, 1, 0)
 function Rays({ lat, lon, tower, getLive }) {
   const sunRef = useRef(), earthRef = useRef()
   const geom = useMemo(() => { const g = new THREE.CylinderGeometry(1, 1, 1, 8, 1, true); g.translate(0, 0.5, 0); return g }, [])
-  const base = useMemo(() => surfacePoint(lat, lon, mastDrawHeight(tower) + 0.01), [lat, lon, tower]) // mast tip
+  const normal = useMemo(() => surfacePoint(lat, lon, 0), [lat, lon]) // unit surface normal at the site
   const tmp = useMemo(() => new THREE.Vector3(), [])
   useFrame(({ camera }) => {
     const live = getLive()
-    const r = Math.min(0.012, Math.max(0.0012, (camera.position.length() - 1) * 0.0028))
+    const r = Math.min(0.012, Math.max(0.00035, (camera.position.length() - 1) * 0.0028)) // thin up close, legible from afar
+    const lift = 1 + beaconLift(tower) * pinScale(camera) // rays leave the drawn beacon at any zoom
+    const base = [normal[0] * lift, normal[1] * lift, normal[2] * lift]
     const place = (mesh, dir) => {
       if (!mesh) return
       tmp.set(dir[0], dir[1], dir[2])

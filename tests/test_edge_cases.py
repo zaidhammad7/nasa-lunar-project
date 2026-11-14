@@ -444,6 +444,46 @@ def _():
     return expect(j["scenario"]["hardware"]["tower_height_m"] == 120 and np.allclose(csv_sun, j["timeline"]["sun_el_eff_deg"][:24], atol=1e-3), "tower not applied in CSV")
 
 
+@case("F", "time sync: the live Sun / Earth values equal the timeline at every requested hour")
+def _():
+    bad = []
+    for i in (0, 37, 250, 719):
+        j = ev(site_id=BEST, duration_hours=720, timeline_hour_index=i)[1]
+        if abs(j["solar_illumination_visibility"]["live_sun_elevation_deg"] - j["timeline"]["sun_el_eff_deg"][i]) > 1e-3 or            abs(j["earth_communication_status"]["live_earth_elevation_deg"] - j["timeline"]["earth_el_eff_deg"][i]) > 1e-3:
+            bad.append(i)
+    return expect(not bad, str(bad))
+
+
+@case("F", "date sync: moving the start date by N hours shifts the whole timeline by exactly N hours")
+def _():
+    a = ev(site_id=BEST, duration_hours=240, start_datetime_utc="2026-11-13T00:00:00Z")[1]["timeline"]
+    b = ev(site_id=BEST, duration_hours=240, start_datetime_utc="2026-11-14T00:00:00Z")[1]["timeline"]
+    return expect(a["sun_el_eff_deg"][24:] == b["sun_el_eff_deg"][:-24] and a["power_watts"][24:] == b["power_watts"][:-24], "timelines do not line up")
+
+
+@case("F", "solar-angle sync: panel tilt changes power exactly as S x efficiency x area x f x sin(elevation + tilt)")
+def _():
+    bad = 0
+    for tilt in (0, 45, 90):
+        j = ev(site_id=BEST, duration_hours=240, panel_tilt_deg=tilt, panel_area_m2=12)[1]["timeline"]
+        el = np.array(j["sun_el_eff_deg"]); p = np.array(j["power_watts"])
+        f = np.clip((el + 0.265) / 0.53, 0, 1)
+        ref = 1361.0 * 0.30 * 12 * f * np.maximum(0, np.sin(np.radians(el + tilt)))
+        # the timeline carries elevations to 4 decimals; where the Sun's disc is half hidden, power changes ~1.9x per degree,
+        # so that rounding alone allows up to S x eta x A x (0.5e-4 / 0.53 + 0.5e-4 rad) of difference
+        tol = 1361.0 * 0.30 * 12 * (0.5e-4 / 0.53 + np.radians(0.5e-4)) + 1e-3
+        bad += int(np.abs(p - ref).max() > tol)
+    return expect(bad == 0, f"{bad} tilts disagree")
+
+
+@case("F", "deterministic: identical inputs give bit-identical results (computed twice, response cache bypassed)")
+def _():
+    s = ms.Scenario(site_id=OTHER, tower_height_m=37.5, panel_tilt_deg=70, duration_hours=480, priority_mode="most_power")
+    a, b = ms.to_jsonable(ms.evaluate_scenario(s)), ms.to_jsonable(ms.evaluate_scenario(s))
+    a.pop("compute_ms", None), b.pop("compute_ms", None)  # wall-clock timing is the only field allowed to differ
+    return expect(json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True))
+
+
 # ======================================================================================= G. NASA / JPL benchmark
 @case("G", "NASA benchmark: no strict check fails and at least 20 pass")
 def _():
@@ -554,6 +594,12 @@ def _():
 def _():
     j = js_edge()
     return expect(j["horizonDistanceMatchesTangent"] and j["dipMatchesIndependent"] and j["horizonGrowsWithHeight"], str(j["horizonDistanceKm"]))
+
+
+@case("H", "battery chart data: hourly charge has the right length, stays within 0-100 %, and agrees with the summary")
+def _():
+    b = js_edge()["battery"]
+    return expect(all(b.values()), str({k: v for k, v in b.items() if not v}))
 
 
 def main() -> int:

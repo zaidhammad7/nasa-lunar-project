@@ -133,7 +133,7 @@
    "group": "B",
    "case": "safety classes are Optimal / Acceptable / Hazardous only",
    "pass": true,
-   "detail": "classes {'Optimal', 'Acceptable', 'Hazardous'}"
+   "detail": "classes {'Acceptable', 'Optimal', 'Hazardous'}"
   },
   {
    "n": 20,
@@ -483,7 +483,7 @@
    "group": "E",
    "case": "single evaluation completes in under 1 s (preset)",
    "pass": true,
-   "detail": "95 ms"
+   "detail": "105 ms"
   },
   {
    "n": 70,
@@ -686,7 +686,7 @@
    "group": "G",
    "case": "battery model: empties at hour 66, 34 h without power (synthetic night)",
    "pass": true,
-   "detail": "{\"survives\": false, \"minSocPct\": 0, \"hoursEmpty\": 34, \"firstEmptyHour\": 66, \"endSocPct\": 100}"
+   "detail": "{\"survives\": false, \"minSocPct\": 0, \"hoursEmpty\": 34, \"firstEmptyHour\": 66, \"endSocPct\": 100, \"generatedKwh\": 50, \"consumedKwh\": 22.5, \"wastedKwh\": 32.500000000000014}"
   },
   {
    "n": 99,

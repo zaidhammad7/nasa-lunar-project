@@ -16,7 +16,7 @@ lander, and in view of Earth often enough to talk to it. Our tool scores all thr
 | **Suitability heatmap** | Whole cap coloured by score (green = better), updates with the priority mode | The best regions are visible at a glance |
 | **Named craters** | Shackleton, de Gerlache, Haworth, Faustini, Nobile, Malapert… (IAU coordinates) | Several Artemis III candidate regions are named after these features |
 | **Mission timeline** | Sun and Earth move hour by hour over 60 days, with live countdowns to sunrise and Earthrise | Landing timing matters as much as location |
-| **Power survival** | Battery charge simulated through the longest lunar night, plus the minimum battery needed | Answers "will the lander survive the night?" |
+| **Power survival** | Front and centre under the score: survives / runs-out verdict, battery needed, lowest charge, longest night, hours without power, capacity-vs-need bar, and an hour-by-hour charge chart (hover for any hour; table view included) | Answers "will the lander survive the night?" at a glance |
 | **Hardware what-if** | Tower height (1–150 m), panel tilt and area update power instantly | A taller mast sees over the horizon: 150 m gains 0.75° of Sun elevation |
 | **Map for my hardware** | Tick "Map for my hardware": all 100 sites are re-evaluated with your tower height, panels and battery; pins and heatmap recolour, with a live count of green / conditional / NO-GO sites | Shows how hardware choices change where you can safely land: a bigger battery or taller mast turns sites green |
 | **Compare + export** | Side-by-side comparison of two sites; CSV mission summary | Ready for a planning review |
@@ -39,6 +39,7 @@ lander, and in view of Earth often enough to talk to it. Our tool scores all thr
 6. **Priority modes** (Most Safety / Balanced / Most Power) re-weight terrain, solar and comms, but **never relax the safety verdict**.
 
 ## Why you can trust the numbers
+- **One command, 392 checks:** `python tests/run_all.py` runs every suite plus the NASA benchmark; the header badge shows the latest result ("✓ VALIDATED 392/392 checks").
 - **100-case data and system suite** passes: dataset integrity, derived-file consistency, physics, safety rules, API, input validation, and browser-vs-backend parity.
 - **107 automated API checks** pass; each recomputes the expected value independently (including terrain shadowing).
 - **102 edge-case checks** pass: boundary limits (tower 1–150 m, coordinates, tilt, area), malformed and hostile requests (always a clean 422, never a crash), identical telemetry in all three priority modes, exact horizon geometry, and front-end error handling.

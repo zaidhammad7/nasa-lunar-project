@@ -43,6 +43,12 @@ The frontend falls back to a built-in offline engine if the backend is unreachab
 | Safety | 3-layer safety factor (13.5° derated slope, worst-case score buffer, hazard probability < 28%) + hard guardrails |
 
 ## Tests and validation
+One command runs every suite below and the NASA benchmark, prints a table, lists any failing check, and writes
+`outputs/test_summary.json` (shown as the "VALIDATED n/n checks" badge in the dashboard header via `GET /api/validation`):
+```bash
+python tests/run_all.py                     # everything: 392 checks
+```
+Individual suites:
 ```bash
 python tests/test_all.py                    # 100 cases: data integrity, physics, safety rules, API, input validation, app/backend parity
 python src/app/api_selftest.py              # 107 API checks with independently recomputed expectations

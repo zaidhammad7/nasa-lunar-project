@@ -3,6 +3,7 @@
 import { readFileSync } from 'node:fs'
 import { checkRange, validate, validateScenario, checkTelemetry, describeError, REQUIRED_TELEMETRY, LIMITS } from '../frontend/src/lib/validation.js'
 import { towerBoostDeg, horizonDistanceKm, MAX_TOWER_M, R_MOON_M } from '../frontend/src/lib/physics.js'
+import { simulateBattery } from '../frontend/src/lib/survival.js'
 
 const real = JSON.parse(readFileSync(process.argv[2], 'utf8'))
 const out = {}
@@ -53,4 +54,15 @@ out.horizonDistanceMatchesTangent = [1, 5, 20, 50, 150].every((h) => Math.abs(ho
 out.dipMatchesIndependent = [1, 5, 20, 50, 150].every((h) => Math.abs(towerBoostDeg(h) - (Math.atan((tangent(h) * 1000) / R_MOON_M) * 180) / Math.PI) < 1e-9)
 out.dip = { 20: towerBoostDeg(20), 150: towerBoostDeg(150) }
 out.horizonGrowsWithHeight = [1, 5, 20, 50, 150].map(horizonDistanceKm).every((v, i, a) => i === 0 || v > a[i - 1])
+// battery charge series used by the Power Survival chart
+const pw = [...Array(100).fill(0), ...Array(50).fill(1000), ...Array(30).fill(0)]
+const b = simulateBattery(pw, 10, 150, true)
+const soc = Array.from(b.socPct)
+out.battery = {
+  seriesLength: soc.length === pw.length, bounded: soc.every((v) => v >= 0 && v <= 100),
+  minMatches: Math.abs(Math.min(...soc) - b.minSocPct) < 1e-6, emptyHoursMatch: soc.filter((v) => v <= 0).length === b.hoursEmpty,
+  energyBalance: Math.abs(b.generatedKwh - 50) < 1e-9 && Math.abs(b.consumedKwh - (150 * 180) / 1000) < 1e-9,
+  seriesOptional: simulateBattery(pw, 10, 150).socPct === undefined,
+  deterministic: JSON.stringify(Array.from(simulateBattery(pw, 10, 150, true).socPct)) === JSON.stringify(soc),
+}
 console.log(JSON.stringify(out))

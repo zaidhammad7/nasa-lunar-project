@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { cx } from '../../lib/format.js'
 import { API_URL } from '../../api/lunarModelApi.js'
 
@@ -20,6 +21,28 @@ function BackendBadge({ backend, loading, onWarmup }) {
   )
 }
 
+/**
+ * Result of the last full validation run (python tests/run_all.py -> GET /api/validation): every suite plus the NASA / JPL
+ * benchmark. Green when everything passed, red with the failure count otherwise; hover for the per-suite breakdown.
+ */
+function ValidationBadge({ online }) {
+  const [v, setV] = useState(null)
+  useEffect(() => {
+    if (!online) return undefined
+    let dead = false
+    fetch(`${API_URL}/api/validation`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!dead) setV(j) }).catch(() => {})
+    return () => { dead = true }
+  }, [online])
+  if (!v) return null
+  const failed = v.total - v.passed
+  const tip = [...v.suites.map((s) => `${s.ok ? '✓' : '✕'} ${s.suite}: ${s.passed}/${s.total}${s.failures.length ? ' - ' + s.failures.map((f) => f.case).join('; ') : ''}`), `last run ${v.generated_utc}`].join('\n')
+  return (
+    <span title={tip} role="status" className={cx('num hidden items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] md:flex', v.ok ? 'border-go/40 bg-go/10 text-go' : 'border-nogo/50 bg-nogo/10 text-nogo')}>
+      {v.ok ? `✓ VALIDATED ${v.passed}/${v.total} checks` : `⚠ ${failed} CHECK${failed === 1 ? '' : 'S'} FAILED`}
+    </span>
+  )
+}
+
 /** App title and backend health (the only things in the top bar; the whole bar can be hidden). */
 export default function TopHeader({ backend, loading, error, onWarmup }) {
   return (
@@ -34,6 +57,7 @@ export default function TopHeader({ backend, loading, error, onWarmup }) {
       <div className="min-w-0 flex-1 text-center">
         {error && <span className="num inline-block max-w-full truncate rounded-md border border-nogo/50 bg-nogo/10 px-2 py-0.5 text-[11px] text-nogo" title={error}>⚠ {error}</span>}
       </div>
+      <ValidationBadge online={backend.online === true} />
       <BackendBadge backend={backend} loading={loading} onWarmup={onWarmup} />
     </header>
   )

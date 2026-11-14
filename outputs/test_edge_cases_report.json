@@ -1,6 +1,6 @@
 {
- "passed": 103,
- "total": 103,
+ "passed": 108,
+ "total": 108,
  "cases": [
   {
    "n": 1,
@@ -599,129 +599,164 @@
   },
   {
    "n": 86,
+   "group": "F",
+   "case": "time sync: the live Sun / Earth values equal the timeline at every requested hour",
+   "pass": true,
+   "detail": "[]"
+  },
+  {
+   "n": 87,
+   "group": "F",
+   "case": "date sync: moving the start date by N hours shifts the whole timeline by exactly N hours",
+   "pass": true,
+   "detail": "timelines do not line up"
+  },
+  {
+   "n": 88,
+   "group": "F",
+   "case": "solar-angle sync: panel tilt changes power exactly as S x efficiency x area x f x sin(elevation + tilt)",
+   "pass": true,
+   "detail": "0 tilts disagree"
+  },
+  {
+   "n": 89,
+   "group": "F",
+   "case": "deterministic: identical inputs give bit-identical results (computed twice, response cache bypassed)",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "n": 90,
    "group": "G",
    "case": "NASA benchmark: no strict check fails and at least 20 pass",
    "pass": true,
    "detail": "22 pass, 0 fail []"
   },
   {
-   "n": 87,
+   "n": 91,
    "group": "G",
    "case": "NASA benchmark covers terrain, illumination, ephemeris, constants, geometry, scoring and solar physics",
    "pass": true,
    "detail": "missing set()"
   },
   {
-   "n": 88,
+   "n": 92,
    "group": "G",
    "case": "NASA benchmark does not hide uncertainty: the slope comparison is reported as INFO with its reason",
    "pass": true,
    "detail": "[{'group': 'terrain', 'name': 'Site slope: dataset vs slope from the 120 m polar DEM (Horn, 3x3)', 'status': 'INFO', 'value': {'mean_dataset_deg': 12.65, 'mean_polar_dem_deg': 8.62, 'pearson_r': 0.511}, 'reference': 'LOLA LDEM_75S_120M', 'threshold': '', 'detail': 'Slope is scale-dependent: the dataset slopes come from the finer global grid (about 10 m east-west near the pole) and are steeper than a 120 m grid shows. Correlation is moderate, so slope is the least certain input; lander-scale hazards need metre-scale maps.'}]"
   },
   {
-   "n": 89,
+   "n": 93,
    "group": "G",
    "case": "GET /api/benchmark serves the report",
    "pass": true,
    "detail": "200"
   },
   {
-   "n": 90,
+   "n": 94,
    "group": "G",
    "case": "benchmark thresholds are not vacuous: a corrupted reference makes a check fail",
    "pass": true,
    "detail": "1 failing checks"
   },
   {
-   "n": 91,
+   "n": 95,
    "group": "H",
    "case": "browser validation: tower accepts the edge values and rejects blank / NaN / Infinity / out-of-range",
    "pass": true,
    "detail": "wrong: []"
   },
   {
-   "n": 92,
+   "n": 96,
    "group": "H",
    "case": "browser validation: lat accepts the edge values and rejects blank / NaN / Infinity / out-of-range",
    "pass": true,
    "detail": "wrong: []"
   },
   {
-   "n": 93,
+   "n": 97,
    "group": "H",
    "case": "browser validation: lon accepts the edge values and rejects blank / NaN / Infinity / out-of-range",
    "pass": true,
    "detail": "wrong: []"
   },
   {
-   "n": 94,
+   "n": 98,
    "group": "H",
    "case": "browser validation: tilt accepts the edge values and rejects blank / NaN / Infinity / out-of-range",
    "pass": true,
    "detail": "wrong: []"
   },
   {
-   "n": 95,
+   "n": 99,
    "group": "H",
    "case": "browser validation: area accepts the edge values and rejects blank / NaN / Infinity / out-of-range",
    "pass": true,
    "detail": "wrong: []"
   },
   {
-   "n": 96,
+   "n": 100,
    "group": "H",
    "case": "browser limits equal the backend limits (tower 150, lat -90..-85, lon 0..360, tilt 0..90, area 1..50)",
    "pass": true,
    "detail": "{'tower': True, 'lat': True, 'lon': True, 'tilt': True, 'area': True}"
   },
   {
-   "n": 97,
+   "n": 101,
    "group": "H",
    "case": "validation messages name the field and its allowed range",
    "pass": true,
    "detail": ""
   },
   {
-   "n": 98,
+   "n": 102,
    "group": "H",
    "case": "validateScenario passes a good scenario and reports every bad field at once",
    "pass": true,
    "detail": "area,lat,lon,tilt,tower"
   },
   {
-   "n": 99,
+   "n": 103,
    "group": "H",
    "case": "a complete backend result passes the telemetry check; every required field exists in a real result",
    "pass": true,
    "detail": ""
   },
   {
-   "n": 100,
+   "n": 104,
    "group": "H",
    "case": "removing ANY required telemetry field is detected and named (no crash)",
    "pass": true,
    "detail": ""
   },
   {
-   "n": 101,
+   "n": 105,
    "group": "H",
    "case": "NaN score, empty timeline and garbage objects are all handled without throwing",
    "pass": true,
    "detail": ""
   },
   {
-   "n": 102,
+   "n": 106,
    "group": "H",
    "case": "errors are classified (input / offline / unexpected) and always carry advice for the user",
    "pass": true,
    "detail": "{'input': 'input', 'offline': 'offline', 'offline5xx': 'offline', 'unexpected': 'unexpected', 'incomplete': 'incomplete', 'nullErr': 'unexpected', 'undefinedErr': 'unexpected', 'stringErr': 'unexpected'}"
   },
   {
-   "n": 103,
+   "n": 107,
    "group": "H",
    "case": "browser horizon distance equals sqrt(2Rh + h^2) and the dip equals the independent geometry (1-150 m)",
    "pass": true,
    "detail": "{'1': 1.8640818115093554, '5': 4.168216045264448, '20': 8.336450083818653, '150': 22.830735861990956}"
+  },
+  {
+   "n": 108,
+   "group": "H",
+   "case": "battery chart data: hourly charge has the right length, stays within 0-100 %, and agrees with the summary",
+   "pass": true,
+   "detail": "{}"
   }
  ]
 }

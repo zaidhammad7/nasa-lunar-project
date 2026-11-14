@@ -1,8 +1,8 @@
-import { Suspense, useEffect, useRef } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
-import MoonSphere from './MoonSphere.jsx'
+import MoonSphere, { beaconLift } from './MoonSphere.jsx'
 import CelestialBodies, { SkyClock } from './CelestialBodies.jsx'
 import VectorsOverlay from './VectorsOverlay.jsx'
 import { HeatmapCap, CraterLabels } from './MapLayers.jsx'
@@ -21,16 +21,41 @@ function CameraRig({ fly, controlsRef }) {
   const { camera } = three
   useEffect(() => { if (import.meta.env.DEV) window.__r3f = three }, [three]) // dev-only handle for browser tests (stripped from production builds)
   const goal = useRef({ active: false, pos: new THREE.Vector3(), target: new THREE.Vector3(), fov: BASE_FOV })
+  // Orbit "up" axis: world +Z for the global views; the site's local vertical (surface normal) for the close-up, so the mast
+  // stands upright on screen and its height reads in profile. OrbitControls fixes its up-axis when created -> remount on change.
+  const [upKey, setUpKey] = useState('global')
 
   useEffect(() => {
     if (!fly || !fly.id) return
     const g = goal.current
     g.fov = BASE_FOV
-    if (fly.kind === 'site' && fly.lat != null) {
+    if (fly.kind === 'site' && fly.lat != null) { // selecting / clicking a site: overhead view, the Moon stays clickable
+      camera.up.set(0, 0, 1)
+      setUpKey('global')
       const v = new THREE.Vector3(...latLonToVec(fly.lat, fly.lon))
       g.pos.copy(v).multiplyScalar(1.5).add(new THREE.Vector3(0, 0, 0.2))
       g.target.copy(v).multiplyScalar(0.97)
-    } else if (fly.kind === 'sunearth') {
+      g.active = true
+      return
+    }
+    if (fly.kind === 'tower' && fly.lat != null) {
+      // "Pin Close-Up": oblique view a little above the surface, aimed at the middle of the mast, local vertical up
+      const v = new THREE.Vector3(...latLonToVec(fly.lat, fly.lon)), n = v.clone().normalize()
+      let side = new THREE.Vector3().crossVectors(n, new THREE.Vector3(0, 0, 1))
+      if (side.lengthSq() < 1e-6) side = new THREE.Vector3(1, 0, 0)
+      side.normalize()
+      camera.up.copy(n)
+      setUpKey(`site:${fly.id}`)
+      // frame the whole drawn mast (close-up legibility scale 0.32): aim at mid-height, back off in proportion to its height
+      const top = beaconLift(fly.tower ?? 5) * 0.32
+      g.pos.copy(v).addScaledVector(n, Math.max(0.05, top * 0.6)).addScaledVector(side, Math.max(0.16, top * 2.6))
+      g.target.copy(v).addScaledVector(n, top * 0.5)
+      g.active = true
+      return
+    }
+    camera.up.set(0, 0, 1)
+    setUpKey('global')
+    if (fly.kind === 'sunearth') {
       // At true scale the Sun and Earth are far away: look out from the Moon's neighbourhood along the Sun/Earth bisector
       const s = new THREE.Vector3(...sky.sun), e = new THREE.Vector3(...sky.earth)
       const sep = Math.acos(THREE.MathUtils.clamp(s.dot(e), -1, 1)) * DEG
@@ -61,7 +86,7 @@ function CameraRig({ fly, controlsRef }) {
     if (camera.position.distanceTo(g.pos) < 0.012 && c.target.distanceTo(g.target) < 0.012 && Math.abs(camera.fov - g.fov) < 0.2) g.active = false
   })
 
-  return <OrbitControls ref={controlsRef} makeDefault enableDamping dampingFactor={0.08} minDistance={0.05} maxDistance={4000}
+  return <OrbitControls key={upKey} ref={controlsRef} makeDefault enableDamping dampingFactor={0.08} minDistance={0.05} maxDistance={4000}
     rotateSpeed={0.7} zoomSpeed={0.9} onStart={() => { goal.current.active = false }} />
 }
 

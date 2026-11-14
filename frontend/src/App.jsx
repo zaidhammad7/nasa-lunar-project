@@ -51,8 +51,8 @@ export default function App() {
   // ---- 3-D scene inputs: Site A (and Site B while comparing)
   const pins = useMemo(() => {
     const label = (id) => (id ? id.replace('Auto_', '') : 'custom')
-    const list = [{ key: 'A', lat: scn.lat, lon: scn.lon, color: PIN.A, label: `A · ${label(scn.siteId)}`, tower: scn.tower, tilt: scn.tilt }]
-    if (compareOpen) list.push({ key: 'B', lat: scnB.lat, lon: scnB.lon, color: PIN.B, label: `B · ${label(scnB.siteId)}`, tower: scn.tower, tilt: scn.tilt })
+    const list = [{ key: 'A', lat: scn.lat, lon: scn.lon, color: PIN.A, label: `A · ${label(scn.siteId)} · ${scn.tower} m mast`, tower: scn.tower, tilt: scn.tilt }]
+    if (compareOpen) list.push({ key: 'B', lat: scnB.lat, lon: scnB.lon, color: PIN.B, label: `B · ${label(scnB.siteId)} · ${scn.tower} m mast`, tower: scn.tower, tilt: scn.tilt })
     return list
   }, [scn.lat, scn.lon, scn.siteId, scn.tower, scn.tilt, scnB.lat, scnB.lon, scnB.siteId, compareOpen])
   const getLive = useCallback((key) => () => {
@@ -72,8 +72,8 @@ export default function App() {
       const sep = (Math.acos(Math.max(-1, Math.min(1, s[0] * e[0] + s[1] * e[1] + s[2] * e[2]))) * 180) / Math.PI
       sim.showToast(`Sun–Earth separation as seen from the Moon: ${sep.toFixed(0)}°${sep > 85 ? ' — too wide for one view; scrub the timeline toward full Moon (hour ~300) to bring them together' : ''}`)
     }
-    sim.requestFly(kind, scn.lat, scn.lon)
-  }, [sim, scn.lat, scn.lon])
+    sim.requestFly(kind, scn.lat, scn.lon, scn.tower)
+  }, [sim, scn.lat, scn.lon, scn.tower])
 
   const left = (
     <>

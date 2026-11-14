@@ -2,7 +2,7 @@ import { cx } from '../../lib/format.js'
 
 const VIEWS = [
   { kind: 'overview', label: 'South Pole View' },
-  { kind: 'site', label: 'Pin Close-Up' },
+  { kind: 'tower', label: 'Pin Close-Up' },
   { kind: 'sunearth', label: 'Earth–Sun Alignment' },
 ]
 

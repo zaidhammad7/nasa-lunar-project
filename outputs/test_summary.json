@@ -1,0 +1,62 @@
+{
+ "generated_utc": "2026-11-14T10:08:26Z",
+ "ok": true,
+ "passed": 392,
+ "total": 392,
+ "suites": [
+  {
+   "suite": "Data & system (100 cases)",
+   "script": "tests/test_all.py",
+   "passed": 100,
+   "total": 100,
+   "ok": true,
+   "seconds": 16.6,
+   "failures": []
+  },
+  {
+   "suite": "Edge cases & error handling",
+   "script": "tests/test_edge_cases.py",
+   "passed": 108,
+   "total": 108,
+   "ok": true,
+   "seconds": 84.8,
+   "failures": []
+  },
+  {
+   "suite": "Verdict rules (mast, slope, map)",
+   "script": "tests/test_verdict_rules.py",
+   "passed": 32,
+   "total": 32,
+   "ok": true,
+   "seconds": 145.6,
+   "failures": []
+  },
+  {
+   "suite": "API self-test",
+   "script": "src/app/api_selftest.py",
+   "passed": 107,
+   "total": 107,
+   "ok": true,
+   "seconds": 22.1,
+   "failures": []
+  },
+  {
+   "suite": "Tower physics",
+   "script": "src/analysis/test_tower_limit.py",
+   "passed": 23,
+   "total": 23,
+   "ok": true,
+   "seconds": 9.5,
+   "failures": []
+  },
+  {
+   "suite": "NASA / JPL benchmark",
+   "script": "src/analysis/nasa_benchmark.py",
+   "passed": 22,
+   "total": 22,
+   "ok": true,
+   "seconds": 28.5,
+   "failures": []
+  }
+ ]
+}

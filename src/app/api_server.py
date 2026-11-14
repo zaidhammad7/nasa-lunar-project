@@ -329,6 +329,17 @@ def export_csv(body: ScenarioIn):
                              headers={"Content-Disposition": 'attachment; filename="mission_telemetry_export.csv"'})
 
 
+@app.get("/api/validation")
+def validation():
+    """Latest result of tests/run_all.py (every suite) plus the NASA benchmark summary - shown as the dashboard's validation badge."""
+    path = OUTPUTS_DIR / "test_summary.json"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="test_summary.json not found; run python tests/run_all.py")
+    s = json.loads(path.read_text(encoding="utf-8"))
+    return JSONResponse({"generated_utc": s["generated_utc"], "ok": s["ok"], "passed": s["passed"], "total": s["total"],
+                         "suites": [{k: r[k] for k in ("suite", "passed", "total", "ok")} | {"failures": r["failures"][:5]} for r in s["suites"]]})
+
+
 @app.get("/api/benchmark")
 def benchmark():
     """Latest NASA / JPL benchmark report (outputs/nasa_benchmark.json): every check with reference, value, threshold, status."""

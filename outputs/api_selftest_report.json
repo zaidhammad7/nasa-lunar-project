@@ -1,17 +1,17 @@
 {
-  "generated_utc": "2026-11-14T09:24:25.638782+00:00",
+  "generated_utc": "2026-11-14T10:07:47.806127+00:00",
   "passed": 107,
   "total": 107,
   "checks": [
     {
       "test": "GET /api/health 200",
       "pass": true,
-      "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor_active': True, 'warmup_latency_ms': 10256.8, 'terrain_shadowing_ready': True, 'horizon_dem_ready': True, 'dem_error': None, 'response_cache_entries': 5, 'schema_version': '3.1', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
+      "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor_active': True, 'warmup_latency_ms': 6120.3, 'terrain_shadowing_ready': True, 'horizon_dem_ready': True, 'dem_error': None, 'response_cache_entries': 5, 'schema_version': '3.1', 'baseline_window_utc': ['2026-11-13T00:00:00Z', '2027-01-12T00:00:00Z']}"
     },
     {
       "test": "health has models_ready, dem_ready, cached_demo_sites, safety_factor_active, warmup_latency_ms",
       "pass": true,
-      "detail": "warm-up 10256.8 ms, 5/5 demo sites cached"
+      "detail": "warm-up 6120.3 ms, 5/5 demo sites cached"
     },
     {
       "test": "CORS header allows any origin",
@@ -66,7 +66,7 @@
     {
       "test": "200 OK",
       "pass": true,
-      "detail": "396 ms round trip incl. 1440-row timeline JSON"
+      "detail": "225 ms round trip incl. 1440-row timeline JSON"
     },
     {
       "test": "all dashboard output blocks present",
@@ -206,7 +206,7 @@
     {
       "test": "custom (lat, lon) evaluates without hanging (<= 3.6 s Horizons budget)",
       "pass": true,
-      "detail": "0.50 s; ephemeris source: JPL Horizons (cached hourly series)"
+      "detail": "0.36 s; ephemeris source: JPL Horizons (cached hourly series)"
     },
     {
       "test": "duration_days=10 -> 240 h and timestamp_utc -> hour 54",
@@ -221,7 +221,7 @@
     {
       "test": "slow Horizons -> analytic fallback returned within budget (never hangs)",
       "pass": true,
-      "detail": "216 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
+      "detail": "217 ms; note: Horizons did not answer within 0.2 s (TimeoutError); analytic curve us..."
     },
     {
       "test": "coordinate equal to a preset snaps to that preset",
@@ -366,7 +366,7 @@
     {
       "test": "illumination_state values are valid",
       "pass": true,
-      "detail": "{'Direct Sunlight', 'Partial Shadow', 'Total Darkness'}"
+      "detail": "{'Partial Shadow', 'Direct Sunlight', 'Total Darkness'}"
     },
     {
       "test": "dte_status values are valid",
@@ -446,12 +446,12 @@
     {
       "test": "POST /api/warmup 200 with 5 demo sites",
       "pass": true,
-      "detail": "4.7 s total (DEM open included)"
+      "detail": "5.7 s total (DEM open included)"
     },
     {
       "test": "warm-up reports cache status + eval latency per site",
       "pass": true,
-      "detail": "A:68.4ms, B:68.3ms, C:61.0ms, D:66.4ms, E:63.4ms"
+      "detail": "A:47.2ms, B:45.8ms, C:40.1ms, D:40.2ms, E:42.2ms"
     },
     {
       "test": "warm-up: all 5 demo sites served from cache",
@@ -461,7 +461,7 @@
     {
       "test": "warm-up opened the LOLA DEM (dem_ready) or reported why not",
       "pass": true,
-      "detail": "{'ready': True, 'open_ms': 3825.4, 'read_ms': 142.7, 'warm_point': {'lat_deg': -88.3448, 'lon_deg_east': 225.8806}, 'elevation_m': -2553.5, "
+      "detail": "{'ready': True, 'open_ms': 5074.3, 'read_ms': 119.7, 'warm_point': {'lat_deg': -88.3448, 'lon_deg_east': 225.8806}, 'elevation_m': -2553.5, "
     },
     {
       "test": "health after warm-up: dem_ready mirrors warm-up, 5/5 cached",
@@ -531,12 +531,12 @@
     {
       "test": "preset /api/evaluate incl. 1440-row timeline: median < 250 ms",
       "pass": true,
-      "detail": "median 96 ms, p95 119 ms"
+      "detail": "median 61 ms, p95 69 ms"
     },
     {
       "test": "hourly series generator < 50 ms",
       "pass": true,
-      "detail": "0.60 ms"
+      "detail": "0.46 ms"
     }
   ]
 }

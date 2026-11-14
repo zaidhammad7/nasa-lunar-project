@@ -13,7 +13,7 @@ const START_ISO = iso(BASELINE_START_MS)
 
 const makeScenario = (id) => {
   const s = siteById(id)
-  return { siteId: id, lat: s.lat, lon: s.lon, startISO: START_ISO, durationHours: 1440, maxSlope: 15, minSun: DEFAULT_MIN_SUN, minEarth: DEFAULT_MIN_EARTH, tower: 5, tilt: 80, area: 10, batteryKwh: 50, loadW: 150 }
+  return { siteId: id, lat: s.lat, lon: s.lon, startISO: START_ISO, durationHours: 1440, maxSlope: 15, minSun: DEFAULT_MIN_SUN, minEarth: DEFAULT_MIN_EARTH, tower: 5, tilt: 80, area: 10, batteryKwh: 60, loadW: 150 } // 60 kWh: enough for the best GO sites' longest night at 150 W (Auto_SP_099 needs ~51 kWh)
 }
 
 /** Throw a readable error if a backend result is missing fields the dashboard needs (so it can never reach the panels). */
@@ -128,7 +128,7 @@ export function useLunarSimulation() {
 
   // ---------------------------------------------------------------- actions
   const showToast = useCallback((msg) => { setToast(msg); setTimeout(() => setToast((t) => (t === msg ? null : t)), 3500) }, [])
-  const requestFly = useCallback((kind, lat, lon) => { setFly((f) => ({ id: f.id + 1, kind, lat, lon })); setActivePreset(kind) }, [])
+  const requestFly = useCallback((kind, lat, lon, tower) => { setFly((f) => ({ id: f.id + 1, kind, lat, lon, tower })); setActivePreset(kind) }, [])
   const patch = useCallback((p) => setScn((prev) => ({ ...prev, ...p })), [])
 
   const selectSite = useCallback((id) => {
