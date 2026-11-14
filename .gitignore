@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -28,8 +28,9 @@ $RECYCLE.BIN/
 .idea/
 *.lnk
 
-# Regenerable ephemeris cache (python src/analysis/warm_caches.py)
-ephemeris_cache/
+# Ephemeris cache: the real JPL Horizons hourly series (*.npz, ~8 MB) are kept in git so a fresh clone needs no internet
+# for the 100 sites and the benchmark; per-point terrain caches (terrain_*.json) are regenerated on demand.
+ephemeris_cache/terrain_*.json
 
 # Vite cache
 .vite/

@@ -55,6 +55,8 @@ def download() -> dict[str, Path]:
 @lru_cache(maxsize=2)
 def _map(key: str) -> np.memmap | None:
     p = RAW / FILES[key]
+    import nasa_data  # bundled copy in nasa_data/ (unpacked on first use)
+    nasa_data.ensure(f"lola_illumination/{FILES[key]}")
     if not p.exists() or p.stat().st_size != N_PIX * N_PIX * 2:
         return None
     return np.memmap(p, dtype="<i2", mode="r", shape=(N_PIX, N_PIX))

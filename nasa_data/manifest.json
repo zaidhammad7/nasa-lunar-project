@@ -1,0 +1,20 @@
+{
+ "lola_dem/ldem_75s_120m.img": {
+  "packed": "ldem_75s_120m.img.xz",
+  "side_px": 7624,
+  "bytes": 116250752,
+  "sha256": "ae3afc3c75c33d43666ca06c83ca08f0b12ef03b7d36d2d791d972730794391b"
+ },
+ "lola_illumination/avgvisib_85s_060m_201608.img": {
+  "packed": "avgvisib_85s_060m_201608.img.xz",
+  "side_px": 5058,
+  "bytes": 51166728,
+  "sha256": "82dadf321dee28f1947c1fed81858d4cf50fe8eb2aa405aae114e8ab21c1efe1"
+ },
+ "lola_illumination/avgvisib_85s_060m_201608_earth.img": {
+  "packed": "avgvisib_85s_060m_201608_earth.img.xz",
+  "side_px": 5058,
+  "bytes": 51166728,
+  "sha256": "0958313069d6039b2474c875ff662f28dbcba2bd853d9ea458aa807b7948c11f"
+ }
+}

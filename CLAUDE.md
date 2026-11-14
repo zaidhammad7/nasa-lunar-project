@@ -7,7 +7,8 @@ safety (slope, roughness) with illumination/Earth-visibility timelines, shown in
 
 ## Architecture
 ```
-data/            Raw downloads (DEM, NASA LOLA illumination maps). Git-ignored; fetched by scripts.
+nasa_data/       Bundled NASA LOLA DEM + illumination maps (lossless xz pack, SHA-256 checked; src/analysis/nasa_data.py).
+data/            Unpacked working copies of nasa_data/ (git-ignored; created automatically on first use).
 src/analysis/    Pure computation: ephemeris, terrain shadowing, slope/roughness, site scoring, ML training.
 src/app/         FastAPI backend (api_server.py): validates requests, calls src/analysis, returns JSON/CSV.
 frontend/        React + three.js dashboard; offline engine in src/lib mirrors the backend physics.

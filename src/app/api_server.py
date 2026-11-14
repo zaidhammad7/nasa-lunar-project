@@ -149,7 +149,7 @@ async def lifespan(_: FastAPI):
     if not (ti.available() and hz.dem_available()):
         print("WARNING: NASA LOLA data missing (illumination maps in data/lola_illumination/ and/or the polar DEM in "
               "data/lola_dem/). Preset sites still use cached horizons; clicked points fall back to coarser shadowing. "
-              "Run: python src/analysis/build_corrected_dataset.py", flush=True)
+              "Run: python src/analysis/nasa_data.py", flush=True)
     STATE["warmup_latency_ms"] = _warm_sync()
     if os.environ.get("LUNAR_SKIP_BG_WARMUP") != "1":
         _bg_warm()
@@ -337,7 +337,8 @@ def validation():
         raise HTTPException(status_code=404, detail="test_summary.json not found; run python tests/run_all.py")
     s = json.loads(path.read_text(encoding="utf-8"))
     return JSONResponse({"generated_utc": s["generated_utc"], "ok": s["ok"], "passed": s["passed"], "total": s["total"],
-                         "suites": [{k: r[k] for k in ("suite", "passed", "total", "ok")} | {"failures": r["failures"][:5]} for r in s["suites"]]})
+                         "skipped": s.get("skipped", 0),
+                         "suites": [{k: r.get(k, 0) for k in ("suite", "passed", "total", "ok", "skipped")} | {"failures": r["failures"][:5]} for r in s["suites"]]})
 
 
 @app.get("/api/benchmark")

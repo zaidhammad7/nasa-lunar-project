@@ -21,7 +21,7 @@ Requirements: Python 3.10+, Node.js 20+.
 
 ```bash
 pip install -r requirements.txt
-python src/analysis/build_corrected_dataset.py   # first run only: downloads NASA LOLA terrain + illumination data (~220 MB) into data/
+python src/analysis/nasa_data.py                  # optional: unpacks the bundled NASA LOLA data (also happens automatically on first use)
 uvicorn src.app.api_server:app --port 8000        # backend  -> http://localhost:8000/docs
 ```
 
@@ -67,7 +67,9 @@ frontend/       React + three.js dashboard (see frontend/README.md)
 tests/          100-case data and system test suite
 scripts/        data preparation (NASA Moon textures, app site list)
 models/         trained models          outputs/   rankings, metrics, figures, reports
-data/           raw downloads (git-ignored; fetched by the scripts above)
+nasa_data/      bundled NASA LOLA rasters (DEM + Sun/Earth illumination maps), losslessly packed, SHA-256 verified
+ephemeris_cache/ JPL Horizons Sun/Earth series for the 100 sites (offline)
+data/           unpacked working copies (git-ignored; created automatically from nasa_data/)
 docs/           judges' brief
 ```
 

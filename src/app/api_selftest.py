@@ -55,6 +55,9 @@ def from_mast(series, lat, lon, tower_m):
     The horizon is ray-traced here directly from the LOLA DEM (not taken from the backend's cache)."""
     import horizon as hz
     sun_d, earth_d, info = ti.correct(series.sun_el, series.earth_el, lat, lon)  # lander-deck level (no mast)
+    if not hz.dem_available():  # fresh clone without the NASA DEM: the backend's documented fallback is the uniform dip
+        dip = math.degrees(math.acos(1737400.0 / (1737400.0 + tower_m)))
+        return sun_d + dip, earth_d + dip
     prof = hz.compute_profile(lat, lon, hz.mast_observer_m(tower_m))
     t = np.arange(len(series.sun_el), dtype=float)
     s_lat, s_lon, e_lat, e_lon = hz.baseline_subpoints(t)

@@ -1,16 +1,18 @@
 {
- "generated_utc": "2026-11-14T10:08:26Z",
+ "generated_utc": "2026-11-14T10:40:27Z",
  "ok": true,
  "passed": 392,
  "total": 392,
+ "skipped": 0,
  "suites": [
   {
    "suite": "Data & system (100 cases)",
    "script": "tests/test_all.py",
    "passed": 100,
    "total": 100,
+   "skipped": 0,
    "ok": true,
-   "seconds": 16.6,
+   "seconds": 15.3,
    "failures": []
   },
   {
@@ -18,8 +20,9 @@
    "script": "tests/test_edge_cases.py",
    "passed": 108,
    "total": 108,
+   "skipped": 0,
    "ok": true,
-   "seconds": 84.8,
+   "seconds": 87.0,
    "failures": []
   },
   {
@@ -27,8 +30,9 @@
    "script": "tests/test_verdict_rules.py",
    "passed": 32,
    "total": 32,
+   "skipped": 0,
    "ok": true,
-   "seconds": 145.6,
+   "seconds": 154.9,
    "failures": []
   },
   {
@@ -36,8 +40,9 @@
    "script": "src/app/api_selftest.py",
    "passed": 107,
    "total": 107,
+   "skipped": 0,
    "ok": true,
-   "seconds": 22.1,
+   "seconds": 28.0,
    "failures": []
   },
   {
@@ -45,8 +50,9 @@
    "script": "src/analysis/test_tower_limit.py",
    "passed": 23,
    "total": 23,
+   "skipped": 0,
    "ok": true,
-   "seconds": 9.5,
+   "seconds": 12.2,
    "failures": []
   },
   {
@@ -54,8 +60,9 @@
    "script": "src/analysis/nasa_benchmark.py",
    "passed": 22,
    "total": 22,
+   "skipped": 0,
    "ok": true,
-   "seconds": 28.5,
+   "seconds": 34.8,
    "failures": []
   }
  ]

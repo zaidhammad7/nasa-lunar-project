@@ -58,6 +58,8 @@ def download() -> Path:
 
 @lru_cache(maxsize=1)
 def _dem() -> np.memmap | None:
+    import nasa_data  # bundled copy in nasa_data/ (unpacked on first use)
+    nasa_data.ensure("lola_dem/ldem_75s_120m.img")
     if not DEM_PATH.exists() or DEM_PATH.stat().st_size != N_PIX * N_PIX * 2:
         return None
     return np.memmap(DEM_PATH, dtype="<i2", mode="r", shape=(N_PIX, N_PIX))

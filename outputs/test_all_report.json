@@ -7,6 +7,7 @@
    "group": "A",
    "case": "dataset has exactly 100 sites",
    "pass": true,
+   "skipped": false,
    "detail": "100 rows"
   },
   {
@@ -14,6 +15,7 @@
    "group": "A",
    "case": "site IDs are unique",
    "pass": true,
+   "skipped": false,
    "detail": "0 duplicates"
   },
   {
@@ -21,6 +23,7 @@
    "group": "A",
    "case": "no missing values in any column",
    "pass": true,
+   "skipped": false,
    "detail": "0 missing cells"
   },
   {
@@ -28,6 +31,7 @@
    "group": "A",
    "case": "latitudes within the -90..-85 deg study cap",
    "pass": true,
+   "skipped": false,
    "detail": "range -89.5637..-85.0062"
   },
   {
@@ -35,6 +39,7 @@
    "group": "A",
    "case": "longitudes within 0..360 deg E",
    "pass": true,
+   "skipped": false,
    "detail": "range 2.0405..351.6163"
   },
   {
@@ -42,6 +47,7 @@
    "group": "A",
    "case": "Sun/Earth visibility percentages within 0..100",
    "pass": true,
+   "skipped": false,
    "detail": "out-of-range percentage"
   },
   {
@@ -49,6 +55,7 @@
    "group": "A",
    "case": "Sun average elevation <= Sun maximum elevation (every site)",
    "pass": true,
+   "skipped": false,
    "detail": "violations: []"
   },
   {
@@ -56,6 +63,7 @@
    "group": "A",
    "case": "Earth average elevation <= Earth maximum elevation (every site)",
    "pass": true,
+   "skipped": false,
    "detail": "violations: []"
   },
   {
@@ -63,6 +71,7 @@
    "group": "A",
    "case": "slopes within 0..90 deg",
    "pass": true,
+   "skipped": false,
    "detail": "range 0.242..68.459"
   },
   {
@@ -70,6 +79,7 @@
    "group": "A",
    "case": "elevations within the Moon's physical range (-9.5..+11 km)",
    "pass": true,
+   "skipped": false,
    "detail": "range -5131.0..6135.0 m"
   },
   {
@@ -77,6 +87,7 @@
    "group": "A",
    "case": "roughness table covers all 100 sites",
    "pass": true,
+   "skipped": false,
    "detail": "missing []"
   },
   {
@@ -84,6 +95,7 @@
    "group": "A",
    "case": "roughness values finite and non-negative",
    "pass": true,
+   "skipped": false,
    "detail": "range 0.275..5.827 m"
   },
   {
@@ -91,6 +103,7 @@
    "group": "A",
    "case": "roughness table terrain agrees with dataset (elev 0.01 m, slope 0.01 deg)",
    "pass": true,
+   "skipped": false,
    "detail": "max diff 0.0000 m, 0.0005 deg"
   },
   {
@@ -98,6 +111,7 @@
    "group": "A",
    "case": "training set keeps terrain; terrain-only horizons predict NASA sunlight (MAE < 3 pts, r > 0.95)",
    "pass": true,
+   "skipped": false,
    "detail": "terrain unchanged=True; independent ray-traced vs NASA sunlight: MAE 1.51 pts, r 0.989"
   },
   {
@@ -105,6 +119,7 @@
    "group": "A",
    "case": "no two sites share the same coordinates",
    "pass": true,
+   "skipped": false,
    "detail": "0 duplicated coordinates"
   },
   {
@@ -112,6 +127,7 @@
    "group": "B",
    "case": "ranked table lists the same 100 sites",
    "pass": true,
+   "skipped": false,
    "detail": "site sets differ"
   },
   {
@@ -119,6 +135,7 @@
    "group": "B",
    "case": "ranks are 1..100 and follow descending suitability score",
    "pass": true,
+   "skipped": false,
    "detail": "rank order inconsistent with score"
   },
   {
@@ -126,6 +143,7 @@
    "group": "B",
    "case": "suitability scores within 0..100",
    "pass": true,
+   "skipped": false,
    "detail": "score out of range"
   },
   {
@@ -133,6 +151,7 @@
    "group": "B",
    "case": "safety classes are Optimal / Acceptable / Hazardous only",
    "pass": true,
+   "skipped": false,
    "detail": "classes {'Acceptable', 'Optimal', 'Hazardous'}"
   },
   {
@@ -140,6 +159,7 @@
    "group": "B",
    "case": "ranked-table features equal the terrain-corrected training set (every site)",
    "pass": true,
+   "skipped": false,
    "detail": "max diff 0.00e+00"
   },
   {
@@ -147,6 +167,7 @@
    "group": "B",
    "case": "frontend site list has the same 100 sites",
    "pass": true,
+   "skipped": false,
    "detail": "site sets differ"
   },
   {
@@ -154,6 +175,7 @@
    "group": "B",
    "case": "frontend coordinates equal the dataset (1e-4 deg)",
    "pass": true,
+   "skipped": false,
    "detail": "max diff 0.00e+00 deg"
   },
   {
@@ -161,6 +183,7 @@
    "group": "B",
    "case": "frontend Sun/Earth/terrain values equal the terrain-corrected training set",
    "pass": true,
+   "skipped": false,
    "detail": "max diff 0.00e+00"
   },
   {
@@ -168,6 +191,7 @@
    "group": "B",
    "case": "frontend roughness equals the roughness table",
    "pass": true,
+   "skipped": false,
    "detail": "max diff 4.89e-04 m"
   },
   {
@@ -175,6 +199,7 @@
    "group": "B",
    "case": "frontend rank and rule class equal the ranked table",
    "pass": true,
+   "skipped": false,
    "detail": "mismatches []"
   },
   {
@@ -182,6 +207,7 @@
    "group": "C",
    "case": "tower boost is zero at 0 m",
    "pass": true,
+   "skipped": false,
    "detail": "0.0"
   },
   {
@@ -189,6 +215,7 @@
    "group": "C",
    "case": "tower boost at 20 m = 0.2749 deg (acos(R/(R+h)))",
    "pass": true,
+   "skipped": false,
    "detail": "0.27492 deg"
   },
   {
@@ -196,6 +223,7 @@
    "group": "C",
    "case": "tower boost at 150 m = 0.7529 deg",
    "pass": true,
+   "skipped": false,
    "detail": "0.75287 deg"
   },
   {
@@ -203,6 +231,7 @@
    "group": "C",
    "case": "tower boost increases with height (1..150 m)",
    "pass": true,
+   "skipped": false,
    "detail": "not strictly increasing"
   },
   {
@@ -210,6 +239,7 @@
    "group": "C",
    "case": "solar disc fully hidden at -1 deg and fully visible at +1 deg",
    "pass": true,
+   "skipped": false,
    "detail": "0.0, 1.0"
   },
   {
@@ -217,6 +247,7 @@
    "group": "C",
    "case": "solar disc half visible at 0 deg",
    "pass": true,
+   "skipped": false,
    "detail": "0.5"
   },
   {
@@ -224,6 +255,7 @@
    "group": "C",
    "case": "illumination states: darkness / partial / direct",
    "pass": true,
+   "skipped": false,
    "detail": "['Total Darkness', 'Partial Shadow', 'Direct Sunlight']"
   },
   {
@@ -231,6 +263,7 @@
    "group": "C",
    "case": "no power when the Sun is below the horizon",
    "pass": true,
+   "skipped": false,
    "detail": "[0. 0. 0.]"
   },
   {
@@ -238,6 +271,7 @@
    "group": "C",
    "case": "power = S0 x efficiency x area x sin(elevation + tilt)",
    "pass": true,
+   "skipped": false,
    "detail": "4083.000 W vs 4083.000 W"
   },
   {
@@ -245,6 +279,7 @@
    "group": "C",
    "case": "Shackleton floor (NASA: permanent shadow) stays 0% sunlit and NO-GO, even with a 150 m mast",
    "pass": true,
+   "skipped": false,
    "detail": "{5: (0.0, 'Hazardous'), 150: (0.0, 'Hazardous')}"
   },
   {
@@ -252,6 +287,7 @@
    "group": "C",
    "case": "power never negative (elevation -10..10, tilt 0..90)",
    "pass": true,
+   "skipped": false,
    "detail": ""
   },
   {
@@ -259,6 +295,7 @@
    "group": "C",
    "case": "pole to -85 deg distance = 151.6 km (5 deg arc)",
    "pass": true,
+   "skipped": false,
    "detail": "151.62 km"
   },
   {
@@ -266,6 +303,7 @@
    "group": "C",
    "case": "sunset crossing found at the right fractional hour",
    "pass": true,
+   "skipped": false,
    "detail": "[1.5]"
   },
   {
@@ -273,6 +311,7 @@
    "group": "D",
    "case": "cross-validated score error (RMSE) below 5 points (5% of the 0-100 scale)",
    "pass": true,
+   "skipped": false,
    "detail": "RMSE 3.64"
   },
   {
@@ -280,6 +319,7 @@
    "group": "D",
    "case": "cross-validated R^2 above 0.9",
    "pass": true,
+   "skipped": false,
    "detail": "R2 0.956"
   },
   {
@@ -287,6 +327,7 @@
    "group": "D",
    "case": "slope safety margin: 15 deg lander limit -> 13.5 deg allowed",
    "pass": true,
+   "skipped": false,
    "detail": "13.5"
   },
   {
@@ -294,6 +335,7 @@
    "group": "D",
    "case": "priority-mode weights sum to 1",
    "pass": true,
+   "skipped": false,
    "detail": "{'most_safety': 1.0, 'balanced': 1.0, 'most_power': 1.0}"
   },
   {
@@ -301,6 +343,7 @@
    "group": "D",
    "case": "unknown priority mode is rejected",
    "pass": true,
+   "skipped": false,
    "detail": "ValueError"
   },
   {
@@ -308,6 +351,7 @@
    "group": "D",
    "case": "prediction is deterministic",
    "pass": true,
+   "skipped": false,
    "detail": "80.12 vs 80.12"
   },
   {
@@ -315,6 +359,7 @@
    "group": "D",
    "case": "all 100 sites: score 0..100, valid class, NO-GO never above 44",
    "pass": true,
+   "skipped": false,
    "detail": "bad: []"
   },
   {
@@ -322,6 +367,7 @@
    "group": "D",
    "case": "steeper slope never raises the score by more than model noise (0.25 pt; best site, 0..14 deg)",
    "pass": true,
+   "skipped": false,
    "detail": "largest rise +0.04 pt; [80.1, 80.1, 80.1, 80.1, 80.2, 80.1, 80.1, 77.1, 76.9, 74.7, 74.7, 44.0, 44.0, 44.0, 44.0]"
   },
   {
@@ -329,6 +375,7 @@
    "group": "D",
    "case": "slope 16 deg forces NO-GO (tip-over guardrail)",
    "pass": true,
+   "skipped": false,
    "detail": "Hazardous"
   },
   {
@@ -336,6 +383,7 @@
    "group": "D",
    "case": "20% sunlight forces NO-GO (shadowed-region guardrail)",
    "pass": true,
+   "skipped": false,
    "detail": "Hazardous"
   },
   {
@@ -343,6 +391,7 @@
    "group": "D",
    "case": "5% Earth visibility forces NO-GO (comms blackout guardrail)",
    "pass": true,
+   "skipped": false,
    "detail": "Hazardous"
   },
   {
@@ -350,6 +399,7 @@
    "group": "D",
    "case": "slope 14 deg (above 13.5 deg derated limit) is NO-GO",
    "pass": true,
+   "skipped": false,
    "detail": "Hazardous"
   },
   {
@@ -357,6 +407,7 @@
    "group": "E",
    "case": "GET /api/health reports models ready",
    "pass": true,
+   "skipped": false,
    "detail": "{'status': 'ok', 'models_ready': True, 'dem_ready': False, 'cached_demo_sites': 5, 'demo_sites_total': 5, 'safety_factor"
   },
   {
@@ -364,6 +415,7 @@
    "group": "E",
    "case": "GET /api/sites returns all 100 sites",
    "pass": true,
+   "skipped": false,
    "detail": "100 sites"
   },
   {
@@ -371,6 +423,7 @@
    "group": "E",
    "case": "evaluate a preset site: required sections present",
    "pass": true,
+   "skipped": false,
    "detail": "missing set()"
   },
   {
@@ -378,6 +431,7 @@
    "group": "E",
    "case": "timeline length equals the mission duration",
    "pass": true,
+   "skipped": false,
    "detail": "240 rows"
   },
   {
@@ -385,6 +439,7 @@
    "group": "E",
    "case": "custom point: exact clicked coordinates are used",
    "pass": true,
+   "skipped": false,
    "detail": "-87.5092, 100.1863"
   },
   {
@@ -392,6 +447,7 @@
    "group": "E",
    "case": "verdict identical in all three priority modes",
    "pass": true,
+   "skipped": false,
    "detail": "{'most_safety': 'Hazardous', 'balanced': 'Hazardous', 'most_power': 'Hazardous'}"
   },
   {
@@ -399,6 +455,7 @@
    "group": "E",
    "case": "reported mode weights match the configuration",
    "pass": true,
+   "skipped": false,
    "detail": "{'terrain': 0.2, 'solar': 0.6, 'comms': 0.2}"
   },
   {
@@ -406,6 +463,7 @@
    "group": "E",
    "case": "POST /api/compare returns both scenarios",
    "pass": true,
+   "skipped": false,
    "detail": "A=Auto_SP_099 B=Auto_SP_075 deltas=True"
   },
   {
@@ -413,6 +471,7 @@
    "group": "E",
    "case": "CSV export: one row per mission hour plus header",
    "pass": true,
+   "skipped": false,
    "detail": "73 lines, header at 0"
   },
   {
@@ -420,6 +479,7 @@
    "group": "E",
    "case": "repeat request is served from cache",
    "pass": true,
+   "skipped": false,
    "detail": "MISS -> HIT"
   },
   {
@@ -427,6 +487,7 @@
    "group": "E",
    "case": "duration_days = 2 gives the same timeline as duration_hours = 48",
    "pass": true,
+   "skipped": false,
    "detail": "timelines differ"
   },
   {
@@ -434,6 +495,7 @@
    "group": "E",
    "case": "timeline_hour_index selects that hour's live values",
    "pass": true,
+   "skipped": false,
    "detail": "-8.0938 vs -8.0938"
   },
   {
@@ -441,6 +503,7 @@
    "group": "E",
    "case": "longer mast never lowers sunlight (API, 1 vs 150 m)",
    "pass": true,
+   "skipped": false,
    "detail": "49.306 % -> 53.611 %"
   },
   {
@@ -448,6 +511,7 @@
    "group": "E",
    "case": "larger panel area raises mission energy proportionally",
    "pass": true,
+   "skipped": false,
    "detail": "ratio 2.0000001384831623"
   },
   {
@@ -455,6 +519,7 @@
    "group": "E",
    "case": "power is zero whenever the timeline is in total darkness",
    "pass": true,
+   "skipped": false,
    "detail": "0 dark hours with power"
   },
   {
@@ -462,6 +527,7 @@
    "group": "E",
    "case": "Hazardous verdict comes with at least one warning",
    "pass": true,
+   "skipped": false,
    "detail": "Auto_SP_07: Hazardous"
   },
   {
@@ -469,6 +535,7 @@
    "group": "E",
    "case": "95% confidence interval contains the score",
    "pass": true,
+   "skipped": false,
    "detail": "5.12 <= 30.0 <= 30.0"
   },
   {
@@ -476,6 +543,7 @@
    "group": "E",
    "case": "GET /api/stress-test serves stored results",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 200"
   },
   {
@@ -483,13 +551,15 @@
    "group": "E",
    "case": "single evaluation completes in under 1 s (preset)",
    "pass": true,
-   "detail": "105 ms"
+   "skipped": false,
+   "detail": "46 ms"
   },
   {
    "n": 70,
    "group": "F",
    "case": "rejects latitude -84.9 (outside cap) with HTTP 422",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 422"
   },
   {
@@ -497,6 +567,7 @@
    "group": "F",
    "case": "rejects latitude -90.1 with HTTP 422",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 422"
   },
   {
@@ -504,6 +575,7 @@
    "group": "F",
    "case": "rejects longitude 360.1 with HTTP 422",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 422"
   },
   {
@@ -511,6 +583,7 @@
    "group": "F",
    "case": "rejects longitude -0.1 with HTTP 422",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 422"
   },
   {
@@ -518,6 +591,7 @@
    "group": "F",
    "case": "rejects tower 0.5 m with HTTP 422",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 422"
   },
   {
@@ -525,6 +599,7 @@
    "group": "F",
    "case": "rejects tower 151 m with HTTP 422",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 422"
   },
   {
@@ -532,6 +607,7 @@
    "group": "F",
    "case": "rejects panel tilt -1 deg with HTTP 422",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 422"
   },
   {
@@ -539,6 +615,7 @@
    "group": "F",
    "case": "rejects panel tilt 91 deg with HTTP 422",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 422"
   },
   {
@@ -546,6 +623,7 @@
    "group": "F",
    "case": "rejects panel area 0.5 m2 with HTTP 422",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 422"
   },
   {
@@ -553,6 +631,7 @@
    "group": "F",
    "case": "rejects panel area 51 m2 with HTTP 422",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 422"
   },
   {
@@ -560,6 +639,7 @@
    "group": "F",
    "case": "rejects duration 0 h with HTTP 422",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 422"
   },
   {
@@ -567,6 +647,7 @@
    "group": "F",
    "case": "rejects unknown site ID with HTTP 422",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 422"
   },
   {
@@ -574,6 +655,7 @@
    "group": "F",
    "case": "rejects unknown priority mode with HTTP 422",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 422"
   },
   {
@@ -581,6 +663,7 @@
    "group": "F",
    "case": "rejects no location given with HTTP 422",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 422"
   },
   {
@@ -588,6 +671,7 @@
    "group": "F",
    "case": "rejects max slope 16 deg (above lander limit) with HTTP 422",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 422"
   },
   {
@@ -595,6 +679,7 @@
    "group": "F",
    "case": "rejects window past the end of the ephemeris with HTTP 422",
    "pass": true,
+   "skipped": false,
    "detail": "HTTP 422"
   },
   {
@@ -602,6 +687,7 @@
    "group": "G",
    "case": "JS horizon boost equals Python at 1, 20, 150 m",
    "pass": true,
+   "skipped": false,
    "detail": "max diff 0.0e+00"
   },
   {
@@ -609,6 +695,7 @@
    "group": "G",
    "case": "JS solar-disc fraction equals Python",
    "pass": true,
+   "skipped": false,
    "detail": "[0, 0, 0.5, 1, 1] vs [0.0, 0.0, 0.5, 1.0, 1.0]"
   },
   {
@@ -616,6 +703,7 @@
    "group": "G",
    "case": "JS illumination states equal Python",
    "pass": true,
+   "skipped": false,
    "detail": ""
   },
   {
@@ -623,6 +711,7 @@
    "group": "G",
    "case": "JS solar power equals Python (5 cases)",
    "pass": true,
+   "skipped": false,
    "detail": "max diff 0.0e+00 W"
   },
   {
@@ -630,6 +719,7 @@
    "group": "G",
    "case": "JS safety constants equal the backend",
    "pass": true,
+   "skipped": false,
    "detail": "mismatch {}"
   },
   {
@@ -637,6 +727,7 @@
    "group": "G",
    "case": "JS priority-mode weights equal the backend",
    "pass": true,
+   "skipped": false,
    "detail": "mismatch {}"
   },
   {
@@ -644,6 +735,7 @@
    "group": "G",
    "case": "JS terrain/solar/comms sub-scores equal the ranked table (100 sites)",
    "pass": true,
+   "skipped": false,
    "detail": "max diff 1.4e-14"
   },
   {
@@ -651,6 +743,7 @@
    "group": "G",
    "case": "JS ranking equals backend in 'most_safety' mode (100 sites)",
    "pass": true,
+   "skipped": false,
    "detail": "max diff 1.4e-14; top-10 same"
   },
   {
@@ -658,6 +751,7 @@
    "group": "G",
    "case": "JS ranking equals backend in 'balanced' mode (100 sites)",
    "pass": true,
+   "skipped": false,
    "detail": "max diff 1.4e-14; top-10 same"
   },
   {
@@ -665,6 +759,7 @@
    "group": "G",
    "case": "JS ranking equals backend in 'most_power' mode (100 sites)",
    "pass": true,
+   "skipped": false,
    "detail": "max diff 1.4e-14; top-10 same"
   },
   {
@@ -672,6 +767,7 @@
    "group": "G",
    "case": "JS great-circle distances equal Python",
    "pass": true,
+   "skipped": false,
    "detail": "max diff 0.0e+00 km"
   },
   {
@@ -679,6 +775,7 @@
    "group": "G",
    "case": "3-D click mapping round-trips lat/lon exactly (2000 points)",
    "pass": true,
+   "skipped": false,
    "detail": "max error 8.5e-14 deg"
   },
   {
@@ -686,6 +783,7 @@
    "group": "G",
    "case": "battery model: empties at hour 66, 34 h without power (synthetic night)",
    "pass": true,
+   "skipped": false,
    "detail": "{\"survives\": false, \"minSocPct\": 0, \"hoursEmpty\": 34, \"firstEmptyHour\": 66, \"endSocPct\": 100, \"generatedKwh\": 50, \"consumedKwh\": 22.5, \"wastedKwh\": 32.500000000000014}"
   },
   {
@@ -693,6 +791,7 @@
    "group": "G",
    "case": "battery sizing: 100 h night at 150 W needs 15.0 kWh",
    "pass": true,
+   "skipped": false,
    "detail": "15.0000 kWh"
   },
   {
@@ -700,6 +799,7 @@
    "group": "G",
    "case": "named craters lie in the polar region with valid longitudes",
    "pass": true,
+   "skipped": false,
    "detail": "bad []"
   }
  ]

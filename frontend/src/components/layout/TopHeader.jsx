@@ -21,6 +21,17 @@ function BackendBadge({ backend, loading, onWarmup }) {
   )
 }
 
+/** Shown when the backend runs without the downloaded NASA terrain / illumination data (e.g. a fresh clone). */
+function DataWarning({ health }) {
+  if (!health || (health.horizon_dem_ready !== false && health.terrain_shadowing_ready !== false)) return null
+  return (
+    <span role="alert" className="num flex max-w-[22rem] items-center gap-1.5 truncate rounded-md border border-solar/60 bg-solar/10 px-2 py-1 text-[11px] text-solar"
+      title="The 100 preset sites use stored NASA horizons and stay accurate. Points you click use a flat horizon, which over-estimates sunlight. Fix: python src/analysis/nasa_data.py (unpacks the NASA LOLA data bundled in nasa_data/), then restart the backend.">
+      ⚠ NASA terrain data not downloaded: clicked points less accurate
+    </span>
+  )
+}
+
 /**
  * Result of the last full validation run (python tests/run_all.py -> GET /api/validation): every suite plus the NASA / JPL
  * benchmark. Green when everything passed, red with the failure count otherwise; hover for the per-suite breakdown.
@@ -38,7 +49,7 @@ function ValidationBadge({ online }) {
   const tip = [...v.suites.map((s) => `${s.ok ? '✓' : '✕'} ${s.suite}: ${s.passed}/${s.total}${s.failures.length ? ' - ' + s.failures.map((f) => f.case).join('; ') : ''}`), `last run ${v.generated_utc}`].join('\n')
   return (
     <span title={tip} role="status" className={cx('num hidden items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] md:flex', v.ok ? 'border-go/40 bg-go/10 text-go' : 'border-nogo/50 bg-nogo/10 text-nogo')}>
-      {v.ok ? `✓ VALIDATED ${v.passed}/${v.total} checks` : `⚠ ${failed} CHECK${failed === 1 ? '' : 'S'} FAILED`}
+      {v.ok ? `✓ VALIDATED ${v.passed}/${v.total} checks${v.skipped ? ` · ${v.skipped} skipped` : ''}` : `⚠ ${failed} CHECK${failed === 1 ? '' : 'S'} FAILED`}
     </span>
   )
 }
@@ -57,6 +68,7 @@ export default function TopHeader({ backend, loading, error, onWarmup }) {
       <div className="min-w-0 flex-1 text-center">
         {error && <span className="num inline-block max-w-full truncate rounded-md border border-nogo/50 bg-nogo/10 px-2 py-0.5 text-[11px] text-nogo" title={error}>⚠ {error}</span>}
       </div>
+      {backend.online === true && <DataWarning health={backend.health} />}
       <ValidationBadge online={backend.online === true} />
       <BackendBadge backend={backend} loading={loading} onWarmup={onWarmup} />
     </header>

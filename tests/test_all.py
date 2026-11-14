@@ -108,6 +108,20 @@ def assess(site_id: str, **override) -> dict:
                               explain_result=False)
 
 
+class SkipCase(Exception):
+    """Raised by a case whose reference data is not on this machine (e.g. a fresh clone without the NASA downloads)."""
+
+
+NEEDS_NASA_DATA = "NASA LOLA terrain / illumination data not downloaded (bundled copy in nasa_data/ missing; run python src/analysis/nasa_data.py)"
+
+
+def require_nasa_data():
+    import horizon as _hz
+    import terrain_illumination as _ti
+    if not (_hz.dem_available() and _ti.available()):
+        raise SkipCase(NEEDS_NASA_DATA)
+
+
 # ============================================================================ A. Dataset integrity (14)
 @case("A", "dataset has exactly 100 sites")
 def _():
@@ -282,6 +296,7 @@ def _():
 
 @case("C", "Shackleton floor (NASA: permanent shadow) stays 0% sunlit and NO-GO, even with a 150 m mast")
 def _():
+    require_nasa_data()
     out = {}
     for h in (5, 150):
         e = ms.evaluate_scenario(ms.Scenario(lat=-89.67, lon=129.78, duration_hours=1440, tower_height_m=h), include_timeline=False)
@@ -612,14 +627,17 @@ def _():
 def main() -> int:
     results, t0 = [], time.perf_counter()
     for n, (group, name, fn) in enumerate(CASES, 1):
+        skipped = False
         try:
             detail, ok = fn() or "", True
+        except SkipCase as exc:
+            detail, ok, skipped = f"SKIPPED: {exc}", True, True
         except AssertionError as exc:
             detail, ok = str(exc), False
         except Exception as exc:  # unexpected crash = failure with the error shown
             detail, ok = f"{type(exc).__name__}: {exc} @ {traceback.extract_tb(exc.__traceback__)[-1].lineno}", False
-        results.append({"n": n, "group": group, "case": name, "pass": ok, "detail": detail})
-        print(f"{n:3d} [{'PASS' if ok else 'FAIL'}] {group} · {name}" + (f"  — {detail}" if detail else ""), flush=True)
+        results.append({"n": n, "group": group, "case": name, "pass": ok, "skipped": skipped, "detail": detail})
+        print(f"{n:3d} [{'SKIP' if skipped else 'PASS' if ok else 'FAIL'}] {group} · {name}" + (f"  — {detail}" if detail else ""), flush=True)
     passed = sum(r["pass"] for r in results)
     print(f"\n==== {passed}/{len(results)} cases passed in {time.perf_counter() - t0:.1f} s ====")
     REPORT.write_text(json.dumps({"passed": passed, "total": len(results), "cases": results}, indent=1), encoding="utf-8")
