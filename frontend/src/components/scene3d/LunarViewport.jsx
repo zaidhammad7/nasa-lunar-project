@@ -13,6 +13,12 @@ import { perfFlag } from '../../lib/perf.js'
 
 const BASE_FOV = 42
 const MIN_CAMERA_RADIUS = 1.02 // scene units from the Moon's centre (~35 km above the surface)
+// Wheel zoom: proportional to how far the wheel / trackpad actually moved, so a mouse notch (deltaY ~ 100) and a trackpad
+// gesture (many small deltas) zoom by the same total amount. exp(100 * 0.0015) ~ 16% per mouse notch; eased, not jumped.
+const ZOOM_PER_DELTA = 0.0015
+const ZOOM_MAX_STEP = 300      // largest deltaY honoured per event (fast-scroll mice send huge spikes)
+const ZOOM_EASE = 14           // 1/s: how quickly the camera reaches the requested distance
+const MIN_DISTANCE = 0.05, MAX_DISTANCE = 4000
 const DEG = 180 / Math.PI
 
 /** Smooth fly-to: frame-interpolated camera position, orbit target and field of view; any user drag cancels it. */
@@ -24,6 +30,26 @@ function CameraRig({ fly, controlsRef }) {
   // Orbit "up" axis: world +Z for the global views; the site's local vertical (surface normal) for the close-up, so the mast
   // stands upright on screen and its height reads in profile. OrbitControls fixes its up-axis when created -> remount on change.
   const [upKey, setUpKey] = useState('global')
+  const zoomGoal = useRef(null) // requested camera-to-target distance (scene units), eased toward in useFrame
+  const { gl } = three
+
+  // Own wheel handler (capture phase, before OrbitControls), so zoom speed does not depend on the input device's event rate.
+  useEffect(() => {
+    const host = gl.domElement.parentElement
+    if (!host) return undefined
+    const onWheel = (e) => {
+      const c = controlsRef.current
+      if (!c) return
+      e.preventDefault(); e.stopPropagation()
+      const unit = e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 100 : 1 // lines (Firefox: 3 per notch) / pages -> ~pixels
+      const dy = Math.max(-ZOOM_MAX_STEP, Math.min(ZOOM_MAX_STEP, e.deltaY * unit))
+      const from = zoomGoal.current ?? camera.position.distanceTo(c.target)
+      zoomGoal.current = Math.max(MIN_DISTANCE, Math.min(MAX_DISTANCE, from * Math.exp(dy * ZOOM_PER_DELTA)))
+      goal.current.active = false // the user takes over from any camera fly-to
+    }
+    host.addEventListener('wheel', onWheel, { passive: false, capture: true })
+    return () => host.removeEventListener('wheel', onWheel, { capture: true })
+  }, [gl, camera, controlsRef])
 
   useEffect(() => {
     if (!fly || !fly.id) return
@@ -74,8 +100,20 @@ function CameraRig({ fly, controlsRef }) {
   }, [fly])
 
   useFrame((_, dt) => {
+    const c0 = controlsRef.current
+    if (zoomGoal.current != null && c0) { // eased wheel zoom along the view direction
+      const off = camera.position.clone().sub(c0.target)
+      const d = off.length(), want = zoomGoal.current
+      const next = d + (want - d) * (1 - Math.exp(-dt * ZOOM_EASE))
+      camera.position.copy(c0.target).add(off.setLength(next))
+      c0.update()
+      if (Math.abs(next - want) / want < 0.002) zoomGoal.current = null
+    }
     // keep the camera above the surface (OrbitControls' minDistance is measured from the target, not the Moon's centre)
-    if (camera.position.length() < MIN_CAMERA_RADIUS) camera.position.setLength(MIN_CAMERA_RADIUS)
+    if (camera.position.length() < MIN_CAMERA_RADIUS) {
+      camera.position.setLength(MIN_CAMERA_RADIUS)
+      if (zoomGoal.current != null && controlsRef.current && zoomGoal.current < camera.position.distanceTo(controlsRef.current.target)) zoomGoal.current = null // reached the surface: stop asking for more
+    }
     const g = goal.current, c = controlsRef.current
     if (!g.active || !c) return
     const k = 1 - Math.exp(-dt * 3.4)
@@ -86,8 +124,8 @@ function CameraRig({ fly, controlsRef }) {
     if (camera.position.distanceTo(g.pos) < 0.012 && c.target.distanceTo(g.target) < 0.012 && Math.abs(camera.fov - g.fov) < 0.2) g.active = false
   })
 
-  return <OrbitControls key={upKey} ref={controlsRef} makeDefault enableDamping dampingFactor={0.08} minDistance={0.05} maxDistance={4000}
-    rotateSpeed={0.7} zoomSpeed={0.9} onStart={() => { goal.current.active = false }} />
+  return <OrbitControls key={upKey} ref={controlsRef} makeDefault enableDamping dampingFactor={0.08} minDistance={MIN_DISTANCE} maxDistance={MAX_DISTANCE}
+    rotateSpeed={0.7} zoomSpeed={1} onStart={() => { goal.current.active = false; zoomGoal.current = null }} />
 }
 
 function Scene({ sites, showPresets, pins, rays, fly, onPick, heatSites, showCraters }) {
