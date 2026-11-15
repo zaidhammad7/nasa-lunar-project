@@ -29,6 +29,7 @@ uvicorn src.app.api_server:app --port 8000        # backend  -> http://localhost
 cd frontend
 npm install
 npm run dev                                       # frontend -> http://localhost:5173
+gcc edge/demo.c -lm -o edge/demo && ./edge/demo
 ```
 
 The frontend falls back to a built-in offline engine if the backend is unreachable. API reference: [API_USAGE.md](API_USAGE.md).
