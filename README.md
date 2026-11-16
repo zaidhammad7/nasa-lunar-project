@@ -1,7 +1,7 @@
 # Lunar Landing Site Navigator
 
 **NASA Space Apps 2026 · Team TNB** — a decision-support tool that ranks candidate landing sites at the lunar South Pole
-(−85° to −90°) by combining terrain safety, real terrain-shadowed sunlight and Earth line-of-sight, in an interactive
+(−85° to −90°) by combining terrain safety, real terrain-shadowed sunlight and Earth line-of-sight, in an interactive 
 true-scale 3-D mission-control dashboard.
 
 ![Validation against NASA LOLA illumination](outputs/illumination_validation.png)
